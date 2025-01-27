@@ -1,4 +1,4 @@
-# 🌟 SCP - Sistema de Carência e Provimento
+# SCP - Sistema de Carência e Provimento
 
 O **SCP** é uma aplicação desenvolvida para facilitar o gerenciamento de processos relacionados à carência e provimento no contexto de gestão educacional e administrativa. 
 
