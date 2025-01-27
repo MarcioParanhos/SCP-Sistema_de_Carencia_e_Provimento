@@ -1,0 +1,120 @@
+@import url("https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;0,1000;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900;1,1000&display=swap");
+
+/* Color Variables */
+:root {
+    --primary: #36425a;
+    --primaryHover: #0054a6;
+    --secondary: #fbf8f3;
+    --danger: #fa4654;
+    --green: #2fb344;
+    --cyan: #17a2b8;
+}
+
+/* GENERAL */
+* {
+    font-family: "Nunito", sans-serif;
+}
+label {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1rem;
+}
+.justify {
+    text-align: justify;
+}
+.size-10 {
+    font-size: 10px;
+}
+/* Global Variables */
+.UperCase {
+    text-transform: uppercase !important;
+}
+/*Tables */
+.table_subheader {
+    font-size: 0.7rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1rem;
+}
+.btn-action {
+    color: var(--primary) !important;
+    height: auto !important;
+    display: inline-block !important;
+}
+.ocult-info-btn {
+    width: 4% !important;
+}
+
+/* Borders */
+.border_top_success {
+    border-top: 2px solid var(--green) !important;
+}
+.border_top_danger {
+    border-top: 2px solid var(--danger) !important;
+}
+.border_top_cyan {
+    border-top: 2px solid var(--cyan) !important;
+}
+/* General Buttons */
+.btn-primary {
+    font-size: 0.7rem !important;
+    background-color: var(--primary) !important;
+    transition: 0.4s !important;
+    padding: 6px !important;
+}
+.btn-primary:hover {
+    background-color: var(--primaryHover) !important;
+}
+.btn-danger {
+    font-size: 0.7rem !important;
+    transition: 0.4s !important;
+    padding: 6px !important;
+}
+.btn .icon {
+    margin: 0 !important;
+}
+.btn-md {
+    padding: 4px !important;
+}
+
+/* Retirements */
+.form-filter {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.form-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+}
+.form-actions {
+    display: flex;
+    justify-content: end;
+    gap: 10px;
+}
+
+/* Reports */
+.print_img {
+    width: 80px;
+    height: auto;
+}
+
+/* DATATABLES */
+.dataTables_length,
+.dataTables_filter,
+.dataTables_info,
+.dataTables_paginate {
+    padding: 15px !important;
+}
+/* Datatables Pagination Buttons */
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    border-radius: 4px !important;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1rem;
+}
