@@ -42,39 +42,58 @@
 </style>
 
 <div class="bg-primary card text-white card_title">
-    <h4 class=" title_show_carencias">Encaminhamento de servidores efetivos - CONCURSADOS 2023</h4>
+    <h4 class=" title_show_carencias">Encaminhamento de servidores - CONCURSADOS 2025</h4>
 </div>
 <div class="d-flex justify-content-between mb-4">
-    <div class="col-3">
-        <table class="table-bordered">
-            <tr>
-                <td class="pl-2 subheader"><b>Servidores efetivos encaminhados</b></td>
-                <td style="width: 20%;" class="text-center"><b>{{ $quantidadeRegistros }}</b></td>
-            </tr>
-            <tr>
-                <td class="pl-2 subheader"><b>Encaminhamentos com inconsistência</b></td>
-                <td style="width: 20%;" class="text-center"><b>{{ ($quantidadeRegistrosError - $quantidadeRegistrosErrorOK)}}</b></td>
-            </tr>
-            <tr>
-                <td class="pl-2 subheader"><b>Inconsistências ajustadas (CPM)</b></td>
-                <td style="width: 20%;" class="text-center"><b>{{ $quantidadeRegistrosErrorOK}}</b></td>
-            </tr>
-            <tr>
-                <td class="pl-2 subheader"><b>PCH - Programado</b></td>
-                <td style="width: 20%;" class="text-center"><b>{{ $quantidadeRegistrosPCH }}</b></td>
-            </tr>
-            <tr>
-                <td class="pl-2 subheader"><b>PENDENTES ANÁLISE (CPG)</b></td>
-                <td style="width: 20%;" class="text-center"><b>{{ ($quantidadeRegistros - $quantidadeRegistrosPCH) - ($quantidadeRegistrosError - $quantidadeRegistrosErrorOK)}}</b></td>
-            </tr>
-        </table>
-    </div>
+    <div class="d-flex">
+        <div class="col-9">
+            <table class="table-bordered">
+                <tr>
+                    <td class="pl-2 subheader"><b>Servidores encaminhados</b></td>
+                    <td style="width: 22%;" class="text-center"><b>{{ $quantidadeRegistros }}</b></td>
+                </tr>
+                <tr>
+                    <td class="pl-2 subheader"><b>ENCAMINHAMENTOS COM DATA DE ASSUNÇÃO</b></td>
+                    <td style="width: 22%;" class="text-center text-success"><b>{{ $quantidadeRegistrosAtrasados }}</b></td>
+                </tr>
+                <tr>
+                    <td class="pl-2 subheader"><b>ENCAMINHAMENTOS SEM ASSUNÇÃO, MAS DENTRO DO PRAZO</b></td>
+                    <td style="width: 22%;" class="text-center text-danger"><b>{{ $quantidadeRegistrosDataNula }}</b></td>
+                </tr>
+                <tr>
+                    <td class="pl-2 subheader"><b>ENCAMINHAMENTOS SEM ASSUNÇÃO COM PRAZO VENCIDO</b></td>
+                    <td style="width: 22%;" class="text-center text-danger"><b>{{ $quantidadeRegistrosAtrasados }}</b></td>
+                </tr>
+            </table>
+        </div>
+        <div class="col-9">
+            <table class="table-bordered">
+                <tr>
+                    <td class="pl-2 subheader"><b>Encaminhamentos com inconsistência</b></td>
+                    <td style="width: 22%;" class="text-center"><b>{{ ($quantidadeRegistrosError - $quantidadeRegistrosErrorOK)}}</b></td>
+                </tr>
+                <tr>
+                    <td class="pl-2 subheader"><b>Inconsistências ajustadas (CPM)</b></td>
+                    <td style="width: 22%;" class="text-center"><b>{{ $quantidadeRegistrosErrorOK}}</b></td>
+                </tr>
+                <tr>
+                    <td class="pl-2 subheader"><b>PCH - Programado</b></td>
+                    <td style="width: 22%;" class="text-center"><b>{{ $quantidadeRegistrosPCH }}</b></td>
+                </tr>
+                <tr>
+                    <td class="pl-2 subheader"><b>PENDENTES ANÁLISE (CPG)</b></td>
+                    <td style="width: 22%;" class="text-center"><b>{{ ($quantidadeRegistros - $quantidadeRegistrosPCH) - ($quantidadeRegistrosError - $quantidadeRegistrosErrorOK)}}</b></td>
+                </tr>
+            </table>
+        </div>
 
+    </div>
     <div class="mb-2 ">
         <a id="active_filters" class="mb-2 btn bg-primary text-white" onclick="active_filters_provimento()">FILTROS <i class='far fa-eye'></i></a>
         <a class="mb-2 btn bg-primary text-white" target="_blank" href="/provimento/efetivo/excel"><i class="ti-download"></i> EXCEL</a>
     </div>
 </div>
+
 <hr>
 <form id="active_form" class="pr-4 pl-4" action="{{ route('provimento_efetivo.showByForm') }}" method="post" hidden>
     @csrf
@@ -190,20 +209,19 @@
     <table id="consultarCarencias" class="table-bordered table-sm table">
         <thead class="bg-primary text-white">
             <tr class="text-center">
-                <td colspan="5"><strong>SERVIDOR ENCAMINHADO</strong></td>
-                <td colspan="6"><strong>UNIDADE DE ENCAMINHAMENTO</strong></td>
+                <td colspan="3"><strong>SERVIDOR ENCAMINHADO</strong></td>
+                <td colspan="7"><strong>UNIDADE DE ENCAMINHAMENTO</strong></td>
             </tr>
             <tr class="text-center">
                 <th>NTE</th>
-                <th>MUNICIPIO</th>
                 <th>NOME</th>
                 <th>CPF</th>
-                <th>DISCIPLINA</th>
                 <th>NTE</th>
                 <th>MUNICIPIO</th>
                 <th>COD.UEE</th>
                 <th>UNIDADE ESCOLAR</th>
                 <th>PCH</th>
+                <th>ASSUNÇÃO</th>
                 <th>AÇÃO</th>
             </tr>
         </thead>
@@ -215,10 +233,8 @@
                 @else
                 <td class="text-center">0{{ $provimentos_encaminhado->servidorEncaminhado->nte }}</td>
                 @endif
-                <td class="text-center">{{ $provimentos_encaminhado->servidorEncaminhado->municipio }}</td>
                 <td class="text-center">{{ $provimentos_encaminhado->servidorEncaminhado->nome }}</td>
                 <td class="text-center">{{ $provimentos_encaminhado->servidorEncaminhado->cpf }}</td>
-                <td class="text-center">{{ $provimentos_encaminhado->servidorEncaminhado->formacao }}</td>
                 @if ($provimentos_encaminhado->uee->nte > 9)
                 <td class="text-center">{{ $provimentos_encaminhado->uee->nte }}</td>
                 @else
@@ -251,20 +267,54 @@
                 <td class="">
                 </td>
                 @endif
-                <td class="text-center">
-                    <div class="btn-group dropleft">
-                        <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        </button>
-                        <div class="dropdown-menu">
-                            <a class="text-primary dropdown-item" href="/provimento/efetivo/detail/{{ $provimentos_encaminhado->id }}"><i class="fas fa-eye"></i> Ver</a>
-                            @if ( (Auth::user()->profile === "cpm_tecnico") || (Auth::user()->profile === "administrador") || (Auth::user()->profile === "cpm_coordenador"))
-                            @if (($provimentos_encaminhado->pch != "OK") || (Auth::user()->profile === "administrador"))
-                            <a title="Excluir" id="" onclick="destroyProvimentoEfetivo('{{ $provimentos_encaminhado->id }}')" class="text-danger dropdown-item"><i class="ti-trash"></i> Excluir</a>
-                            @endif
-                            @endif
-                        </div>
-                    </div>
+                @php
+                $dataEncaminhamento = \Carbon\Carbon::parse($provimentos_encaminhado->data_encaminhamento);
+                $diferencaDias = $dataEncaminhamento->diffInDays(\Carbon\Carbon::now());
+                @endphp
+
+                @if($provimentos_encaminhado->data_encaminhamento && $diferencaDias >= 2 && $provimentos_encaminhado->data_assuncao == null)
+                <td class="text-center text-danger">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-alert-hexagon">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M19.875 6.27c.7 .398 1.13 1.143 1.125 1.948v7.284c0 .809 -.443 1.555 -1.158 1.948l-6.75 4.27a2.269 2.269 0 0 1 -2.184 0l-6.75 -4.27a2.225 2.225 0 0 1 -1.158 -1.948v-7.285c0 -.809 .443 -1.554 1.158 -1.947l6.75 -3.98a2.33 2.33 0 0 1 2.25 0l6.75 3.98h-.033z" />
+                        <path d="M12 8v4" />
+                        <path d="M12 16h.01" />
+                    </svg>
                 </td>
+                @elseif ($provimentos_encaminhado->data_encaminhamento && $diferencaDias < 2 && $provimentos_encaminhado->data_assuncao == null)
+                    <td class="text-center text-warning">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-calendar-stats">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+                            <path d="M18 14v4h4" />
+                            <path d="M18 18m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                            <path d="M15 3v4" />
+                            <path d="M7 3v4" />
+                            <path d="M3 11h16" />
+                        </svg>
+                    </td>
+                    @else
+                    <td class="text-center text-success">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-check">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M5 12l5 5l10 -10" />
+                        </svg>
+                    </td>
+                    @endif
+                    <td class="text-center">
+                        <div class="btn-group dropleft">
+                            <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            </button>
+                            <div class="dropdown-menu">
+                                <a class="text-primary dropdown-item" href="/provimento/efetivo/detail/{{ $provimentos_encaminhado->id }}"><i class="fas fa-eye"></i> Ver</a>
+                                @if ( (Auth::user()->profile === "cpm_tecnico") || (Auth::user()->profile === "administrador") || (Auth::user()->profile === "cpm_coordenador"))
+                                @if (($provimentos_encaminhado->pch != "OK") || (Auth::user()->profile === "administrador"))
+                                <a title="Excluir" id="" onclick="destroyProvimentoEfetivo('{{ $provimentos_encaminhado->id }}')" class="text-danger dropdown-item"><i class="ti-trash"></i> Excluir</a>
+                                @endif
+                                @endif
+                            </div>
+                        </div>
+                    </td>
             </tr>
             @endforeach
         </tbody>

@@ -386,7 +386,6 @@ function searchEfetivo() {
 
             if (data) {
                 servidor_efetivo.value = data.nome;
-                disciplina_efetivo.value = data.formacao;
                 nte_efetivo.value = data.nte;
                 cargo_efetivo.value = data.cargo;
                 servidor_id.value = data.id;

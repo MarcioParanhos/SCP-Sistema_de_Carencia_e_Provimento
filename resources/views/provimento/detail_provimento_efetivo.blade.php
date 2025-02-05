@@ -62,12 +62,6 @@
                                 <input value="{{ $servidor_encaminhado->servidorEncaminhado->id }}" id="servidor_id" name="servidor_encaminhado_id" type="number" class="form-control form-control-sm" hidden>
                             </div>
                         </div>
-                        <div class="col-md-2">
-                            <div class="form-group">
-                                <label for="municipio_efetivo" class="">MUNICIPIO</label>
-                                <input value="{{ $servidor_encaminhado->servidorEncaminhado->municipio }}" id="municipio_efetivo" name="" type="text" class="form-control form-control-sm" readonly>
-                            </div>
-                        </div>
                         <div class="col-md-5">
                             <div class="form-group">
                                 <label for="servidor_efetivo" class="">nome do servidor</label>
@@ -75,15 +69,15 @@
                             </div>
                         </div>
                         <div class="col-md-1">
-                            <div class="form-group">
-                                <label for="disciplina_efetivo" class="">DISCIPLINA</label>
-                                <input value="{{ $servidor_encaminhado->servidorEncaminhado->formacao }}" id="disciplina_efetivo" name="" type="text" class="form-control form-control-sm" readonly>
-                            </div>
-                        </div>
-                        <div class="col-md-1">
                             <div class="position-relative form-group">
                                 <label for="regime" class="">regime</label>
                                 <input value="40h" name="" required id="" type="text" class="form-control form-control-sm" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label for="servidor_efetivo" class="">FUNÇÃO</label>
+                                <input value="{{ $servidor_encaminhado->servidorEncaminhado->cargo }}" id="servidor_efetivo" name="" type="text" class="form-control form-control-sm" readonly>
                             </div>
                         </div>
                     </div>
@@ -165,9 +159,6 @@
                                         <button id="cadastro_btn" class="position-relative btn_search_carencia btn btn-sm btn-primary" type="button" onclick="searchServidor()">
                                             <i class="ti-search"></i>
                                         </button>
-                                        <button title="SEGUNDO SERVIDOR" id="cadastro_segundo_servidor_btn" class="ml-2 position-relative btn_search_carencia btn btn-sm btn-primary" type="button">
-                                            <i id="icon_segundo_servidor" class="fas fa-user-plus"></i>
-                                        </button>
                                     </div>
 
                                 </div>
@@ -195,7 +186,7 @@
                             @if ( (Auth::user()->profile === "cpg_tecnico") || (Auth::user()->profile === "administrador"))
                             <div class="col-md-2">
                                 <div class="position-relative form-group">
-                                    <label class="control-label" for="">SITUAÇÃO</label>
+                                    <label class="control-label" for="">SITUAÇÃO - ANÁLISE CPG</label>
                                     <select name="" id="selected_situation_server_1" class="form-control form-control-sm select2">
 
                                         @if ($provimento_efetivo->server_1_situation == 1)
@@ -328,7 +319,7 @@
                             @if (Auth::user()->profile == "cpm_tecnico")
                             <div class="col-md-2">
                                 <div class="position-relative form-group">
-                                    <label class="control-label" for="">SITUAÇÃO</label>
+                                    <label class="control-label" for="">SITUAÇÃO - ANÁLISE CPG</label>
                                     <select name="" id="selected_situation_server_1" class="form-control form-control-sm select2" disabled>
                                         @if ($provimento_efetivo->server_1_situation == 1)
                                         <option value="1" selected>EXCEDENTE</option>
@@ -411,7 +402,7 @@
                             @if ( (Auth::user()->profile === "cpg_tecnico") || (Auth::user()->profile === "administrador"))
                             <div class="col-md-2">
                                 <div class="position-relative form-group">
-                                    <label class="control-label" for="">SITUAÇÃO</label>
+                                    <label class="control-label" for="">SITUAÇÃO - ANÁLISE CPG</label>
                                     <select name="" id="selected_situation_server_2" class="form-control form-control-sm select2">
                                         @if ($provimento_efetivo->server_2_situation == 1)
                                         <option value="1" selected>EXCEDENTE</option>
@@ -543,7 +534,7 @@
                             @if (Auth::user()->profile === "cpm_tecnico")
                             <div class="col-md-2">
                                 <div class="position-relative form-group">
-                                    <label class="control-label" for="">SITUAÇÃO</label>
+                                    <label class="control-label" for="">SITUAÇÃO - ANÁLISE CPG</label>
                                     <select name="" id="selected_situation_server_2" class="form-control form-control-sm select2" disabled>
                                         @if ($provimento_efetivo->server_2_situation == 1)
                                         <option value="1" selected>EXCEDENTE</option>

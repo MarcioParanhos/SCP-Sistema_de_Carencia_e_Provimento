@@ -879,6 +879,27 @@ class ProvimentoController extends Controller
         $quantidadeRegistrosPCH = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('servidor_encaminhado_id')->where('pch', 'OK')->count('servidor_encaminhado_id');
         $quantidadeRegistrosError = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('servidor_encaminhado_id')->where('pch', 'INCONSISTENCIA')->count('servidor_encaminhado_id');
         $quantidadeRegistrosErrorOK = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('servidor_encaminhado_id')->where('pch', 'INCONSISTENCIA')->where('inconsistencia', 'OK')->count('servidor_encaminhado_id');
+        
+        $quantidadeRegistrosComAssuncao = ProvimentosEncaminhado::where('ano_ref', $anoRef)
+        ->whereNotNull('data_assuncao') // Filtra registros onde data_assuncao é nulo
+        ->whereNotNull('data_encaminhamento') // Garante que data_encaminhamento não seja nulo
+        ->distinct('servidor_encaminhado_id') // Considera apenas registros únicos por servidor_encaminhado_id
+        ->count('servidor_encaminhado_id'); // Conta os registros distintos
+
+        $quantidadeRegistrosDataNula = ProvimentosEncaminhado::where('ano_ref', $anoRef)
+        ->whereNull('data_assuncao') // Filtra registros onde data_assuncao é nulo
+        ->whereNotNull('data_encaminhamento') // Garante que data_encaminhamento não seja nulo
+        ->whereRaw("DATEDIFF(?, data_encaminhamento) < 2", [Carbon::now()->format('Y-m-d')]) // Diferença de 2 ou mais dias
+        ->distinct('servidor_encaminhado_id') // Considera apenas registros únicos por servidor_encaminhado_id
+        ->count('servidor_encaminhado_id'); // Conta os registros distintos
+
+        $quantidadeRegistrosAtrasados = ProvimentosEncaminhado::where('ano_ref', $anoRef)
+        ->whereNull('data_assuncao') // Filtra registros onde data_assuncao é nulo
+        ->whereNotNull('data_encaminhamento') // Garante que data_encaminhamento não seja nulo
+        ->whereRaw("DATEDIFF(?, data_encaminhamento) >= 2", [Carbon::now()->format('Y-m-d')]) // Diferença de 2 ou mais dias
+        ->distinct('servidor_encaminhado_id') // Considera apenas registros únicos por servidor_encaminhado_id
+        ->count('servidor_encaminhado_id'); // Conta os registros distintos
+    
 
         $disciplinas = ServidoresEncaminhado::select('formacao')
             ->distinct()
@@ -898,18 +919,44 @@ class ProvimentoController extends Controller
             'quantidadeRegistrosPCH' => $quantidadeRegistrosPCH,
             'quantidadeRegistrosError' => $quantidadeRegistrosError,
             'quantidadeRegistrosErrorOK' => $quantidadeRegistrosErrorOK,
+            'quantidadeRegistrosDataNula' => $quantidadeRegistrosDataNula,
+            'quantidadeRegistrosAtrasados' => $quantidadeRegistrosAtrasados,
+            'quantidadeRegistrosComAssuncao' => $quantidadeRegistrosComAssuncao,
         ]);
     }
 
     public function showProvimentoEfetivoFilter()
     {
+        $actualDate = Carbon::now();
+        $formattedDate = $actualDate->format('Y-m-d');
+        $anoRef = session()->get('ano_ref');
 
-        $provimentos_encaminhados = ProvimentosEncaminhado::all();
-        $quantidadeRegistros = ProvimentosEncaminhado::distinct('servidor_encaminhado_id')->count('servidor_encaminhado_id');
-        $quantidadeRegistrosPCH = ProvimentosEncaminhado::distinct('servidor_encaminhado_id')->where('pch', 'OK')->count('servidor_encaminhado_id');
-        $quantidadeRegistrosError = ProvimentosEncaminhado::distinct('servidor_encaminhado_id')->where('pch', 'INCONSISTENCIA')->count('servidor_encaminhado_id');
-        $quantidadeRegistrosErrorOK = ProvimentosEncaminhado::distinct('servidor_encaminhado_id')->where('pch', 'INCONSISTENCIA')->where('inconsistencia', 'OK')->count('servidor_encaminhado_id');
+        $provimentos_encaminhados = ProvimentosEncaminhado::where('ano_ref', $anoRef)->get();
+        $quantidadeRegistros = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('servidor_encaminhado_id')->count('servidor_encaminhado_id');
+        $quantidadeRegistrosPCH = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('servidor_encaminhado_id')->where('pch', 'OK')->count('servidor_encaminhado_id');
+        $quantidadeRegistrosError = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('servidor_encaminhado_id')->where('pch', 'INCONSISTENCIA')->count('servidor_encaminhado_id');
+        $quantidadeRegistrosErrorOK = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('servidor_encaminhado_id')->where('pch', 'INCONSISTENCIA')->where('inconsistencia', 'OK')->count('servidor_encaminhado_id');
+        
+        $quantidadeRegistrosComAssuncao = ProvimentosEncaminhado::where('ano_ref', $anoRef)
+        ->whereNotNull('data_assuncao') // Filtra registros onde data_assuncao é nulo
+        ->whereNotNull('data_encaminhamento') // Garante que data_encaminhamento não seja nulo
+        ->distinct('servidor_encaminhado_id') // Considera apenas registros únicos por servidor_encaminhado_id
+        ->count('servidor_encaminhado_id'); // Conta os registros distintos
 
+        $quantidadeRegistrosDataNula = ProvimentosEncaminhado::where('ano_ref', $anoRef)
+        ->whereNull('data_assuncao') // Filtra registros onde data_assuncao é nulo
+        ->whereNotNull('data_encaminhamento') // Garante que data_encaminhamento não seja nulo
+        ->whereRaw("DATEDIFF(?, data_encaminhamento) < 2", [Carbon::now()->format('Y-m-d')]) // Diferença de 2 ou mais dias
+        ->distinct('servidor_encaminhado_id') // Considera apenas registros únicos por servidor_encaminhado_id
+        ->count('servidor_encaminhado_id'); // Conta os registros distintos
+
+        $quantidadeRegistrosAtrasados = ProvimentosEncaminhado::where('ano_ref', $anoRef)
+        ->whereNull('data_assuncao') // Filtra registros onde data_assuncao é nulo
+        ->whereNotNull('data_encaminhamento') // Garante que data_encaminhamento não seja nulo
+        ->whereRaw("DATEDIFF(?, data_encaminhamento) >= 2", [Carbon::now()->format('Y-m-d')]) // Diferença de 2 ou mais dias
+        ->distinct('servidor_encaminhado_id') // Considera apenas registros únicos por servidor_encaminhado_id
+        ->count('servidor_encaminhado_id'); // Conta os registros distintos
+        
         $disciplinas = ServidoresEncaminhado::select('formacao')
             ->distinct()
             ->groupBy('formacao')
@@ -932,18 +979,42 @@ class ProvimentoController extends Controller
             'quantidadeRegistrosPCH' => $quantidadeRegistrosPCH,
             'quantidadeRegistrosError' => $quantidadeRegistrosError,
             'quantidadeRegistrosErrorOK' => $quantidadeRegistrosErrorOK,
+            'quantidadeRegistrosDataNula' => $quantidadeRegistrosDataNula,
+            'quantidadeRegistrosAtrasados' => $quantidadeRegistrosAtrasados,
+            'quantidadeRegistrosComAssuncao' => $quantidadeRegistrosComAssuncao,
         ]);
     }
 
     public function showProvimentoEfetivoByForm(Request $request)
     {
 
+
         $anoRef = session()->get('ano_ref');
         $provimentos_encaminhados = ProvimentosEncaminhado::query();
-        $quantidadeRegistros = ProvimentosEncaminhado::distinct('servidor_encaminhado_id')->count('servidor_encaminhado_id');
-        $quantidadeRegistrosPCH = ProvimentosEncaminhado::distinct('servidor_encaminhado_id')->where('pch', 'OK')->count('servidor_encaminhado_id');
-        $quantidadeRegistrosError = ProvimentosEncaminhado::distinct('servidor_encaminhado_id')->where('pch', 'INCONSISTENCIA')->count('servidor_encaminhado_id');
-        $quantidadeRegistrosErrorOK = ProvimentosEncaminhado::distinct('servidor_encaminhado_id')->where('pch', 'INCONSISTENCIA')->where('inconsistencia', 'OK')->count('servidor_encaminhado_id');
+        $quantidadeRegistros = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('servidor_encaminhado_id')->count('servidor_encaminhado_id');
+        $quantidadeRegistrosPCH = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('servidor_encaminhado_id')->where('pch', 'OK')->count('servidor_encaminhado_id');
+        $quantidadeRegistrosError = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('servidor_encaminhado_id')->where('pch', 'INCONSISTENCIA')->count('servidor_encaminhado_id');
+        $quantidadeRegistrosErrorOK = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('servidor_encaminhado_id')->where('pch', 'INCONSISTENCIA')->where('inconsistencia', 'OK')->count('servidor_encaminhado_id');
+
+        $quantidadeRegistrosComAssuncao = ProvimentosEncaminhado::where('ano_ref', $anoRef)
+        ->whereNotNull('data_assuncao') // Filtra registros onde data_assuncao é nulo
+        ->whereNotNull('data_encaminhamento') // Garante que data_encaminhamento não seja nulo
+        ->distinct('servidor_encaminhado_id') // Considera apenas registros únicos por servidor_encaminhado_id
+        ->count('servidor_encaminhado_id'); // Conta os registros distintos
+
+        $quantidadeRegistrosDataNula = ProvimentosEncaminhado::where('ano_ref', $anoRef)
+        ->whereNull('data_assuncao') // Filtra registros onde data_assuncao é nulo
+        ->whereNotNull('data_encaminhamento') // Garante que data_encaminhamento não seja nulo
+        ->whereRaw("DATEDIFF(?, data_encaminhamento) < 2", [Carbon::now()->format('Y-m-d')]) // Diferença de 2 ou mais dias
+        ->distinct('servidor_encaminhado_id') // Considera apenas registros únicos por servidor_encaminhado_id
+        ->count('servidor_encaminhado_id'); // Conta os registros distintos
+
+        $quantidadeRegistrosAtrasados = ProvimentosEncaminhado::where('ano_ref', $anoRef)
+        ->whereNull('data_assuncao') // Filtra registros onde data_assuncao é nulo
+        ->whereNotNull('data_encaminhamento') // Garante que data_encaminhamento não seja nulo
+        ->whereRaw("DATEDIFF(?, data_encaminhamento) >= 2", [Carbon::now()->format('Y-m-d')]) // Diferença de 2 ou mais dias
+        ->distinct('servidor_encaminhado_id') // Considera apenas registros únicos por servidor_encaminhado_id
+        ->count('servidor_encaminhado_id'); // Conta os registros distintos
 
         if ($request->filled('search_nte_provimento_efetivos')) {
             $provimentos_encaminhados = $provimentos_encaminhados->whereHas('uee', function ($query) use ($request) {
@@ -997,7 +1068,7 @@ class ProvimentoController extends Controller
             }
         }
 
-        $provimentos_encaminhados = $provimentos_encaminhados->get();
+        $provimentos_encaminhados = $provimentos_encaminhados->where('ano_ref', $anoRef)->get();
 
         $disciplinas = ServidoresEncaminhado::select('formacao')
             ->distinct()
@@ -1017,6 +1088,9 @@ class ProvimentoController extends Controller
             'quantidadeRegistrosPCH' => $quantidadeRegistrosPCH,
             'quantidadeRegistrosError' => $quantidadeRegistrosError,
             'quantidadeRegistrosErrorOK' => $quantidadeRegistrosErrorOK,
+            'quantidadeRegistrosDataNula' => $quantidadeRegistrosDataNula,
+            'quantidadeRegistrosAtrasados' => $quantidadeRegistrosAtrasados,
+            'quantidadeRegistrosComAssuncao' => $quantidadeRegistrosComAssuncao,
         ]);
     }
 

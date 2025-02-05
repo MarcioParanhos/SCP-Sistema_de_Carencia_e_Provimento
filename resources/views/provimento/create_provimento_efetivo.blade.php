@@ -67,17 +67,6 @@
                                 <input value="40h" name="" required id="" type="text" class="form-control form-control-sm" readonly>
                             </div>
                         </div>
-                        <div class="col-md-2" id="disciplina_row">
-                            <div class="form-group">
-                                <label class="control-label" for="disciplina_efetivo">DISCIPLINA <span class="span_required">*</span></label>
-                                <select name="disciplina_efetivo" id="disciplina_efetivo" class="form-control form-control-sm select2" required>
-                                    <option></option>
-                                    @foreach ($disciplinas as $disciplina)
-                                    <option value="{{ $disciplina->nome }}">{{ $disciplina->nome }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
                     </div>
                     <div class="d-flex">
                         <div id="buttons" class="buttons">
