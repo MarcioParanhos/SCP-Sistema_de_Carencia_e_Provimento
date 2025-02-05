@@ -515,12 +515,12 @@
                 <h4 class="modal-title text-center text-dark" id="TituloModalDeleteProvimentosEfetivos"><strong>Excluir Dados</strong></h4>
             </div>
             <div class="modal-body modal-destroy">
-                <h4><strong>Tem certeza?</strong></h4>
-                <h4><strong>O registro sera excluido permanentemente!</strong></h4>
+                <h4 class="subheader"><strong>Tem certeza?</strong></h4>
+                <h4 class="subheader"><strong>O registro sera excluido permanentemente!</strong></h4>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" data-dismiss="modal">Fechar</button>
-                <a title="Excluir Encaminhamento"><button id="btn_delete_provimento" type="button" class="btn float-right btn-danger"><i class="fa-solid fa-trash"></i> Excluir</button></a>
+                <a title="Excluir Encaminhamento"><button id="btn_delete_provimento" type="button" class="btn float-right btn-danger">Excluir</button></a>
             </div>
         </div>
     </div>

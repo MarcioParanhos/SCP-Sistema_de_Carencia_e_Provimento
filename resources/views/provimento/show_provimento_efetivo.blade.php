@@ -39,6 +39,98 @@
         flex: 0 1 auto;
         color: #fbf8f3 !important;
     }
+
+    .btn {
+        padding: 6px !important;
+    }
+
+    .icon-tabler-search,
+    .icon-tabler-trash,
+    .icon-tabler-replace {
+        width: 16px;
+        height: 16px;
+    }
+
+    td span {
+        font-size: 10px !important;
+        font-weight: 900 !important;
+        border-radius: 50% !important;
+    }
+
+    .col-1,
+    .col-2,
+    .col-3,
+    .col-4,
+    .col-5,
+    .col-6,
+    .lightGallery .image-tile,
+    .col-7,
+    .col-8,
+    .col-9,
+    .col-10,
+    .col-11,
+    .col-12,
+    .col,
+    .col-auto,
+    .col-sm-1,
+    .col-sm-2,
+    .col-sm-3,
+    .col-sm-4,
+    .col-sm-5,
+    .col-sm-6,
+    .col-sm-7,
+    .col-sm-8,
+    .col-sm-9,
+    .col-sm-10,
+    .col-sm-11,
+    .col-sm-12,
+    .col-sm,
+    .col-sm-auto,
+    .col-md-1,
+    .col-md-2,
+    .col-md-3,
+    .col-md-4,
+    .col-md-5,
+    .col-md-6,
+    .col-md-7,
+    .col-md-8,
+    .col-md-9,
+    .col-md-10,
+    .col-md-11,
+    .col-md-12,
+    .col-md,
+    .col-md-auto,
+    .col-lg-1,
+    .col-lg-2,
+    .col-lg-3,
+    .col-lg-4,
+    .col-lg-5,
+    .col-lg-6,
+    .col-lg-7,
+    .col-lg-8,
+    .col-lg-9,
+    .col-lg-10,
+    .col-lg-11,
+    .col-lg-12,
+    .col-lg,
+    .col-lg-auto,
+    .col-xl-1,
+    .col-xl-2,
+    .col-xl-3,
+    .col-xl-4,
+    .col-xl-5,
+    .col-xl-6,
+    .col-xl-7,
+    .col-xl-8,
+    .col-xl-9,
+    .col-xl-10,
+    .col-xl-11,
+    .col-xl-12,
+    .col-xl,
+    .col-xl-auto {
+        padding-right: 2px !important;
+        padding-left: 2px !important;
+    }
 </style>
 
 <div class="bg-primary card text-white card_title">
@@ -54,7 +146,7 @@
                 </tr>
                 <tr>
                     <td class="pl-2 subheader"><b>ENCAMINHAMENTOS COM DATA DE ASSUNÇÃO</b></td>
-                    <td style="width: 22%;" class="text-center text-success"><b>{{ $quantidadeRegistrosAtrasados }}</b></td>
+                    <td style="width: 22%;" class="text-center text-success"><b>{{ $quantidadeRegistrosComAssuncao }}</b></td>
                 </tr>
                 <tr>
                     <td class="pl-2 subheader"><b>ENCAMINHAMENTOS SEM ASSUNÇÃO, MAS DENTRO DO PRAZO</b></td>
@@ -82,20 +174,35 @@
                 </tr>
                 <tr>
                     <td class="pl-2 subheader"><b>PENDENTES ANÁLISE (CPG)</b></td>
-                    <td style="width: 22%;" class="text-center"><b>{{ ($quantidadeRegistros - $quantidadeRegistrosPCH) - ($quantidadeRegistrosError - $quantidadeRegistrosErrorOK)}}</b></td>
+                    <td style="width: 22%;" class="text-center"><b>{{ ($quantidadeRegistros - $quantidadeRegistrosPCH) - ($quantidadeRegistrosError - $quantidadeRegistrosErrorOK) - $quantidadeRegistrosDataNula - $quantidadeRegistrosAtrasados }}</b></td>
                 </tr>
             </table>
         </div>
 
     </div>
-    <div class="mb-2 ">
+    <div id="regularizacao_filter" class="mb-2 ">
+        <a id="active_filters" class="mb-2 btn bg-primary text-white" data-toggle="tooltip" data-placement="top" title="Filtros Personalizaveis" onclick="active_filters()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-filter">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
+            </svg>
+        </a>
+        <a class="mb-2 btn bg-primary text-white" target="_blank" href="/provimento/efetivo/excel" data-toggle="tooltip" data-placement="top" title="Download em Excel">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-file-download">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+                <path d="M12 17v-6" />
+                <path d="M9.5 14.5l2.5 2.5l2.5 -2.5" />
+            </svg>
+        </a>
+    </div>
+    <!-- <div class="mb-2 ">
         <a id="active_filters" class="mb-2 btn bg-primary text-white" onclick="active_filters_provimento()">FILTROS <i class='far fa-eye'></i></a>
         <a class="mb-2 btn bg-primary text-white" target="_blank" href="/provimento/efetivo/excel"><i class="ti-download"></i> EXCEL</a>
-    </div>
+    </div> -->
 </div>
-
-<hr>
-<form id="active_form" class="pr-4 pl-4" action="{{ route('provimento_efetivo.showByForm') }}" method="post" hidden>
+<form id="active_form" class="border shadow bg-light rounded pt-3 pl-3 pr-3" action="{{ route('provimento_efetivo.showByForm') }}" method="post" hidden>
     @csrf
     <div class="form-row">
         <div class="col-md-1">
@@ -202,9 +309,32 @@
             </div>
         </div>
     </div>
-    <button type="submit" class="mb-4 btn btn-primary">BUSCAR</button>
-    <hr>
+    <div class="col-md-12">
+        <div id="buttons" class="mb-3 buttons d-flex align-items-center">
+            <button id="" class="button" type="submit">
+                <span class="button__text">BUSCAR</span>
+                <span class="button__icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+                        <path d="M21 21l-6 -6" />
+                    </svg>
+                </span>
+            </button>
+            <button id="" class="ml-2 button" type="button" onclick="clearForm()">
+                <span class="button__text text-danger">LIMPAR</span>
+                <span class="button__icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="red" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-eraser">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M19 20h-10.5l-4.21 -4.3a1 1 0 0 1 0 -1.41l10 -10a1 1 0 0 1 1.41 0l5 5a1 1 0 0 1 0 1.41l-9.2 9.3" />
+                        <path d="M18 13.3l-6.3 -6.3" />
+                    </svg>
+                </span>
+            </button>
+        </div>
+    </div>
 </form>
+<hr>
 <div class="table-responsive">
     <table id="consultarCarencias" class="table-bordered table-sm table">
         <thead class="bg-primary text-white">
@@ -301,21 +431,31 @@
                         </svg>
                     </td>
                     @endif
-                    <td class="text-center">
-                        <div class="btn-group dropleft">
-                            <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <td class="text-center d-flex align-items-center justify-content-center">
+                        <a href="/provimento/efetivo/detail/{{ $provimentos_encaminhado->id }}" class=""><button id="" type="submit" class="btn btn-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-search">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                    <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+                                    <path d="M21 21l-6 -6" />
+                                </svg>
                             </button>
-                            <div class="dropdown-menu">
-                                <a class="text-primary dropdown-item" href="/provimento/efetivo/detail/{{ $provimentos_encaminhado->id }}"><i class="fas fa-eye"></i> Ver</a>
-                                @if ( (Auth::user()->profile === "cpm_tecnico") || (Auth::user()->profile === "administrador") || (Auth::user()->profile === "cpm_coordenador"))
-                                @if (($provimentos_encaminhado->pch != "OK") || (Auth::user()->profile === "administrador"))
-                                <a title="Excluir" id="" onclick="destroyProvimentoEfetivo('{{ $provimentos_encaminhado->id }}')" class="text-danger dropdown-item"><i class="ti-trash"></i> Excluir</a>
-                                @endif
-                                @endif
-                            </div>
-                        </div>
+                        </a>
+                        @if ( (Auth::user()->profile === "cpm_tecnico") || (Auth::user()->profile === "administrador") || (Auth::user()->profile === "cpm_coordenador"))
+                        @if (($provimentos_encaminhado->pch != "OK") || (Auth::user()->profile === "administrador"))
+                        <a data-toggle="tooltip" data-placement="top" title="Excluir" title="Excluir" id="" onclick="destroyProvimentoEfetivo('{{ $provimentos_encaminhado->id }}')" class="ml-1 btn btn-danger">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-trash">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M4 7l16 0" />
+                                <path d="M10 11l0 6" />
+                                <path d="M14 11l0 6" />
+                                <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                                <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                            </svg>
+                        </a>
+                        @endif
+                        @endif
                     </td>
-            </tr>
+                </tr>
             @endforeach
         </tbody>
     </table>

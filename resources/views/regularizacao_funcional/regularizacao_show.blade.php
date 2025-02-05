@@ -111,30 +111,6 @@
 
 <div id="regularizacao_container" class="d-flex mb-4 justify-content-between">
     <div id="count-infos" class="d-flex col-md-10">
-        <!-- <div class="d-flex col-md-3">
-            <div class="col-md-12">
-                <table class="table-bordered">
-                    <th class="pl-2 bg-primary subheader text-white">TOTAL DE REGULARIZAÇÕES</th>
-                    <th class="text-center bg-primary  text-white">{{ $quantidade_de_registros }}</th>
-                    <tr>
-                        <td class="pl-2 subheader"><b>PENDENTES CPM</b></td>
-                        <td style="width: 20%;" class="text-center "><b>{{ $quantidade_de_registros_pendente_cpm }}</b></td>
-                    </tr>
-                    <tr>
-                        <td class="pl-2 subheader"><b>PENDENTES CGI</b></td>
-                        <td style="width: 20%;" class="text-center "><b>{{ $quantidade_de_registros_pendente_cgi }}</b></td>
-                    </tr>
-                    <tr>
-                        <td class="pl-2 subheader"><b>PENDENTES CPG</b></td>
-                        <td style="width: 20%;" class="text-center "><b>{{ $quantidade_de_registros_pendente_cpg }}</b></td>
-                    </tr>
-                    <tr>
-                        <td class="pl-2 subheader"><b>PCH - Programado</b></td>
-                        <td style="width: 20%;" class="text-center "><b>{{ $quantidade_de_registros_pch_ok }}</b></td>
-                    </tr>
-                </table>
-            </div>
-        </div> -->
         <div class="d-flex col-md-4">
             <div class="col-md-12">
                 <table class="table-bordered">
