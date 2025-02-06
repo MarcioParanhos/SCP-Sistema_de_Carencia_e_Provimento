@@ -28,6 +28,7 @@ class VerifyCsrfToken extends Middleware
         '/consultar/efetivo/*',
         '/provimento/efetivo/*',
         '/update/*',
-        '/consultarServidorCompleto/*'
+        '/consultarServidorCompleto/*',
+        '/*'
     ];
 }

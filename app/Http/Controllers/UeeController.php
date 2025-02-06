@@ -25,6 +25,20 @@ class UeeController extends Controller
         }
     }
 
+    public function searchUnidadeCodSap($cod_unidade)
+    {
+
+        $unidade = Unidade_organizacional::where('uo', $cod_unidade)->first();
+
+        $data = Uee::where('cod_unidade', $unidade->cod_sec)->orderBy('unidade_escolar', 'asc')->first();
+
+        if ($data) {
+            return response()->json([$data]);
+        } else {
+            return response()->json(["error" => "Unidade não encontrada"], 404);
+        }
+    }
+
     public function searchMunicipio($searchMunicipio)
     {
 
@@ -472,9 +486,8 @@ class UeeController extends Controller
             $uee->fill($request->except('check_2_pch', 'check_3_pch', 'check_4_pch'));
             $uee->programming_stage = 4;
             $uee->save();
-
         } else {
-            
+
             $uee = Uee::findOrFail($request->id);
             $uee->fill($request->except('check_2_pch'));
             $uee->programming_stage = 0;
@@ -486,7 +499,7 @@ class UeeController extends Controller
 
         // Itera sobre cada carência e atualiza o campo unidade_escolar
         foreach ($carenciaParaAtualizarUnidadeEscolar as $carencia) {
-            
+
             $carencia->unidade_escolar = $request->unidade_escolar;
             $carencia->save();  // Salva as alterações
         }

@@ -82,6 +82,7 @@ function addTotal() {
 
 // PESQUISA UNIDADE ESCOLAR E ATUALIZA A TABELA COM AS INFORMAÇÕES VINDAS DO BANCO
 function addNewCarencia() {
+    
     let codigo_unidade = cod_unidade.value;
 
     if (codigo_unidade == "") {

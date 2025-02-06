@@ -91,12 +91,12 @@
                             <div class=" col-md-2">
                                 <div class="display_btn position-relative form-group">
                                     <div>
-                                        <label for="cod_ue" class="">Codigo da UEE <span class="span_required">*</span></label>
+                                        <label for="cod_ue" class="">Codigo SAP da UEE <span class="span_required">*</span></label>
                                         <input value="" minlength="8" maxlength="9" name="" id="cod_ue" type="number" class="form-control form-control-sm" required>
                                         <input value="" id="unidade_id" name="unidade_id" type="number" class="form-control form-control-sm" hidden>
                                     </div>
                                     <div class="btn_carencia_seacrh">
-                                        <button id="btn-cadastro" class="position-relative btn_search_carencia btn btn-sm btn-primary" type="button" onclick="addNewCarencia()" required>
+                                        <button id="btn-cadastro" class="position-relative btn_search_carencia btn btn-sm btn-primary" type="button" onclick="searchUnidadeForCodSap()" required>
                                             <i class="ti-search"></i>
                                         </button>
                                     </div>
@@ -290,149 +290,37 @@
     </div>
 </div>
 
-<script>
-    const btn_submit = document.getElementById('btn_submit')
-    const encaminhamento_btn = document.getElementById('encaminhamento_btn')
-    const vaga_real_btn = document.getElementById('vaga_real_btn')
-    const hidden_select_unidade_escolar_vaga_real = document.getElementById("hidden_select_unidade_escolar_vaga_real");
-    const hidden_select_unidade_escolar = document.getElementById("hidden_select_unidade_escolar");
-    const cadastro_segundo_servidor_btn = document.getElementById('cadastro_segundo_servidor_btn');
-    const segundo_servidor = document.getElementById('segundo_servidor');
-    const icon_segundo_servidor = document.getElementById('icon_segundo_servidor')
+<!-- Scriptis for this page -->
+<script src="{{ asset('dist/js/encaminhamento.js') }}" defer></script>
 
+<Script>
+    document.addEventListener("DOMContentLoaded", function () {
+    const session_message = document.getElementById("session_message");
 
-
-    btn_submit.addEventListener('click', function(event) {
-        const nte = document.getElementById('nte')
-        const municipio = document.getElementById('municipio')
-        const vinculo = document.getElementById('vinculo')
-        const regime = document.getElementById('regime')
-
-        if ((nte.value == "") || (municipio.value == "")) {
-            event.preventDefault();
+    if (session_message) {
+        if (session_message.value === "error") {
             Swal.fire({
-                icon: "warning",
-                title: "Atenção!",
-                text: "Nenhuma unidade escolar foi selecionada!",
-            });
-        } else if ((vinculo.value == "") || (regime.value == "")) {
-            event.preventDefault();
+                icon: 'error',
+                title: 'Atenção!',
+                text: 'Já existe um registro de servidor associado a este número de CPF na unidade escolar selecionada.',
+            })
+        } else if (session_message.value === "success") {
             Swal.fire({
-                icon: "warning",
-                title: "Atenção!",
-                text: "Nenhum servidor foi selecionado!",
-            });
+                icon: 'success',
+                text: 'Encaminhamento adicionado com sucesso!',
+            })
         } else {
 
-        }
-
-    });
-
-    cadastro_segundo_servidor_btn.addEventListener('click', () => {
-        if (servidor_subistituido.value == '') {
-
             Swal.fire({
-                icon: "warning",
-                title: "Atenção!",
-                text: "Para liberar o segundo servidor é preciso ter o primeiro servidor selacionado",
-            });
+                position: 'center',
+                icon: 'success',
+                title: 'Motivo de vaga adicionado com sucesso!',
+                showConfirmButton: true,
+            })
 
-        } else {
-            if (cadastro_segundo_servidor_btn.classList.contains('btn-primary')) {
-                cadastro_segundo_servidor_btn.classList.remove('btn-primary');
-                cadastro_segundo_servidor_btn.classList.add('btn-danger');
-                icon_segundo_servidor.classList.remove('fa-solid', 'fa-user-plus');
-                icon_segundo_servidor.classList.add('fa-solid', 'fa-user-xmark');
-                segundo_servidor.hidden = false;
-
-            } else {
-                const segundo_servidor_name = document.getElementById(
-                    "segundo_servidor_name"
-                );
-                const vinculo_segundo_servidor = document.getElementById(
-                    "vinculo_segundo_servidor"
-                );
-                const regime_segundo_servidor = document.getElementById(
-                    "regime_segundo_servidor"
-                );
-                const id_segundo_servidor_subistituido = document.getElementById(
-                    "id_segundo_servidor_subistituido"
-                );
-                const cadastro_segundo_servidor = document.getElementById(
-                    "cadastro_segundo_servidor"
-                );
-                cadastro_segundo_servidor_btn.classList.remove('btn-danger');
-                cadastro_segundo_servidor_btn.classList.add('btn-primary');
-                icon_segundo_servidor.classList.add('fa-solid', 'fa-user-plus');
-                icon_segundo_servidor.classList.remove('fa-solid', 'fa-user-xmark');
-                segundo_servidor.hidden = true
-                segundo_servidor_name.value = ''
-                vinculo_segundo_servidor.value = ''
-                regime_segundo_servidor.value = ''
-                id_segundo_servidor_subistituido.value = ''
-                cadastro_segundo_servidor.value = ''
-            }
         }
-    })
-
-    encaminhamento_btn.addEventListener('click', () => {
-        hidden_select_unidade_escolar.hidden = !hidden_select_unidade_escolar.hidden;
-        encaminhamento_btn.classList.toggle('btn-primary');
-        encaminhamento_btn.classList.toggle('btn-info');
-
-        if ((hidden_select_unidade_escolar_vaga_real.hidden == true) && (hidden_select_unidade_escolar.hidden == false)) {
-            btn_submit.hidden = false
-        } else if ((hidden_select_unidade_escolar_vaga_real.hidden == false) && (hidden_select_unidade_escolar.hidden == true)) {
-            btn_submit.hidden = false
-        } else if ((hidden_select_unidade_escolar_vaga_real.hidden == true) && (hidden_select_unidade_escolar.hidden == true)) {
-            btn_submit.hidden = true
-        } else if ((hidden_select_unidade_escolar_vaga_real.hidden == false) && (hidden_select_unidade_escolar.hidden == false)) {
-            btn_submit.hidden = false
-        }
-    })
-
-    vaga_real_btn.addEventListener('click', () => {
-        hidden_select_unidade_escolar_vaga_real.hidden = !hidden_select_unidade_escolar_vaga_real.hidden;
-        vaga_real_btn.classList.toggle('btn-primary');
-        vaga_real_btn.classList.toggle('btn-info');
-        if ((hidden_select_unidade_escolar_vaga_real.hidden == true) && (hidden_select_unidade_escolar.hidden == true)) {
-            btn_submit.hidden = true
-        } else if ((hidden_select_unidade_escolar_vaga_real.hidden == true) && (hidden_select_unidade_escolar.hidden == false)) {
-            btn_submit.hidden = false
-        } else if ((hidden_select_unidade_escolar_vaga_real.hidden == false) && (hidden_select_unidade_escolar.hidden == true)) {
-            btn_submit.hidden = false
-        }
-    })
-</script>
-
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const session_message = document.getElementById("session_message");
-
-        if (session_message) {
-            if (session_message.value === "error") {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Atenção!',
-                    text: 'Já existe um registro de servidor associado a este número de CPF na unidade escolar selecionada.',
-                })
-            } else if (session_message.value === "success") {
-                Swal.fire({
-                    icon: 'success',
-                    text: 'Encaminhamento adicionado com sucesso!',
-                })
-            } else {
-
-                Swal.fire({
-                    position: 'center',
-                    icon: 'success',
-                    title: 'Motivo de vaga adicionado com sucesso!',
-                    showConfirmButton: true,
-                })
-
-            }
-        }
-    });
-</script>
+    }
+});
+</Script>
 
 @endsection

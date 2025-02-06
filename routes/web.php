@@ -76,6 +76,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/uees/update/{id}', [UeeController::class, 'update']);
     Route::get('/homologarUnidade/{new_cod}/{action}', [UeeController::class, 'homologarUnidade']);
     Route::post('/consultarUnidade/{cod_unidade}', [UeeController::class, 'searchUnidade']);
+    Route::post('/consultarUnidadeForCodSap/{cod_unidade}', [UeeController::class, 'searchUnidadeCodSap']);
     Route::post('/consultarMunicipio/{search_nte}', [UeeController::class, 'searchMunicipio']);
     Route::post('/consultarUees/{search_municipio}', [UeeController::class, 'searchUees']);
     Route::post('/uees/search', [UeeController::class, 'showUeesByForm'])->name("uees.showByForm");
