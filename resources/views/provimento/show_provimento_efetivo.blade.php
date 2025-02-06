@@ -169,7 +169,7 @@
                     <td style="width: 22%;" class="text-center"><b>{{ $quantidadeRegistrosErrorOK}}</b></td>
                 </tr>
                 <tr>
-                    <td class="pl-2 subheader"><b>PCH - Programado</b></td>
+                    <td class="pl-2 subheader"><b>ENCAMINHAMENTOS ANÁLISADOS- CPG</b></td>
                     <td style="width: 22%;" class="text-center"><b>{{ $quantidadeRegistrosPCH }}</b></td>
                 </tr>
                 <tr>
@@ -350,7 +350,7 @@
                 <th>MUNICIPIO</th>
                 <th>COD.UEE</th>
                 <th>UNIDADE ESCOLAR</th>
-                <th>PCH</th>
+                <th>ANÁLISE CPG</th>
                 <th>ASSUNÇÃO</th>
                 <th>AÇÃO</th>
             </tr>
@@ -375,22 +375,40 @@
                 <td class="text-center">{{ $provimentos_encaminhado->uee->unidade_escolar }}</td>
                 @if ($provimentos_encaminhado->pch === "OK")
                 @if (($provimentos_encaminhado->server_1_situation != 2) && ($provimentos_encaminhado->server_2_situation != 2))
-                <td class="d-flex justify-content-center align-items-center">
-                    <span class="bg-success tipo_carencia"><i class="ti-check"></i></span>
+                <td class="text-center text-success">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-check">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M5 12l5 5l10 -10" />
+                    </svg>
                 </td>
                 @else
-                <td class="d-flex justify-content-center align-items-center">
-                    <a class="bg-danger tipo_carencia info"><i class="fas fa-exclamation-triangle"></i></a>
+                <td class="text-center text-danger">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-alert-hexagon">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M19.875 6.27c.7 .398 1.13 1.143 1.125 1.948v7.284c0 .809 -.443 1.555 -1.158 1.948l-6.75 4.27a2.269 2.269 0 0 1 -2.184 0l-6.75 -4.27a2.225 2.225 0 0 1 -1.158 -1.948v-7.285c0 -.809 .443 -1.554 1.158 -1.947l6.75 -3.98a2.33 2.33 0 0 1 2.25 0l6.75 3.98h-.033z" />
+                        <path d="M12 8v4" />
+                        <path d="M12 16h.01" />
+                    </svg>
                 </td>
                 @endif
                 @elseif (($provimentos_encaminhado->server_1_situation == 2) || ($provimentos_encaminhado->server_2_situation == 2))
                 @if ($provimentos_encaminhado->inconsistencia === "OK")
-                <td class="d-flex justify-content-center align-items-center">
-                    <a class="bg-success tipo_carencia info"><i class="fas fa-exclamation-triangle"></i></a>
+                <td class="text-center text-success">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-alert-hexagon">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M19.875 6.27c.7 .398 1.13 1.143 1.125 1.948v7.284c0 .809 -.443 1.555 -1.158 1.948l-6.75 4.27a2.269 2.269 0 0 1 -2.184 0l-6.75 -4.27a2.225 2.225 0 0 1 -1.158 -1.948v-7.285c0 -.809 .443 -1.554 1.158 -1.947l6.75 -3.98a2.33 2.33 0 0 1 2.25 0l6.75 3.98h-.033z" />
+                        <path d="M12 8v4" />
+                        <path d="M12 16h.01" />
+                    </svg>
                 </td>
                 @else
-                <td class="d-flex justify-content-center align-items-center">
-                    <a class="bg-danger tipo_carencia info"><i class="fas fa-exclamation-triangle"></i></a>
+                <td class="text-center text-danger">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-alert-hexagon">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M19.875 6.27c.7 .398 1.13 1.143 1.125 1.948v7.284c0 .809 -.443 1.555 -1.158 1.948l-6.75 4.27a2.269 2.269 0 0 1 -2.184 0l-6.75 -4.27a2.225 2.225 0 0 1 -1.158 -1.948v-7.285c0 -.809 .443 -1.554 1.158 -1.947l6.75 -3.98a2.33 2.33 0 0 1 2.25 0l6.75 3.98h-.033z" />
+                        <path d="M12 8v4" />
+                        <path d="M12 16h.01" />
+                    </svg>
                 </td>
                 @endif
                 @else
@@ -455,10 +473,53 @@
                         @endif
                         @endif
                     </td>
-                </tr>
+            </tr>
             @endforeach
         </tbody>
     </table>
+    <tfoot>
+        <tr>
+            <td colspan="100%">
+                <h6>SUMÁRIO</h6>
+                <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 10px; border-radius: 8px; background-color: #ffffff;" class="border mt-2">
+                    <div style="display: flex; align-items: center; gap: 8px;" class="text-danger">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-alert-hexagon">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M19.875 6.27c.7 .398 1.13 1.143 1.125 1.948v7.284c0 .809 -.443 1.555 -1.158 1.948l-6.75 4.27a2.269 2.269 0 0 1 -2.184 0l-6.75 -4.27a2.225 2.225 0 0 1 -1.158 -1.948v-7.285c0 -.809 .443 -1.554 1.158 -1.947l6.75 -3.98a2.33 2.33 0 0 1 2.25 0l6.75 3.98h-.033z" />
+                            <path d="M12 8v4" />
+                            <path d="M12 16h.01" />
+                        </svg>
+                        <span class="subheader"><strong>ENCAMINHAMENTOS SEM ASSUNÇÃO COM PRAZO VENCIDO</strong></span>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 8px;" class="text-warning">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-calendar-stats">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+                            <path d="M18 14v4h4" />
+                            <path d="M18 18m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                            <path d="M15 3v4" />
+                            <path d="M7 3v4" />
+                            <path d="M3 11h16" />
+                        </svg>
+                        <span class="subheader"><strong>ENCAMINHAMENTOS SEM ASSUNÇÃO, MAS DENTRO DO PRAZO</strong></span>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 8px;" class="text-success">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-check">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M5 12l5 5l10 -10" />
+                        </svg>
+                        <span class="subheader"><strong>ENCAMINHAMENTOS COM DATA DE ASSUNÇÃO | VALIDAÇÃO DA CPG</strong></span>
+                    </div>
+
+                </div>
+
+            </td>
+        </tr>
+    </tfoot>
+
+
 </div>
 @endsection
 

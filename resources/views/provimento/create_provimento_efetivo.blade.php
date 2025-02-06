@@ -10,7 +10,7 @@
 <div class="col-12 grid-margin stretch-card">
     <div class="card shadow rounded">
         <div class="card_title_form">
-            <h4 class="card-title">ENCAMINHAMENTO DE SERVIDOR EFETIVO</h4>
+            <h4 class="card-title">ENCAMINHAMENTO DE SERVIDOR</h4>
             <div class="col-12 col-xl-4">
                 <div class="botao_de_tipo d-flex">
 
@@ -70,7 +70,14 @@
                     </div>
                     <div class="d-flex">
                         <div id="buttons" class="buttons">
-                            <button id="encaminhamento_btn" type="button" class="btn btn-primary mr-2">ENCAMINHAMENTO</button>
+                            <button style="padding: 6px !important; border-radius: 5px !important" id="encaminhamento_btn" type="button" class="btn btn-sm btn-primary p-auto subheader">ENCAMINHAR
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-device-ipad-horizontal-share">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                    <path d="M12.5 20h-7.5a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v7" />
+                                    <path d="M9 17h3" />
+                                    <path d="M16 22l5 -5" />
+                                    <path d="M21 21.5v-4.5h-4.5" />
+                                </svg></button>
                         </div>
                         <!-- <div id="buttons" class="buttons">
                             <button id="vaga_real_btn" type="button" class="btn btn-primary mr-2" hidden>VAGA REAL</button>
@@ -268,8 +275,15 @@
                     </div>
                 </div>
                 <hr>
-                <div id="buttons" class="buttons d-flex" style="position: relative;">
-                    <button id="btn_submit" type="submit" class="btn btn-primary mr-2" hidden>CADASTRAR</button>
+                <div id="buttons" class="buttons d-flex" style="position: relative;" >
+                    <button id="btn_submit" type="submit" class="btn btn-primary mr-2" data-toggle="tooltip" data-placement="top" title="Cadastrar novo encaminhamento" hidden>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-device-floppy">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M6 4h10l4 4v10a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2" />
+                            <path d="M12 14m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                            <path d="M14 4l0 4l-6 0l0 -4" />
+                        </svg>
+                    </button>
                 </div>
             </form>
         </div>

@@ -133,7 +133,7 @@
                         <div class="collapse subheader" id="encaminhamentos">
                             <ul class="nav flex-column sub-menu">
                                 @if ( (Auth::user()->profile === "cpm_tecnico") || (Auth::user()->profile === "administrador") || (Auth::user()->profile === "cpm_coordenador"))
-                                <li class="nav-item"><i class="ti-plus"></i><a class="nav-link sub-title" href="" data-toggle="modal" data-target="#incluirProvimentoEfetivo">Incluir</a></li>
+                                <li class="nav-item"><i class="ti-plus"></i><a class="nav-link sub-title" href="/provimento/efetivo/prover">Incluir</a></li>
                                 @endif
                                 <li class="nav-item"><i class="ti-search"></i><a class="nav-link sub-title" href="/provimento/efetivo/show">Buscar</a></li>
                             </ul>
@@ -420,7 +420,7 @@
 
 </body>
 <!-- Modal Provimento Efetivo -->
-<div class="modal fade" id="incluirProvimentoEfetivo" tabindex="-1" role="dialog" aria-labelledby="incluirProvimentoEfetivo" aria-hidden="true">
+<!-- <div class="modal fade" id="incluirProvimentoEfetivo" tabindex="-1" role="dialog" aria-labelledby="incluirProvimentoEfetivo" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered " role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -434,7 +434,7 @@
             </div>
         </div>
     </div>
-</div>
+</div> -->
 <!-- Modal Selecionar Carencia -->
 <div class="modal fade" id="ExemploModalCentralizado" tabindex="-1" role="dialog" aria-labelledby="TituloModalCentralizado" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
