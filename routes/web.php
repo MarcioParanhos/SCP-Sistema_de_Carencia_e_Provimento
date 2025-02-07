@@ -58,7 +58,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/provimentos', [ProvimentoController::class, 'showProvimentoByForm'])->name("provimentos.showByForm");
     Route::put('/provimento/update/{id}', [ProvimentoController::class, 'update']);
     Route::get('/validarProvimento/{id}/{action}', [ProvimentoController::class, 'validarProvimento']);
-    Route::get('/provimento/efetivo/prover', [ProvimentoController::class, 'createProvimentoEfetivo']);
+    Route::get('/provimento/efetivo/prover', [ProvimentoController::class, 'createProvimentoEfetivo'])->name("provimento_efetivo.create");
     Route::get('/provimento/efetivo/show', [ProvimentoController::class, 'showProvimentoEfetivo']);
     Route::post('/provimento/efetivo/create', [ProvimentoController::class, 'addNewProvimentoEfetivo']);
     Route::post('/provimento/efetivo/show/search', [ProvimentoController::class, 'showProvimentoEfetivoByForm'])->name("provimento_efetivo.showByForm");

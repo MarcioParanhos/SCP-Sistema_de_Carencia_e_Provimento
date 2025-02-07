@@ -133,7 +133,7 @@
                         <div class="collapse subheader" id="encaminhamentos">
                             <ul class="nav flex-column sub-menu">
                                 @if ( (Auth::user()->profile === "cpm_tecnico") || (Auth::user()->profile === "administrador") || (Auth::user()->profile === "cpm_coordenador"))
-                                <li class="nav-item"><i class="ti-plus"></i><a class="nav-link sub-title" href="/provimento/efetivo/prover" >Incluir</a></li>
+                                <li class="nav-item"><i class="ti-plus"></i><a class="nav-link sub-title" href="{{ route('provimento_efetivo.create') }}">Incluir</a></li>
                                 @endif
                                 <li class="nav-item"><i class="ti-search"></i><a class="nav-link sub-title" href="/provimento/efetivo/show">Buscar</a></li>
                             </ul>
