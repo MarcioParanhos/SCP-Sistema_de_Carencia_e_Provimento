@@ -126,7 +126,11 @@
                             <div class=" col-md-2">
                                 <div class="display_btn position-relative form-group">
                                     <div>
-                                        <label for="cadastro" class="">Matrícula</label>
+                                        <label for="cadastro" class="">Matrícula <a style="border-radius: 8px;" class="mr-2 bg-primary text-white p-1" data-toggle="modal" data-target="#modalInfo"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-question-mark">
+                                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                    <path d="M8 8a3.5 3 0 0 1 3.5 -3h1a3.5 3 0 0 1 3.5 3a3 3 0 0 1 -2 3a3 4 0 0 0 -2 4" />
+                                                    <path d="M12 19l0 .01" />
+                                                </svg></a></label>
                                         <input value="" minlength="8" maxlength="11" name="cadastro" id="cadastro" type="cadastro" class="form-control form-control-sm" required>
                                     </div>
                                     <div class="btn_carencia_seacrh">
@@ -275,7 +279,7 @@
                     </div>
                 </div>
                 <hr>
-                <div id="buttons" class="buttons d-flex" style="position: relative;" >
+                <div id="buttons" class="buttons d-flex" style="position: relative;">
                     <button id="btn_submit" type="submit" class="btn btn-primary mr-2" data-toggle="tooltip" data-placement="top" title="Cadastrar novo encaminhamento" hidden>
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-device-floppy">
                             <path stroke="none" d="M0 0h24v24H0z" fill="none" />
@@ -290,37 +294,70 @@
     </div>
 </div>
 
+<!-- Modal -->
+<div class="modal fade" id="modalInfo" tabindex="-1" role="dialog" aria-labelledby="TitulomodalInfo" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="TitulomodalInfo">MATRÍCULAS FUNCIONAIS</h5>
+            </div>
+            <div class="modal-body justify-content-start p-4">
+                <div class="">
+                    <h5>Legenda:</h5>
+                    <div class="pt-2">
+                        <div>
+                            <span class="subheader">99999999 - VAGA DE COORDENAÇÃO PEDAGOGICA</span>
+                        </div>
+                        <div>
+                            <span class="subheader">88888888 - VAGA REAL</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button style="padding: 4px !important;" type="button" class="btn btn-danger" data-dismiss="modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-x">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M18 6l-12 12" />
+                        <path d="M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Scriptis for this page -->
 <script src="{{ asset('dist/js/encaminhamento.js') }}" defer></script>
 
 <Script>
-    document.addEventListener("DOMContentLoaded", function () {
-    const session_message = document.getElementById("session_message");
+    document.addEventListener("DOMContentLoaded", function() {
+        const session_message = document.getElementById("session_message");
 
-    if (session_message) {
-        if (session_message.value === "error") {
-            Swal.fire({
-                icon: 'error',
-                title: 'Atenção!',
-                text: 'Já existe um registro de servidor associado a este número de CPF na unidade escolar selecionada.',
-            })
-        } else if (session_message.value === "success") {
-            Swal.fire({
-                icon: 'success',
-                text: 'Encaminhamento adicionado com sucesso!',
-            })
-        } else {
+        if (session_message) {
+            if (session_message.value === "error") {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Atenção!',
+                    text: 'Já existe um registro de servidor associado a este número de CPF na unidade escolar selecionada.',
+                })
+            } else if (session_message.value === "success") {
+                Swal.fire({
+                    icon: 'success',
+                    text: 'Encaminhamento adicionado com sucesso!',
+                })
+            } else {
 
-            Swal.fire({
-                position: 'center',
-                icon: 'success',
-                title: 'Motivo de vaga adicionado com sucesso!',
-                showConfirmButton: true,
-            })
+                Swal.fire({
+                    position: 'center',
+                    icon: 'success',
+                    title: 'Motivo de vaga adicionado com sucesso!',
+                    showConfirmButton: true,
+                })
 
+            }
         }
-    }
-});
+    });
 </Script>
 
 @endsection
