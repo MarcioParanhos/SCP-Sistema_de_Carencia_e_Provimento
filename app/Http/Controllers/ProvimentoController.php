@@ -1053,6 +1053,24 @@ class ProvimentoController extends Controller
             });
         }
 
+        if ($request->filled('search_assuncao_efetivo')) {
+            $provimentos_encaminhados = $provimentos_encaminhados->whereHas('servidorEncaminhado', function ($query) use ($request) {
+                if ($request->search_assuncao_efetivo === "PRAZO VENCIDO") {
+                    $query->whereNull('data_assuncao') // Filtra registros onde data_assuncao é nulo
+                    ->whereNotNull('data_encaminhamento') // Garante que data_encaminhamento não seja nulo
+                    ->whereRaw("DATEDIFF(?, data_encaminhamento) >= 2", [Carbon::now()->format('Y-m-d')]); // Diferença de 2 ou mais dias;
+                }elseif ($request->search_assuncao_efetivo === "DENTRO DO PRAZO") {
+                    $query->whereNull('data_assuncao') // Filtra registros onde data_assuncao é nulo
+                    ->whereNotNull('data_encaminhamento') // Garante que data_encaminhamento não seja nulo
+                    ->whereRaw("DATEDIFF(?, data_encaminhamento) < 2", [Carbon::now()->format('Y-m-d')]); // Diferença de 2 ou mais dias
+                }else {
+                    $query->whereNotNull('data_assuncao') // Filtra registros onde data_assuncao é nulo
+                    ->whereNotNull('data_encaminhamento'); // Garante que data_encaminhamento não seja nulo
+                }
+
+            });
+        }
+
 
         if ($request->filled('search_disciplina_efetivo')) {
             $disciplinasSelecionadas = $request->input('search_disciplina_efetivo');
@@ -1066,20 +1084,12 @@ class ProvimentoController extends Controller
 
         $provimentos_encaminhados = $provimentos_encaminhados->where('ano_ref', $anoRef)->get();
 
-        $disciplinas = ServidoresEncaminhado::select('formacao')
-            ->distinct()
-            ->groupBy('formacao')
-            ->where('formacao', '<>', '0')
-            ->where('formacao', '<>', '#N/D')
-            ->whereNotNull('formacao')
-            ->whereRaw('formacao != ""')
-            ->get();
+
 
         session()->put('provimentos_encaminhados', $provimentos_encaminhados);
 
         return view('provimento.show_provimento_efetivo', [
             'provimentos_encaminhados' => $provimentos_encaminhados,
-            'disciplinas' => $disciplinas,
             'quantidadeRegistros' => $quantidadeRegistros,
             'quantidadeRegistrosPCH' => $quantidadeRegistrosPCH,
             'quantidadeRegistrosError' => $quantidadeRegistrosError,

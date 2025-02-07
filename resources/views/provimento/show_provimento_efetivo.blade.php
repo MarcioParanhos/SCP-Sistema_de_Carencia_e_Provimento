@@ -270,34 +270,6 @@
                 <input value="" name="search_cpf_servidor_efetivo" id="search_matricula_servidor" type="number" class="form-control form-control-sm">
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="form-group_disciplina">
-                <label class="control-label" for="search_disciplina_efetivo">SELECIONE UMA OU MAIS DISCIPLINAS</label>
-                <select name="search_disciplina_efetivo[]" class="form-control form-control-sm" id="search_disciplina" multiple>
-                    @foreach ($disciplinas as $disciplina)
-                    <option value="{{ $disciplina->formacao }}">{{ $disciplina->formacao }}</option>
-                    @endforeach
-                </select>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="form-group_disciplina">
-                <label class="control-label" for="search_situation_efetivo">SITUAÇÃO</label>
-                <select name="search_situation_efetivo" id="search_situation_efetivo" class="form-control form-control-sm select2">
-                    <option></option>
-                    <option value="3">REAPROVEITADO NA UEE</option>
-                    <option value="1">EXCEDENTE</option>
-                    <option value="2">PROVIMENTO INCORRETO</option>
-                    <option value="5">REDA DESLIGAMENTO</option>
-                    <option value="4">EFETIVO EM LICENÇA</option>
-                    <option value="6">APOSENTADORIA</option>
-                    <option value="7">DEIXAR HORAS EXTRAS</option>
-                    <option value="8">COORD. PEDAGÓGICO</option>
-                    <option value="9">VAGA REAL</option>
-                    <option value="10">VAGA DE CARGO</option>
-                </select>
-            </div>
-        </div>
         <div class="col-md-2">
             <div class="form-group_disciplina">
                 <label class="control-label" for="search_pch_efetivo">PCH</label>
@@ -305,6 +277,17 @@
                     <option></option>
                     <option value="OK">PROGRAMADO</option>
                     <option value="PENDENTE">PENDENTE</option>
+                </select>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="form-group_disciplina">
+                <label class="control-label" for="search_assuncao_efetivo">ASSUNÇÃO</label>
+                <select name="search_assuncao_efetivo" id="search_assuncao_efetivo" class="form-control form-control-sm select2">
+                    <option></option>
+                    <option value="COM ASSUNCAO">COM ASSUNÇÃO</option>
+                    <option value="PRAZO VENCIDO">PRAZO VENCIDO</option>
+                    <option value="DENTRO DO PRAZO">DENTRO DO PRAZO</option>
                 </select>
             </div>
         </div>
