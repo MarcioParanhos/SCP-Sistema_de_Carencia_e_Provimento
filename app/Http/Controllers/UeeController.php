@@ -178,12 +178,26 @@ class UeeController extends Controller
             })->where('typing_started', 'SIM')->count();
 
             $uees = Uee::orderBy('nte', 'asc')
-                ->select('id', 'nte', 'municipio', 'unidade_escolar', 'cod_unidade', 'tipo', 'programming_stage', 'situacao', 'categorias', 'carencia')
+                ->select(
+                    'uees.id',
+                    'uees.nte',
+                    'uees.municipio',
+                    'uees.unidade_escolar',
+                    'uees.cod_unidade',
+                    'uees.tipo',
+                    'uees.programming_stage',
+                    'uees.situacao',
+                    'uees.categorias',
+                    'uees.carencia',
+                    'unidades_organizacionais.uo' // Adiciona a coluna da outra tabela
+                )
+                ->leftJoin('unidades_organizacionais', 'uees.cod_unidade', '=', 'unidades_organizacionais.cod_sec')
                 ->where(function ($query) {
-                    $query->where('desativation_situation', 'Ativa')
-                        ->orWhereNull('desativation_situation');
+                    $query->where('uees.desativation_situation', 'Ativa')
+                        ->orWhereNull('uees.desativation_situation');
                 })
                 ->get();
+
 
             session()->put('uees', $uees);
             Session::put('previous_url', url()->current());

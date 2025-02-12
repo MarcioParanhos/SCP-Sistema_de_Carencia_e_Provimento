@@ -7,18 +7,56 @@
 @if(session('msg'))
 <input id="session_message" value="{{ session('msg')}}" type="text" hidden>
 @endif
+
+<style>
+    .btn {
+        padding: 6px !important;
+    }
+
+    .icon-tabler-search,
+    .icon-tabler-trash,
+    .icon-tabler-replace {
+        width: 16px;
+        height: 16px;
+    }
+
+    td span {
+        font-size: 10px !important;
+        font-weight: 900 !important;
+        border-radius: 50% !important;
+    }
+</style>
+
 <div class="col-12 grid-margin stretch-card">
     <div class="card shadow rounded">
         <div class="shadow bg-primary text-white card_title">
             <h4 class="title_show_carencias">ENCAMINHAMENTO DE SERVIDOR EFETIVO</h4>
-            <a class="mr-2" title="Voltar" href="/provimento/efetivo/filter">
+            <!-- <a class="mr-2" title="Voltar" href="/provimento/efetivo/filter">
                 <button>
                     <svg height="16" width="16" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 1024 1024">
                         <path d="M874.690416 495.52477c0 11.2973-9.168824 20.466124-20.466124 20.466124l-604.773963 0 188.083679 188.083679c7.992021 7.992021 7.992021 20.947078 0 28.939099-4.001127 3.990894-9.240455 5.996574-14.46955 5.996574-5.239328 0-10.478655-1.995447-14.479783-5.996574l-223.00912-223.00912c-3.837398-3.837398-5.996574-9.046027-5.996574-14.46955 0-5.433756 2.159176-10.632151 5.996574-14.46955l223.019353-223.029586c7.992021-7.992021 20.957311-7.992021 28.949332 0 7.992021 8.002254 7.992021 20.957311 0 28.949332l-188.073446 188.073446 604.753497 0C865.521592 475.058646 874.690416 484.217237 874.690416 495.52477z"></path>
                     </svg>
                     <span>VOLTAR</span>
                 </button>
-            </a>
+            </a> -->
+            <div class="print-none  d-flex justify-content-center align-items-center">
+                <a data-toggle="tooltip" data-placement="top" title="Voltar" class="m-1 btn bg-white text-primary" href="/provimento/efetivo/filter">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-back-up">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M9 14l-4 -4l4 -4" />
+                        <path d="M5 10h11a4 4 0 1 1 0 8h-1" />
+                    </svg>
+                </a>
+                <a class="m-1 btn bg-white text-primary" href="/provimentos/encaminhamento/{{ $provimento_efetivo->id }}" target="_blank" data-toggle="tooltip" data-placement="top" title="Imprimir Encaminhamento">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-printer">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M17 17h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-14a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h2" />
+                        <path d="M17 9v-4a2 2 0 0 0 -2 -2h-6a2 2 0 0 0 -2 2v4" />
+                        <path d="M7 13m0 2a2 2 0 0 1 2 -2h6a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-6a2 2 0 0 1 -2 -2z" />
+                    </svg>
+                    IMPRIMIR ENCAMINHAMENTO
+                </a>
+            </div>
         </div>
         <div class="info-edit">
             <div class="edit-container-homlogada">
@@ -133,7 +171,7 @@
                         <div class="edit-container">
                             <div class="user-edit">
                                 <i class="ti-pencil-alt"></i>
-                                <h4 class="subheader">{{$provimento_efetivo->userUpdate->name}}</h4>
+
                             </div>
                             <div class="user-edit">
                                 <i class="ti-time"></i>
@@ -585,6 +623,7 @@
                                     <input value="{{ $provimento_efetivo->data_assuncao }}" name="data_assuncao" id="data_assuncao" type="date" class="form-control form-control-sm">
                                 </div>
                             </div>
+
                             @if (((Auth::user()->profile === "cpm_tecnico") || (Auth::user()->profile === "administrador")) && ($provimento_efetivo->server_1_situation == 2))
                             <div class="col-8">
                                 <div class="d-flex justify-content-end">
@@ -629,6 +668,50 @@
                             </div>
                             @endif
                         </div>
+                        <div class="form-row">
+                            <div id="disciplinas-container">
+                                @php
+                                // Convertendo as strings do banco de dados em arrays
+                                $disciplinas = explode(', ', $provimento_efetivo->disciplina);
+                                $matutino = explode(', ', $provimento_efetivo->matutino);
+                                $vespertino = explode(', ', $provimento_efetivo->vespertino);
+                                $noturno = explode(', ', $provimento_efetivo->noturno);
+                                @endphp
+
+                                @foreach ($disciplinas as $index => $disciplina)
+                                <div class="form-row disciplina-row">
+                                    <div class="col-md-6">
+                                        <div class="form-group_disciplina">
+                                            <label class="control-label">Disciplina</label>
+                                            <input value="{{ $disciplina }}" name="" type="text" class="form-control form-control-sm" readonly>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-1">
+                                        <div class="form-group_disciplina">
+                                            <label for="mat">MAT</label>
+                                            <input type="text" name="" value="{{ $matutino[$index] ?? '' }}" class="form-control form-control-sm" readonly>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-1">
+                                        <div class="form-group_disciplina">
+                                            <label for="vesp">VESP</label>
+                                            <input type="text" name="" value="{{ $vespertino[$index] ?? '' }}" class="form-control form-control-sm" readonly>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-1">
+                                        <div class="form-group_disciplina">
+                                            <label for="not">NOT</label>
+                                            <input type="text" name="" value="{{ $noturno[$index] ?? '' }}" class="form-control form-control-sm" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                                @endforeach
+                            </div>
+                        </div>
+
                     </div>
                 </div>
                 <hr>
@@ -836,51 +919,51 @@
 
 <script>
     function searchSegundoServidorTeste() {
-    
-    const cadastro_segundo_servidor = document.getElementById(
-        "cadastro_segundo_servidor"
-    );
 
-    let segundo_servidor = cadastro_segundo_servidor.value;
+        const cadastro_segundo_servidor = document.getElementById(
+            "cadastro_segundo_servidor"
+        );
 
-    if (segundo_servidor == "") {
-        Swal.fire({
-            icon: "error",
-            title: "Atenção!",
-            text: "Matrícula não informada. Tente novamente.",
-        });
-    }
+        let segundo_servidor = cadastro_segundo_servidor.value;
 
-    $.post("/consultarServidor/" + segundo_servidor, function (response) {
-        let data = response[0];
-
-        if (data) {
-            const segundo_servidor_name = document.getElementById(
-                "segundo_servidor_name"
-            );
-            const vinculo_segundo_servidor = document.getElementById(
-                "vinculo_segundo_servidor"
-            );
-            const regime_segundo_servidor = document.getElementById(
-                "regime_segundo_servidor"
-            );
-            const id_segundo_servidor_subistituido = document.getElementById(
-                "id_segundo_servidor_subistituido"
-            );
-            id_segundo_servidor_subistituido.value = data.id;
-            segundo_servidor_name.value = data.nome;
-            vinculo_segundo_servidor.value = data.vinculo;
-            regime_segundo_servidor.value = data.regime;
-           
-        } else {
+        if (segundo_servidor == "") {
             Swal.fire({
-                icon: "warning",
+                icon: "error",
                 title: "Atenção!",
-                text: "Servidor não encontrado. Tente novamente.",
+                text: "Matrícula não informada. Tente novamente.",
             });
         }
-    });
-}
+
+        $.post("/consultarServidor/" + segundo_servidor, function(response) {
+            let data = response[0];
+
+            if (data) {
+                const segundo_servidor_name = document.getElementById(
+                    "segundo_servidor_name"
+                );
+                const vinculo_segundo_servidor = document.getElementById(
+                    "vinculo_segundo_servidor"
+                );
+                const regime_segundo_servidor = document.getElementById(
+                    "regime_segundo_servidor"
+                );
+                const id_segundo_servidor_subistituido = document.getElementById(
+                    "id_segundo_servidor_subistituido"
+                );
+                id_segundo_servidor_subistituido.value = data.id;
+                segundo_servidor_name.value = data.nome;
+                vinculo_segundo_servidor.value = data.vinculo;
+                regime_segundo_servidor.value = data.regime;
+
+            } else {
+                Swal.fire({
+                    icon: "warning",
+                    title: "Atenção!",
+                    text: "Servidor não encontrado. Tente novamente.",
+                });
+            }
+        });
+    }
 </script>
 
 @endsection

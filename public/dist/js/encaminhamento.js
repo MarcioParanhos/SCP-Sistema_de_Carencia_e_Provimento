@@ -130,7 +130,7 @@ function searchUnidadeForCodSap() {
     $.post("/consultarUnidadeForCodSap/" + codUe, function (response) {
         let data = response[0];
 
-        if (data) { 
+        if (data) {
 
             const unidade_id = document.getElementById("unidade_id");
 
@@ -155,4 +155,54 @@ function searchUnidadeForCodSap() {
 
     });
 
+}
+
+
+function adicionarDisciplina() {
+    let container = document.getElementById('disciplinas-container');
+
+    let novaDisciplina = document.createElement('div');
+    novaDisciplina.classList.add('form-row', 'disciplina-row');
+
+    novaDisciplina.innerHTML = `
+        <div class="col-md-6">
+            <div class="form-group_disciplina">
+                <label class="control-label">Disciplina</label>
+                <input value="" name="disciplinas[]" required id="" type="text" class="form-control form-control-sm">
+            </div>
+        </div>
+
+        <div class="col-md-1">
+            <div class="form-group_disciplina">
+                <label for="mat">MAT</label>
+                <input type="text" name="matutino[]" class="form-control form-control-sm" required>
+            </div>
+        </div>
+
+        <div class="col-md-1">
+            <div class="form-group_disciplina">
+                <label for="vesp">VESP</label>
+                <input type="text" name="vespertino[]" class="form-control form-control-sm" required>
+            </div>
+        </div>
+
+        <div class="col-md-1">
+            <div class="form-group_disciplina">
+                <label for="not">NOT</label>
+                <input type="text" name="noturno[]" class="form-control form-control-sm" required>
+            </div>
+        </div>
+
+        <div class="col-md-2 d-flex align-items-center">
+            <button type="button" class="btn btn-danger btn-remove-disciplina" onclick="removerDisciplina(this)">
+                <i class="ti-trash"></i>
+            </button>
+        </div>
+    `;
+
+    container.appendChild(novaDisciplina);
+}
+
+function removerDisciplina(botao) {
+    botao.closest('.disciplina-row').remove();
 }

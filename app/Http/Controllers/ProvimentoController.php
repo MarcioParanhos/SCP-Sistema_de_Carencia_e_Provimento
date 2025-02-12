@@ -835,11 +835,12 @@ class ProvimentoController extends Controller
 
     public function addNewProvimentoEfetivo(Request $request)
     {
-
-        $verify_servidor = ProvimentosEncaminhado::where('servidor_encaminhado_id', $request->servidor_id)->where('uee_id', $request->unidade_id)->first();
-
+        $verify_servidor = ProvimentosEncaminhado::where('servidor_encaminhado_id', $request->servidor_id)
+            ->where('uee_id', $request->unidade_id)
+            ->first();
+    
         if ($verify_servidor) {
-            return  redirect()->to(url()->previous())->with('msg', 'error');
+            return redirect()->to(url()->previous())->with('msg', 'error');
         } else {
             $anoRef = session()->get('ano_ref');
             $provimentos_encaminhados = new ProvimentosEncaminhado();
@@ -851,21 +852,40 @@ class ProvimentoController extends Controller
             $provimentos_encaminhados->ano_ref = $anoRef;
             $provimentos_encaminhados->user_id = $request->usuario;
             $provimentos_encaminhados->servidor_substituido_id = $request->servidor_subistituido;
+    
             if ($request->id_segundo_servidor_subistituido) {
                 $provimentos_encaminhados->segundo_servidor_subistituido = $request->id_segundo_servidor_subistituido;
             }
-
+    
             $servidor_encaminhado = ServidoresEncaminhado::find($request->servidor_id);
             $servidor_encaminhado->formacao = $request->disciplina_efetivo;
-
-            if ($servidor_encaminhado->save()) {
-                $provimentos_encaminhados->save();
+    
+            $disciplinas = $request->input('disciplinas');
+            $matutino = $request->input('matutino');
+            $vespertino = $request->input('vespertino');
+            $noturno = $request->input('noturno');
+    
+            // Concatenar as disciplinas e os turnos
+            $disciplinas_str = implode(', ', $disciplinas);
+            $matutino_str = implode(', ', $matutino);
+            $vespertino_str = implode(', ', $vespertino);
+            $noturno_str = implode(', ', $noturno);
+    
+            // Salvar os dados no banco de dados
+            $provimentos_encaminhados->disciplina = $disciplinas_str;
+            $provimentos_encaminhados->matutino = $matutino_str;
+            $provimentos_encaminhados->vespertino = $vespertino_str;
+            $provimentos_encaminhados->noturno = $noturno_str;
+    
+            if ($servidor_encaminhado->save() && $provimentos_encaminhados->save()) {
+                return redirect()->to(url()->previous())->with('msg', 'success');
             }
-
-
-            return  redirect()->to(url()->previous())->with('msg', 'success');
+    
+            return redirect()->to(url()->previous())->with('msg', 'error');
         }
     }
+    
+
 
     public function showProvimentoEfetivo()
     {
@@ -1057,17 +1077,16 @@ class ProvimentoController extends Controller
             $provimentos_encaminhados = $provimentos_encaminhados->whereHas('servidorEncaminhado', function ($query) use ($request) {
                 if ($request->search_assuncao_efetivo === "PRAZO VENCIDO") {
                     $query->whereNull('data_assuncao') // Filtra registros onde data_assuncao é nulo
-                    ->whereNotNull('data_encaminhamento') // Garante que data_encaminhamento não seja nulo
-                    ->whereRaw("DATEDIFF(?, data_encaminhamento) >= 2", [Carbon::now()->format('Y-m-d')]); // Diferença de 2 ou mais dias;
-                }elseif ($request->search_assuncao_efetivo === "DENTRO DO PRAZO") {
+                        ->whereNotNull('data_encaminhamento') // Garante que data_encaminhamento não seja nulo
+                        ->whereRaw("DATEDIFF(?, data_encaminhamento) >= 2", [Carbon::now()->format('Y-m-d')]); // Diferença de 2 ou mais dias;
+                } elseif ($request->search_assuncao_efetivo === "DENTRO DO PRAZO") {
                     $query->whereNull('data_assuncao') // Filtra registros onde data_assuncao é nulo
-                    ->whereNotNull('data_encaminhamento') // Garante que data_encaminhamento não seja nulo
-                    ->whereRaw("DATEDIFF(?, data_encaminhamento) < 2", [Carbon::now()->format('Y-m-d')]); // Diferença de 2 ou mais dias
-                }else {
+                        ->whereNotNull('data_encaminhamento') // Garante que data_encaminhamento não seja nulo
+                        ->whereRaw("DATEDIFF(?, data_encaminhamento) < 2", [Carbon::now()->format('Y-m-d')]); // Diferença de 2 ou mais dias
+                } else {
                     $query->whereNotNull('data_assuncao') // Filtra registros onde data_assuncao é nulo
-                    ->whereNotNull('data_encaminhamento'); // Garante que data_encaminhamento não seja nulo
+                        ->whereNotNull('data_encaminhamento'); // Garante que data_encaminhamento não seja nulo
                 }
-
             });
         }
 
@@ -1248,4 +1267,24 @@ class ProvimentoController extends Controller
 
         return response()->json(['message' => $encaminhamento]);
     }
+
+    public function gerarEncaminhamento($encaminhamento) {
+
+
+        $provimentos_encaminhado = ProvimentosEncaminhado::where('id', $encaminhamento)
+            ->first();
+
+             // Verifica se há dados antes de calcular
+    if ($provimentos_encaminhado) {
+        $provimentos_encaminhado->total_matutino = array_sum(array_map('intval', explode(',', $provimentos_encaminhado->matutino)));
+        $provimentos_encaminhado->total_vespertino = array_sum(array_map('intval', explode(',', $provimentos_encaminhado->vespertino)));
+        $provimentos_encaminhado->total_noturno = array_sum(array_map('intval', explode(',', $provimentos_encaminhado->noturno)));
+    }
+
+
+        return view('relatorios.termo_encaminhamento', [
+            'provimentos_encaminhado' => $provimentos_encaminhado,
+        ]);
+    }
+    
 }

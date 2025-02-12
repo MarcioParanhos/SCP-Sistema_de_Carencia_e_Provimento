@@ -12,6 +12,8 @@ class ProvimentosEncaminhado extends Model
 
     protected $table = 'provimentos_encaminhados';
 
+    protected $fillable = ['disciplina', 'matutino', 'vespertino', 'noturno', 'nome'];
+
     public function servidorEncaminhado()
     {
         return $this->belongsTo(ServidoresEncaminhado::class, 'servidor_encaminhado_id');

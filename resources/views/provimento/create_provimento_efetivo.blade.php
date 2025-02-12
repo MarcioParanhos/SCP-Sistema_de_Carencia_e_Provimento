@@ -126,11 +126,14 @@
                             <div class=" col-md-2">
                                 <div class="display_btn position-relative form-group">
                                     <div>
-                                        <label for="cadastro" class="">Matrícula <a style="border-radius: 8px;" class="mr-2 bg-primary text-white p-1" data-toggle="modal" data-target="#modalInfo"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-question-mark">
+                                        <label for="cadastro" class="">Matrícula
+                                            <a style="border-radius: 8px;" class="mr-2 bg-primary text-white p-1" data-toggle="modal" data-target="#modalInfo"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-question-mark">
                                                     <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                                                     <path d="M8 8a3.5 3 0 0 1 3.5 -3h1a3.5 3 0 0 1 3.5 3a3 3 0 0 1 -2 3a3 4 0 0 0 -2 4" />
                                                     <path d="M12 19l0 .01" />
-                                                </svg></a></label>
+                                                </svg>
+                                            </a>
+                                        </label>
                                         <input value="" minlength="8" maxlength="11" name="cadastro" id="cadastro" type="cadastro" class="form-control form-control-sm" required>
                                     </div>
                                     <div class="btn_carencia_seacrh">
@@ -201,7 +204,7 @@
                         <div class="form-row">
                             <div id="data_encaminhamento_row" class="col-md-2">
                                 <div class="form-group_disciplina">
-                                    <label for="data_encaminhamento" class="">Data de encaminhamento</label>
+                                    <label for="data_encaminhamento" class="">Data de encaminhamento <span class="span_required">*</span></label>
                                     <input value="data_encaminhamento" name="data_encaminhamento" id="data_encaminhamento" type="date" class="form-control form-control-sm" required>
                                 </div>
                             </div>
@@ -211,6 +214,46 @@
                                     <input value="data_assuncao" name="data_assuncao" id="data_assuncao" type="date" class="form-control form-control-sm">
                                 </div>
                             </div>
+                        </div>
+                        <div class="form-row d-flex justify-content-end">
+                            <button type="button" class="btn btn-primary mt-2 subheader"  onclick="adicionarDisciplina()">
+                                <i class="ti-plus"></i> Adicionar Disciplina
+                            </button>
+                        </div>
+                        <div class="form-row">
+                            <div id="disciplinas-container">
+                                <div class="form-row disciplina-row">
+                                    <div class="col-md-6">
+                                        <div class="form-group_disciplina">
+                                            <label class="control-label">Disciplina</label>
+                                            <input value="" name="disciplinas[]"  id="" type="text" class="form-control form-control-sm">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-1">
+                                        <div class="form-group_disciplina">
+                                            <label for="mat">MAT</label>
+                                            <input type="text" name="matutino[]" class="form-control form-control-sm" >
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-1">
+                                        <div class="form-group_disciplina">
+                                            <label for="vesp">VESP</label>
+                                            <input type="text" name="vespertino[]" class="form-control form-control-sm" >
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-1">
+                                        <div class="form-group_disciplina">
+                                            <label for="not">NOT</label>
+                                            <input type="text" name="noturno[]" class="form-control form-control-sm" >
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
                             <div id="data_assuncao_row" class="col-md-12">
                                 <div class="form-group_disciplina">
                                     <label for="obs">Observações<i class="ti-pencil"></i></label>
@@ -267,6 +310,14 @@
                                 <div class="form-group_disciplina">
                                     <label for="data_assuncao" class="">assunção</label>
                                     <input value="data_assuncao" name="" id="data_assuncao" type="date" class="form-control form-control-sm">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div id="" class="col-md-2">
+                                    <div class="form-group_disciplina">
+                                        <label for="data_assuncao" class="">assunção</label>
+                                        <input value="data_assuncao" name="" id="data_assuncao" type="date" class="form-control form-control-sm">
+                                    </div>
                                 </div>
                             </div>
                             <div id="data_assuncao_row" class="col-md-12">
@@ -329,6 +380,8 @@
 
 <!-- Scriptis for this page -->
 <script src="{{ asset('dist/js/encaminhamento.js') }}" defer></script>
+
+
 
 <Script>
     document.addEventListener("DOMContentLoaded", function() {

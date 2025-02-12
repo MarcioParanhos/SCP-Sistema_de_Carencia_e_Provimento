@@ -15,4 +15,5 @@ class ServidoresEncaminhado extends Model
     {
         return $this->hasMany(ProvimentosEncaminhado::class, 'servidor_encaminhado_id');
     }
+
 }

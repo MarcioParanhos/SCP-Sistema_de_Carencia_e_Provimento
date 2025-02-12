@@ -48,6 +48,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/provimentos/relatorio', [ProvimentoController::class, 'imprimirTabela'])->name("provimentos.relatorio");
     Route::get('/provimentos/excel', [ProvimentoController::class, 'gerarExcel'])->name("provimentos.excel");
     Route::get('/provimentos/anuencia/{cadastro}', [ProvimentoController::class, 'gerarAnuencia']);
+    Route::get('/provimentos/encaminhamento/{encaminhamento}', [ProvimentoController::class, 'gerarEncaminhamento']);
     Route::get('/provimento/detalhes_provimento/{provimento}', [ProvimentoController::class, 'detailProvimento'])->name("provimentos.detalhar");
     Route::get('/prover/{id}/{cod_ue}', [ProvimentoController::class, 'provide'])->name("provimentos.prover");
     Route::get('/deletar_provimento/{provimento}', [ProvimentoController::class, 'destroy']);

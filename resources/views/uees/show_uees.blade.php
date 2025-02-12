@@ -245,7 +245,8 @@
                 <th class="text-center" scope="col">NTE</th>
                 <th scope="col">MUNICIPIO</th>
                 <th scope="col">UNIDADE ESCOLAR</th>
-                <th class="text-center" scope="col">CODIGO</th>
+                <th class="text-center" scope="col">COD. SEC</th>
+                <th class="text-center" scope="col">COD. SAP</th>
                 <th class="text-center" scope="col">TIPOLOGIA</th>
                 @if ((Auth::user()->profile === "administrador") || (Auth::user()->profile === "cpg_tecnico") )
                 <th class="text-center" scope="col">HOMOLOGADA</th>
@@ -271,6 +272,7 @@
                     <td>{{ $uee->municipio }}</td>
                     <td>{{ $uee->unidade_escolar }}</td>
                     <td class="text-center">{{ $uee->cod_unidade }}</td>
+                    <td class="text-center">{{ $uee->uo ?? 'Sem UO' }}</td>
                     <td class="text-center">{{ $uee->tipo }}</td>
                     @if ( $uee->tipo === "NTE")
                     <td class="text-center"></td>
