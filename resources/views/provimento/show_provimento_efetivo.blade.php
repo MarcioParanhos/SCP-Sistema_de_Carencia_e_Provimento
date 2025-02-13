@@ -132,69 +132,76 @@
         padding-left: 2px !important;
     }
 </style>
-
 <div class="bg-primary card text-white card_title">
     <h4 class=" title_show_carencias">Encaminhamento de servidores - CONCURSADOS 2025</h4>
 </div>
-<div class="d-flex justify-content-between mb-4">
-    <div class="d-flex">
-        <div class="col-9">
+<div id="aposentadoria_info" class="d-flex justify-content-between mb-4">
+    
+    <div id="aposentadoria_info_content" class="d-flex justify-content-between" style="width: 50%;">
+        <div class="col-md-6">
             <table class="table-bordered">
                 <tr>
+                    <td colspan="2" class="pl-2 text-center bg-primary text-white subheader"><b>TOTAL GERAL - ENCAMINHAMENTOS</b></td>
+                </tr>
+                <tr>
                     <td class="pl-2 subheader"><b>Servidores encaminhados</b></td>
-                    <td style="width: 22%;" class="text-center"><b>{{ $quantidadeRegistros }}</b></td>
+                    <td style="width: 20%;" class="text-center"><b>{{ $quantidadeRegistros }}</b></td>
                 </tr>
                 <tr>
-                    <td class="pl-2 subheader"><b>ENCAMINHAMENTOS COM DATA DE ASSUNÇÃO</b></td>
-                    <td style="width: 22%;" class="text-center text-success"><b>{{ $quantidadeRegistrosComAssuncao }}</b></td>
+                    <td class="pl-2 subheader"><b>COM DATA DE ASSUNÇÃO</b></td>
+                    <td style="width: 20%;" class="text-center"><b>{{ $quantidadeRegistrosComAssuncao }}</b></td>
                 </tr>
                 <tr>
-                    <td class="pl-2 subheader"><b>ENCAMINHAMENTOS SEM ASSUNÇÃO, MAS DENTRO DO PRAZO</b></td>
-                    <td style="width: 22%;" class="text-center text-danger"><b>{{ $quantidadeRegistrosDataNula }}</b></td>
+                    <td class="pl-2 subheader"><b>SEM ASSUÇÃO DENTRO DO PRAZO</b></td>
+                    <td style="width: 20%;" class="text-center"><b>{{ $quantidadeRegistrosDataNula }}</b></td>
                 </tr>
                 <tr>
-                    <td class="pl-2 subheader"><b>ENCAMINHAMENTOS SEM ASSUNÇÃO COM PRAZO VENCIDO</b></td>
-                    <td style="width: 22%;" class="text-center text-danger"><b>{{ $quantidadeRegistrosAtrasados }}</b></td>
+                    <td class="pl-2 subheader"><b>SEM ASSUÇÃO COM PRAZO VENCIDO</b></td>
+                    <td style="width: 20%;" class="text-center"><b>{{ $quantidadeRegistrosAtrasados }}</b></td>
                 </tr>
             </table>
         </div>
-        <div class="col-9">
+        <div class="col-md-6">
             <table class="table-bordered">
                 <tr>
+                    <td colspan="2" class="pl-2 text-center bg-primary text-white subheader"><b>PENDENCIAS E AÇÕES</b></td>
+                </tr>
+                <tr>
                     <td class="pl-2 subheader"><b>Encaminhamentos com inconsistência</b></td>
-                    <td style="width: 22%;" class="text-center"><b>{{ ($quantidadeRegistrosError - $quantidadeRegistrosErrorOK)}}</b></td>
+                    <td style="width: 20%;" class="text-center"><b>{{ ($quantidadeRegistrosError - $quantidadeRegistrosErrorOK)}}</b></td>
                 </tr>
                 <tr>
                     <td class="pl-2 subheader"><b>Inconsistências ajustadas (CPM)</b></td>
-                    <td style="width: 22%;" class="text-center"><b>{{ $quantidadeRegistrosErrorOK}}</b></td>
+                    <td style="width: 20%;" class="text-center"><b>{{ $quantidadeRegistrosErrorOK}}</b></td>
                 </tr>
                 <tr>
                     <td class="pl-2 subheader"><b>ENCAMINHAMENTOS ANÁLISADOS- CPG</b></td>
-                    <td style="width: 22%;" class="text-center"><b>{{ $quantidadeRegistrosPCH }}</b></td>
+                    <td style="width: 20%;" class="text-center"><b>{{ $quantidadeRegistrosPCH }}</b></td>
                 </tr>
                 <tr>
                     <td class="pl-2 subheader"><b>PENDENTES ANÁLISE (CPG)</b></td>
-                    <td style="width: 22%;" class="text-center"><b>{{ ($quantidadeRegistros - $quantidadeRegistrosPCH) - ($quantidadeRegistrosError - $quantidadeRegistrosErrorOK) - $quantidadeRegistrosDataNula - $quantidadeRegistrosAtrasados }}</b></td>
+                    <td style="width: 20%;" class="text-center"><b>{{ ($quantidadeRegistros - $quantidadeRegistrosPCH) - ($quantidadeRegistrosError - $quantidadeRegistrosErrorOK) - $quantidadeRegistrosDataNula - $quantidadeRegistrosAtrasados }}</b></td>
                 </tr>
             </table>
         </div>
-
     </div>
-    <div id="regularizacao_filter" class="mb-2 ">
-        <a id="active_filters" class="mb-2 btn bg-primary text-white" data-toggle="tooltip" data-placement="top" title="Filtros Personalizaveis" onclick="active_filters()">
+    <div class="mb-2 ">
+    <a id="active_filters" data-toggle="tooltip" data-placement="top" title="Filtros Personalizaveis" class="mb-2 btn bg-primary text-white" onclick="active_filters()">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-filter">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                 <path d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
             </svg>
         </a>
-        <a class="mb-2 btn bg-primary text-white" href="{{ route('provimento_efetivo.create') }}" data-toggle="tooltip" data-placement="top" title="Adicionar novo">
+        @if((Auth::user()->profile === "cad_tecnico") ||(Auth::user()->profile === "administrador"))
+        <button type="button" class="mb-2 btn bg-primary text-white" data-toggle="modal" data-target="#addNewProcess">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-plus">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                 <path d="M12 5l0 14" />
                 <path d="M5 12l14 0" />
             </svg>
-        </a>
-        <a class="mb-2 btn bg-primary text-white" target="_blank" href="/provimento/efetivo/excel" data-toggle="tooltip" data-placement="top" title="Download em Excel">
+        </button>
+        @endif
+        <a class="mb-2 btn bg-primary text-white" data-toggle="tooltip" data-placement="top" title="Download em Excel" target="_blank" href="{{ route('aposentadorias.excel') }}">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-file-download">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                 <path d="M14 3v4a1 1 0 0 0 1 1h4" />
@@ -204,11 +211,9 @@
             </svg>
         </a>
     </div>
-    <!-- <div class="mb-2 ">
-        <a id="active_filters" class="mb-2 btn bg-primary text-white" onclick="active_filters_provimento()">FILTROS <i class='far fa-eye'></i></a>
-        <a class="mb-2 btn bg-primary text-white" target="_blank" href="/provimento/efetivo/excel"><i class="ti-download"></i> EXCEL</a>
-    </div> -->
 </div>
+
+
 <form id="active_form" class="border shadow bg-light rounded pt-3 pl-3 pr-3" action="{{ route('provimento_efetivo.showByForm') }}" method="post" hidden>
     @csrf
     <div class="form-row">
