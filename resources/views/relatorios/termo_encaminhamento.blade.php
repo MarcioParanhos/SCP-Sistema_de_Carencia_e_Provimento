@@ -235,26 +235,19 @@
 
 <body>
     <header>
-        <div class="header">
+        <div class="header border mb-2">
             <img src="/images/teste.png" alt="">
             <div class="inputs">
                 <div class="radio_buttons">
                     <input type="checkbox">
-                    <label for="">REMOÇÃO</label>
+                    <label for="">INGRESSO</label>
                 </div>
                 <div class="radio_buttons">
                     <input type="checkbox">
                     <label for="">COMPLEMENTAÇÃO</label>
                 </div>
-                <div class="radio_buttons">
-                    <input type="checkbox">
-                    <label for="">RELOTAÇÃO</label>
-                </div>
-
-
             </div>
         </div>
-        <hr>
         <div class="title-header">
             <p>
                 GOVERNO DO ESTADO DA BAHIA<br>
@@ -311,8 +304,7 @@
                 </tbody>
             </table>
         </div>
-        <p class="main_content_two">Informamos que a assunção deverá ser entregue em 02 (Duas) vias, no prazo de 48 horas nesta coordenação, sala 121
-            Ressaltamos que após a publicação do ato de remoção da matricula o gestor deve efetuar a assunção pelo portal no RH BAHIA .
+        <p class="main_content_two">Informamos que a assunção deverá ser entregue em 02 (Duas) vias, no prazo de 48 horas nesta coordenação, sala 117.
         </p>
     </main>
     <section class="tipo_vaga">

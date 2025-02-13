@@ -425,6 +425,10 @@ class UeeController extends Controller
     public function update(Request $request)
     {
 
+        $uee = Uee::findOrFail($request->id);
+        $uee->unidade_escolar = $request->unidade_escolar; // Atualiza o nome da escola
+        $uee->save();
+
 
         if ($request->filled('typing_started')) {
 
@@ -522,6 +526,8 @@ class UeeController extends Controller
             $provimento->unidade_escolar = $request->unidade_escolar;
             $provimento->save();  // Salva as alterações
         }
+
+      
 
         return  redirect()->to(url()->previous())->with('msg', 'Registros Alterados com Sucesso!');
     }
