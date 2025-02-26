@@ -191,7 +191,7 @@
             <div class="col-md-5">
                 <div class="form-group_disciplina">
                     <label class="control-label" for="email">UNIDADE ESCOLAR</label>
-                    <input value="{{ $uee->unidade_escolar }}" name="unidade_escolar" id="unidade_escolar" type="text" class="form-control form-control-sm" readonly>
+                    <input value="{{ $uee->unidade_escolar }}" name="unidade_escolar" id="unidade_escolar" type="text" class="form-control form-control-sm" >
                 </div>
             </div>
             <div class="col-md-3">
@@ -514,7 +514,6 @@
                     </span>
                 </button>
             </div>
-
             @endif
             @if ($uee->desativation_situation == "Desativada")
             <button id="toggle-button" type="button" class="btn btn-success"><i class="ti-unlock"></i> REATIVAR UNIDADE</button>
@@ -609,7 +608,5 @@
         });
     });
 </script>
-
-
 
 @endsection

@@ -20,6 +20,7 @@ class RegularizacaoFuncionalController extends Controller
     public function store(Request $request)
     {
         $anoRef = session()->get('ano_ref');
+        
         $uee = Uee::select('id')->where('cod_unidade', $request->cod_ue_origem)->first();
         $ueeDestino = Uee::select('id')->where('cod_unidade', $request->cod_ue_destino)->first();
         $servidor = Servidore::select('id')->where('cadastro', $request->cadastro)->first();

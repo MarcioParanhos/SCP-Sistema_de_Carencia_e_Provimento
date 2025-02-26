@@ -145,7 +145,8 @@ class ServidoreController extends Controller
         return redirect('/servidores')->with('msg', 'Registro excluído com sucesso!');
     }
 
-    public function detalhesServidorAnuencia($cadastro) {
+    public function detalhesServidorAnuencia($cadastro) 
+    {
 
         $servidor = Servidore::where('cadastro', $cadastro)->first();
         $provimentosByServidor = Provimento::where('cadastro', $cadastro)->get();
@@ -154,7 +155,8 @@ class ServidoreController extends Controller
 
     }
 
-    public function consultarEfetivo($cpf) {
+    public function consultarEfetivo($cpf) 
+    {
 
         $data = ServidoresEncaminhado::where('cpf', 'LIKE', '%' . $cpf . '%')->get();
 
@@ -166,4 +168,18 @@ class ServidoreController extends Controller
         }
 
     }
+
+    public function addShowServidoresEncaminhamentoByForm (Request $request) {
+
+        $servidores = new ServidoresEncaminhado;
+        $servidores->nome = $request->nome;
+        $servidores->cpf = $request->cpf;
+        $servidores->cargo = $request->vinculo;
+        $servidores->nte = $request->nte;
+        $servidores->situacao = "CADASTRADO";
+        $servidores->save();
+        return  redirect()->back()->with('msg', 'Servidor cadastrado com Sucesso!');
+
+    }
+
 }

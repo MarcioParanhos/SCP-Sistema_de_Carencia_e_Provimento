@@ -427,29 +427,43 @@ class UeeController extends Controller
 
         $uee = Uee::findOrFail($request->id);
         $uee->unidade_escolar = $request->unidade_escolar; // Atualiza o nome da escola
+        $uee->obs_cpg = $request->obs_cpg;
         $uee->save();
 
 
         if ($request->filled('typing_started')) {
 
             if ($request->typing_started == "SIM") {
+
                 $uee = Uee::findOrFail($request->id);
                 $uee->typing_started = "SIM";
                 $uee->description_typing_started = null;
                 $uee->save();
+
             } else if ($request->typing_started == "NÃO") {
+
                 $uee = Uee::findOrFail($request->id);
                 $uee->typing_started = "NÃO";
                 $uee->finished_typing = "";
                 $uee->description_typing_started = $request->description_typing_started;
                 $uee->finished_typing_description = null;
                 $uee->save();
+
             }
+           
 
             if ($request->finished_typing == "SIM") {
                 $uee->finished_typing_description = null;
+                $uee->finished_typing = $request->finished_typing; // Correção aqui
+                $uee->save();
+
+            } else {
+
+                $uee->finished_typing_description = $request->finished_typing_description;
+                $uee->finished_typing = $request->finished_typing; // Correção aqui
                 $uee->save();
             }
+
         } else if (!$request->filled('typing_started')) {
             $uee = Uee::findOrFail($request->id);
             $uee->typing_started = null;

@@ -87,7 +87,7 @@
                         <div class=" col-md-2">
                             <div class=" position-relative form-group">
                                 <div>
-                                    <label for="cpf_cervidor" class="">CPF</label>
+                                    <label for="cpf_cervidor" class="">CPF / MATRÍCULA</label>
                                     <input value="{{ $servidor_encaminhado->servidorEncaminhado->cpf }}" minlength="8" maxlength="11" name="" id="cpf_cervidor" type="number" class="form-control form-control-sm" readonly>
                                 </div>
                             </div>
@@ -109,7 +109,11 @@
                         <div class="col-md-1">
                             <div class="position-relative form-group">
                                 <label for="regime" class="">regime</label>
+                                @if ($servidor_encaminhado->servidorEncaminhado->cargo === "REDA SELETIVO")
+                                <input value="20h" name="" required id="" type="text" class="form-control form-control-sm" readonly>
+                                @else
                                 <input value="40h" name="" required id="" type="text" class="form-control form-control-sm" readonly>
+                                @endif
                             </div>
                         </div>
                         <div class="col-md-2">
@@ -171,7 +175,6 @@
                         <div class="edit-container">
                             <div class="user-edit">
                                 <i class="ti-pencil-alt"></i>
-
                             </div>
                             <div class="user-edit">
                                 <i class="ti-time"></i>

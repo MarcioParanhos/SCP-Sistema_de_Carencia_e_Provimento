@@ -843,6 +843,8 @@ class ProvimentoController extends Controller
             return redirect()->to(url()->previous())->with('msg', 'error');
         } else {
             $anoRef = session()->get('ano_ref');
+
+
             $provimentos_encaminhados = new ProvimentosEncaminhado();
             $provimentos_encaminhados->servidor_encaminhado_id = $request->servidor_id;
             $provimentos_encaminhados->uee_id = $request->unidade_id;
@@ -1187,16 +1189,21 @@ class ProvimentoController extends Controller
                 return Response()->json($value);
             }
         } elseif ($situation == 2) {
+
             $encaminhamento = ProvimentosEncaminhado::findOrFail($id);
+
             $pch = "INCONSISTENCIA";
+
             if ($encaminhamento->update([
                 'server_1_situation' => $situation,
                 'pch' => $pch,
+
             ])) {
-                $value = 0;
-                return Response()->json($value);
+                return response()->json(['value' => 0]);
             }
+            
         } else {
+
             $encaminhamento = ProvimentosEncaminhado::findOrFail($id);
             $pch = "OK";
             if ($encaminhamento->update([

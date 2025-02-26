@@ -90,6 +90,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/servidor/detalhes/{servidor}', [ServidoreController::class, 'detalharServidor'])->name("servidores.detail");
     Route::post('/consultarServidor/{cadastro_servidor}', [ServidoreController::class, 'searchServidor']);
     Route::post('/servidores/add', [ServidoreController::class, 'addShowServidoresByForm'])->name("servidores.add");
+    Route::post('/servidores/add_encaminhamento', [ServidoreController::class, 'addShowServidoresEncaminhamentoByForm'])->name("servidores.add_encaminhamento");
     Route::put('/servidores/update/{id}', [ServidoreController::class, 'update']);
     Route::delete('/servidor/destroy/{id}', [ServidoreController::class, 'destroy']);
     Route::post('/consultar/efetivo/{cpf}', [ServidoreController::class, 'consultarEfetivo'])->name("servidores_efetivos.show");

@@ -12,7 +12,7 @@ class ProvimentosEncaminhado extends Model
 
     protected $table = 'provimentos_encaminhados';
 
-    protected $fillable = ['disciplina', 'matutino', 'vespertino', 'noturno', 'nome'];
+    protected $fillable = ['disciplina', 'matutino', 'vespertino', 'noturno', 'nome', 'server_1_situation', 'pch', 'server_2_situation'];
 
     public function servidorEncaminhado()
     {

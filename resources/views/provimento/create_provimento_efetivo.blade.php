@@ -4,17 +4,55 @@
 
 @section('content')
 
+
+<style>
+    .btn {
+        padding: 6px !important;
+    }
+
+    .icon-tabler-search,
+    .icon-tabler-trash,
+    .icon-tabler-replace {
+        width: 16px;
+        height: 16px;
+    }
+
+    td span {
+        font-size: 10px !important;
+        font-weight: 900 !important;
+        border-radius: 50% !important;
+    }
+</style>
+
+
 @if(session('msg'))
 <input id="session_message" value="{{ session('msg')}}" type="text" hidden>
 @endif
 <div class="col-12 grid-margin stretch-card">
     <div class="card shadow rounded">
-        <div class="card_title_form">
-            <h4 class="card-title">ENCAMINHAMENTO DE SERVIDOR</h4>
-            <div class="col-12 col-xl-4">
-                <div class="botao_de_tipo d-flex">
-
-                </div>
+        <div class="shadow bg-primary text-white card_title">
+            <h4 class="title_show_carencias">ENCAMINHAMENTO DE SERVIDOR EFETIVO</h4>
+            <div class="print-none  d-flex justify-content-center align-items-center">
+                <a data-toggle="modal" data-target="#ExemploModalCentralizado55" title="INCLUIR NOVO SERVIDOR" class="m-1 btn bg-white text-primary" href="">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-plus">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
+                        <path d="M16 19h6" />
+                        <path d="M19 16v6" />
+                        <path d="M6 21v-2a4 4 0 0 1 4 -4h4" />
+                    </svg>
+                </a>
+                <a title="SERVIDORES" class="m-1 btn bg-white text-primary" href="">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-users-group">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M10 13a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                        <path d="M8 21v-1a2 2 0 0 1 2 -2h4a2 2 0 0 1 2 2v1" />
+                        <path d="M15 5a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                        <path d="M17 10h2a2 2 0 0 1 2 2v1" />
+                        <path d="M5 5a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                        <path d="M3 13v-1a2 2 0 0 1 2 -2h2" />
+                    </svg>
+                </a>
             </div>
         </div>
         <div class="card-body">
@@ -26,7 +64,7 @@
                         <div class=" col-md-2">
                             <div class="display_btn position-relative form-group">
                                 <div>
-                                    <label for="cpf_cervidor" class="">CPF</label>
+                                    <label for="cpf_cervidor" class="">CPF / MATRÍCULA</label>
                                     <input value="" minlength="8" maxlength="11" name="" id="cpf_cervidor" type="number" class="form-control form-control-sm">
                                 </div>
                                 <div class="btn_carencia_seacrh">
@@ -57,14 +95,14 @@
                         </div> -->
                         <div class="col-md-2">
                             <div class="form-group">
-                                <label for="cargo_efetivo" class="">CARGO</label>
+                                <label for="cargo_efetivo" class="">VINCULO</label>
                                 <input value="" id="cargo_efetivo" name="" type="text" class="form-control form-control-sm" readonly>
                             </div>
                         </div>
                         <div class="col-md-1">
                             <div class="position-relative form-group">
                                 <label for="regime" class="">regime</label>
-                                <input value="40h" name="" required id="" type="text" class="form-control form-control-sm" readonly>
+                                <input value="" name="" required id="regime_efetivo" type="text" class="form-control form-control-sm" readonly>
                             </div>
                         </div>
                     </div>
@@ -77,7 +115,8 @@
                                     <path d="M9 17h3" />
                                     <path d="M16 22l5 -5" />
                                     <path d="M21 21.5v-4.5h-4.5" />
-                                </svg></button>
+                                </svg>
+                            </button>
                         </div>
                         <!-- <div id="buttons" class="buttons">
                             <button id="vaga_real_btn" type="button" class="btn btn-primary mr-2" hidden>VAGA REAL</button>
@@ -216,7 +255,7 @@
                             </div>
                         </div>
                         <div class="form-row d-flex justify-content-end">
-                            <button type="button" class="btn btn-primary mt-2 subheader"  onclick="adicionarDisciplina()">
+                            <button type="button" class="btn btn-primary mt-2 subheader" onclick="adicionarDisciplina()">
                                 <i class="ti-plus"></i> Adicionar Disciplina
                             </button>
                         </div>
@@ -226,28 +265,28 @@
                                     <div class="col-md-6">
                                         <div class="form-group_disciplina">
                                             <label class="control-label">Disciplina</label>
-                                            <input value="" name="disciplinas[]"  id="" type="text" class="form-control form-control-sm">
+                                            <input value="" name="disciplinas[]" id="" type="text" class="form-control form-control-sm">
                                         </div>
                                     </div>
 
                                     <div class="col-md-1">
                                         <div class="form-group_disciplina">
                                             <label for="mat">MAT</label>
-                                            <input type="text" name="matutino[]" class="form-control form-control-sm" >
+                                            <input type="text" name="matutino[]" class="form-control form-control-sm">
                                         </div>
                                     </div>
 
                                     <div class="col-md-1">
                                         <div class="form-group_disciplina">
                                             <label for="vesp">VESP</label>
-                                            <input type="text" name="vespertino[]" class="form-control form-control-sm" >
+                                            <input type="text" name="vespertino[]" class="form-control form-control-sm">
                                         </div>
                                     </div>
 
                                     <div class="col-md-1">
                                         <div class="form-group_disciplina">
                                             <label for="not">NOT</label>
-                                            <input type="text" name="noturno[]" class="form-control form-control-sm" >
+                                            <input type="text" name="noturno[]" class="form-control form-control-sm">
                                         </div>
                                     </div>
                                 </div>
@@ -362,6 +401,9 @@
                         <div>
                             <span class="subheader">88888888 - VAGA REAL</span>
                         </div>
+                        <div>
+                            <span class="subheader">77777777 - VAGA TEMPORÁRIA </span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -373,6 +415,88 @@
                         <path d="M6 6l12 12" />
                     </svg>
                 </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="ExemploModalCentralizado55" tabindex="-1" role="dialog" aria-labelledby="TituloModalCentralizado" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document" style="width: 100%;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="TituloModalCentralizado">NOVO SERVIDOR</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form style="width: 100%;" action="/servidores/add_encaminhamento" method="post">
+                    @csrf
+                    <div class="form-row">
+                        <div class="col-md-12">
+                            <div class="form-group_disciplina">
+                                <label class="control-label" for="nome">NOME DO SERVIDOR</label>
+                                <input value="" name="nome" id="nome" type="text" class="form-control form-control-sm" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row mb-2">
+                        <div class="col-md-5">
+                            <div class="form-group_disciplina">
+                                <label class="control-label" for="cpf">CPF</label>
+                                <input value="" name="cpf" id="cpf" type="text" class="form-control form-control-sm" maxlength="11">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group_disciplina">
+                                <label class="control-label" for="vinculo">VINCULO</label>
+                                <select name="vinculo" id="vinculo" class="form-control form-control-sm " required>
+                                    <option></option>
+                                    <option value="REDA">REDA</option>
+                                    <option value="EFETIVO">EFETIVO</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group_disciplina">
+                                <label class="control-label" for="nte">NTE</label>
+                                <select name="nte" id="nte" class="form-control form-control-sm select2">
+                                    <option></option>
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                    <option value="6">6</option>
+                                    <option value="7">7</option>
+                                    <option value="8">8</option>
+                                    <option value="9">9</option>
+                                    <option value="10">10</option>
+                                    <option value="11">11</option>
+                                    <option value="12">12</option>
+                                    <option value="13">13</option>
+                                    <option value="14">14</option>
+                                    <option value="15">15</option>
+                                    <option value="16">16</option>
+                                    <option value="17">17</option>
+                                    <option value="18">18</option>
+                                    <option value="19">19</option>
+                                    <option value="20">20</option>
+                                    <option value="21">21</option>
+                                    <option value="22">22</option>
+                                    <option value="23">23</option>
+                                    <option value="24">24</option>
+                                    <option value="25">25</option>
+                                    <option value="26">26</option>
+                                    <option value="27">27</option>
+                                </select>
+                            </div>
+                        </div>
+
+                    </div>
+                    <button type="submit" class="btn btn-primary">CADASTRAR</button>
+                </form>
             </div>
         </div>
     </div>
@@ -404,7 +528,7 @@
                 Swal.fire({
                     position: 'center',
                     icon: 'success',
-                    title: 'Motivo de vaga adicionado com sucesso!',
+                    title: 'SERVIDOR ADICIONADO COM SUCESSO!',
                     showConfirmButton: true,
                 })
 

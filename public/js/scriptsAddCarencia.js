@@ -49,6 +49,45 @@ const num_rim = document.getElementById("num_rim");
 const area_row = document.getElementById("area_row");
 const area = document.getElementById("area");
 
+$(document).ready(function () {
+    // Inicializa o Select2
+    $("#motivo_vaga").select2();
+
+    // Captura a mudança no select
+    $("#motivo_vaga").on("select2:select change", function (e) {
+        var selectedValue = $(this).val();
+
+        let matricula_row = document.getElementById("matricula-row")
+        let servidor = document.getElementById("servidor")
+        let vinculo = document.getElementById("vinculo")
+        let regime = document.getElementById("regime")
+
+
+        if (selectedValue === "REDA DEMITIDO 2024") {
+
+            matricula_row.hidden = true
+            servidor.value = "REDA DEMITIDO 2024"
+            vinculo.value = "REDA DEMITIDO 2024"
+            regime.value = "20"
+
+        } else if (selectedValue === "MEDIADOR EMITEC") {
+
+            matricula_row.hidden = true
+            servidor.value = "VAGA MEDIADOR EMITEC"
+            vinculo.value = "VAGA MEDIADOR EMITEC"
+            regime.value = "20"
+ 
+        } else {
+            // matricula_row.hidden = false
+            servidor.value = ""
+            vinculo.value = ""
+            regime.value = ""
+
+        }
+
+    });
+});
+
 cod_unidade.addEventListener("blur", checkIfUnitHasBeenSelected);
 function checkIfUnitHasBeenSelected() {
     if (btnCadastro.disabled === true) {
@@ -82,7 +121,7 @@ function addTotal() {
 
 // PESQUISA UNIDADE ESCOLAR E ATUALIZA A TABELA COM AS INFORMAÇÕES VINDAS DO BANCO
 function addNewCarencia() {
-    
+
     let codigo_unidade = cod_unidade.value;
 
     if (codigo_unidade == "") {
@@ -249,7 +288,7 @@ function addNewCarencia() {
     });
 }
 
-function searchUnidadeEscolar () {
+function searchUnidadeEscolar() {
     const cod_ue_destino = document.getElementById("cod_ue_destino")
 
     if (cod_ue_destino.value == "") {
@@ -274,7 +313,7 @@ function searchUnidadeEscolar () {
             municipio_destino.value = data.municipio;
             unidade_escolar_destino.value = data.unidade_escolar;
             uo_destino.value = data.uo_cod[0].uo;
-            
+
         } else {
             Swal.fire({
                 icon: "error",
@@ -285,6 +324,8 @@ function searchUnidadeEscolar () {
 
     });
 }
+
+
 
 // PESQUISA O CADASTRO DO SERVIDOR NO BANCO
 function searchServidor() {
@@ -482,6 +523,8 @@ function addTipoCarencia(tipo) {
     }
 }
 
+
+
 // SALVAR NO BANCO DE FORMA ASSINCRONA COM VALIDAÇÕES
 $("#InsertForm").submit(function (e) {
     // previne o reload
@@ -532,6 +575,7 @@ $("#InsertForm").submit(function (e) {
     } else if (tipo_carencia.value === "Temp") {
         if (
             num_rim.value === "" &&
+
             motivo_vaga.value === "LICENÇA POR APRAZAMENTO"
         ) {
             Swal.fire({

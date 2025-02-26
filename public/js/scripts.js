@@ -357,6 +357,7 @@ function resetPass(id) {
 
 function searchEfetivo() {
     const cpf_cervidor = document.getElementById("cpf_cervidor");
+    const regime_efetivo = document.getElementById("regime_efetivo")
 
     let cpf = cpf_cervidor.value;
 
@@ -389,6 +390,11 @@ function searchEfetivo() {
                 nte_efetivo.value = data.nte;
                 cargo_efetivo.value = data.cargo;
                 servidor_id.value = data.id;
+                if (data.cargo === "REDA SELETIVO") {
+                    regime_efetivo.value = "20h"
+                } else {
+                    regime_efetivo.value = "40h"
+                }
                 encaminhamento_btn.hidden = false;
                 if (data.cargo != "PROFESSOR") {
                     disciplina_row.hidden = true

@@ -7,7 +7,6 @@ const municipio_ap = document.getElementById("municipio_ap")
 const uee_ap = document.getElementById("uee_ap")
 
 
-
 let selectedNteAP = $("#nte_ap")
 selectedNteAP.on("select2:select", searchMunicipioAp)
 

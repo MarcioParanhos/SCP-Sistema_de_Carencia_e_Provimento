@@ -267,23 +267,23 @@
         <p><strong>OF. CIRC CPM</strong></p>
     </section>
     <section class="unidade_escolar">
-
+    <p>{{ $provimentos_encaminhado->uee->unidade_escolar }} - {{ $provimentos_encaminhado->uee->cod_unidade}}.</p>
     </section>
     <main>
         <p>Senhor (a) Diretor (a): </p>
         <p class="main-content">
             Encaminhamos o(a) PROFESSOR(A) {{ $provimentos_encaminhado->servidorEncaminhado->nome  }},
-            @if ($provimentos_encaminhado->servidorEncaminhado->cargo === "REDA")
-                REDA
+            @if ($provimentos_encaminhado->servidorEncaminhado->cargo === "REDA SELETIVO")
+               REDA SELETIVO
             @else
-                ESTATUTÁRIO
+                EFETIVO
             @endif, 
             CPF {{ $provimentos_encaminhado->servidorEncaminhado->cpf }}  com carga horária de 
-            @if ($provimentos_encaminhado->servidorEncaminhado->cargo === "REDA")
-                20
+            @if ($provimentos_encaminhado->servidorEncaminhado->cargo === "REDA SELETIVO")
+                20hs
             @else
-                40
-            @endif (hs), para atuar nos turnos abaixo indicados, na(s) disciplina(s) {{ $provimentos_encaminhado->disciplina }}
+                40hs
+            @endif (hs), para atuar nos turnos abaixo indicados, na(s) disciplina(s) {{ $provimentos_encaminhado->disciplina }}.
 
         </p>
         <div class="table">

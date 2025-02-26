@@ -181,9 +181,9 @@
                             <label class="control-label" for="disciplina_especial">COMPONENTE ESPECIAL</label>
                             <select name="disciplina_especial" id="disciplina_especial" class="form-control select2">
                                 <option></option>
-                             @foreach ($componentes as $componente)
-                             <option value="{{ $componente->nome }}">{{ $componente->nome }}</option>
-                             @endforeach
+                                @foreach ($componentes as $componente)
+                                <option value="{{ $componente->nome }}">{{ $componente->nome }}</option>
+                                @endforeach
                             </select>
                         </div>
                     </div>
@@ -193,7 +193,7 @@
                             <select name="motivo_vaga" id="motivo_vaga" class="form-control select2" required>
                                 <option></option>
                                 @foreach ($motivo_vagas as $motivo_vaga)
-                                <option>{{$motivo_vaga -> motivo}}</option>
+                                <option value="{{$motivo_vaga -> motivo}}">{{$motivo_vaga -> motivo}}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -207,8 +207,8 @@
                 </div>
                 <div id="servidor_row" class="hidden">
                     <div class="form-row">
-                        <div class=" col-md-2">
-                            <div class="display_btn position-relative form-group">
+                        <div id="matricula-row" class="col-md-2">
+                            <div  class="display_btn position-relative form-group">
                                 <div>
                                     <label for="cadastro" class="">Matrícula / CPF</label>
                                     <input value="" minlength="8" maxlength="11" name="cadastro" id="cadastro" type="cadastro" class="form-control form-control-sm">
@@ -297,7 +297,6 @@
                 </div>
                 <div class="table-responsive">
                     <table id="table_carencia" class="table-carencia table table-sm table-hover table-bordered">
-                    
                         <caption class="mt-2">Carências da UEE selecionada</caption>
                     </table>
                 </div>
@@ -315,5 +314,6 @@
         })
     }
 </script>
+
 
 @endsection
