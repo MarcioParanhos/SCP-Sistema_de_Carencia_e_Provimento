@@ -72,16 +72,17 @@ class HomeController extends Controller
         $actualDate = Carbon::now()->format('Y-m-d'); // Formata a data para incluir apenas ano, mês e dia
         $existingStatus = Status_diario::where('data', $actualDate)->first();
         $anoRef = session()->get('ano_ref');
-        $carenciasBasicaReal = Carencia::where('tipo_carencia', 'Real')->where('tipo_vaga', 'Basica')->where('ano_ref', $anoRef)->sum('total');
-        $carenciasProfiReal = Carencia::where('tipo_carencia', 'Real')->where('tipo_vaga', 'Profissionalizante')->where('ano_ref', $anoRef)->sum('total');
-        $carenciasBasicaTemp = Carencia::where('tipo_carencia', 'temp')->where('tipo_vaga', 'Basica')->where('fim_vaga', '>', $actualDate)->where('ano_ref', $anoRef)->sum('total');
-        $carenciasProfiTemp = Carencia::where('tipo_carencia', 'temp')->where('tipo_vaga', 'Profissionalizante')->where('fim_vaga', '>', $actualDate)->where('ano_ref', $anoRef)->sum('total');
-        $carenciasRealEdEspecial = Carencia::where('tipo_carencia', 'Real')->where('tipo_vaga', 'Especial')->where('ano_ref', $anoRef)->sum('total');
-        $carenciasTempEdEspecial = Carencia::where('tipo_carencia', 'temp')->where('tipo_vaga', 'Especial')->where('fim_vaga', '>', $actualDate)->where('ano_ref', $anoRef)->sum('total');
+        $carenciasBasicaReal = Carencia::where('tipo_carencia', 'Real')->where('tipo_vaga', 'Basica')->where('ano_ref', $anoRef)->where('motivo_vaga','!=', "MEDIADOR EMITEC")->sum('total');
+        $carenciasProfiReal = Carencia::where('tipo_carencia', 'Real')->where('tipo_vaga', 'Profissionalizante')->where('ano_ref', $anoRef)->where('motivo_vaga','!=', "MEDIADOR EMITEC")->sum('total');
+        $carenciasBasicaTemp = Carencia::where('tipo_carencia', 'temp')->where('tipo_vaga', 'Basica')->where('fim_vaga', '>', $actualDate)->where('ano_ref', $anoRef)->where('motivo_vaga','!=', "MEDIADOR EMITEC")->sum('total');
+        $carenciasProfiTemp = Carencia::where('tipo_carencia', 'temp')->where('tipo_vaga', 'Profissionalizante')->where('fim_vaga', '>', $actualDate)->where('ano_ref', $anoRef)->where('motivo_vaga','!=', "MEDIADOR EMITEC")->sum('total');
+        $carenciasRealEdEspecial = Carencia::where('tipo_carencia', 'Real')->where('tipo_vaga', 'Especial')->where('ano_ref', $anoRef)->where('motivo_vaga','!=', "MEDIADOR EMITEC")->sum('total');
+        $carenciasTempEdEspecial = Carencia::where('tipo_carencia', 'temp')->where('tipo_vaga', 'Especial')->where('fim_vaga', '>', $actualDate)->where('ano_ref', $anoRef)->where('motivo_vaga','!=', "MEDIADOR EMITEC")->sum('total');
         $provimentosReal = Provimento::where('situacao_provimento', 'provida')->where('ano_ref', $anoRef)->where('tipo_carencia_provida', 'Real')->sum('total');
         $provimentosTemp = Provimento::where('situacao_provimento', 'provida')->where('ano_ref', $anoRef)->where('tipo_carencia_provida', 'Temp')->sum('total');
         $provimentosTramiteReal = Provimento::where('situacao_provimento', 'tramite')->where('ano_ref', $anoRef)->where('tipo_carencia_provida', 'real')->sum('total');
         $provimentosTramiteTemp = Provimento::where('situacao_provimento', 'tramite')->where('ano_ref', $anoRef)->where('tipo_carencia_provida', 'temp')->sum('total');
+        $vagaEmitec = Carencia::where('tipo_carencia', 'Real')->where('ano_ref', $anoRef)->where('motivo_vaga', "MEDIADOR EMITEC")->sum('total');
 
         if (!$existingStatus) {
             $actualDate = Carbon::now();
@@ -120,7 +121,8 @@ class HomeController extends Controller
             'provimentosTramiteReal',
             'totalCarencia',
             'uees',
-            'anoRef'
+            'anoRef',
+            'vagaEmitec'
         ));
       
     }

@@ -403,6 +403,7 @@ class ProvimentoController extends Controller
 
         $provimentos = $provimentos->orderBy('nte', 'asc')
             ->orderBy('municipio', 'asc')
+            ->orderBy('servidor', 'asc')
             ->where('ano_ref', $anoRef)
             ->get();
         session()->put('provimentos', $provimentos);
@@ -886,8 +887,6 @@ class ProvimentoController extends Controller
             return redirect()->to(url()->previous())->with('msg', 'error');
         }
     }
-    
-
 
     public function showProvimentoEfetivo()
     {

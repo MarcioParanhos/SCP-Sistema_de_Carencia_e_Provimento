@@ -194,6 +194,7 @@ $ano_atual = $data_atual->year;
                         <option value="Basica">BASICA</option>
                         <option value="Especial">ESPECIAL</option>
                         <option value="Profissionalizante">PROFISSIONALIZANTE</option>
+                        <option value="Emitec">EMITEC</option>
                     </select>
                 </div>
             </div>

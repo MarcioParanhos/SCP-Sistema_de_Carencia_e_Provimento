@@ -38,18 +38,19 @@
         </div>
     </div>
 </div>
+
 <div id="cards_system" class="row">
-    <div id="logo_system" class="col-md-5 grid-margin stretch-card ">
+    <div id="logo_system" class="col-md-4 grid-margin stretch-card ">
         <div class="shadow card tale-bg">
             <div class="card-people">
                 <img class=" img-logo" src="images/SCP.png" alt="Logo Sistema">
             </div>
         </div>
     </div>
-    <div id="cards_system_unit" class="col-md-7 grid-margin transparent">
+    <div id="cards_system_unit" class="col-md-8 grid-margin transparent">
         <div  class="card p-4 shadow">
             <div class="mb-2 row gap_mobile">
-                <div class="col-md-4 mb-2 stretch-card transparent">
+                <div class="col-md-3 mb-2 stretch-card transparent">
                     <div class="card card-dark-blue">
                         <div class="card-body">
                             <p class="text-center font_title mb-2 subheader"><strong>VAGA REAL - {{ number_format($carenciasBasicaReal+$carenciasProfiReal, 0, ',', '.') }} h </strong></p>
@@ -66,7 +67,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4 mb-2 stretch-card transparent">
+                <div class="col-md-3 mb-2 stretch-card transparent">
                     <div class="card card-dark-blue">
                         <div class="card-body">
                             <p class="text-center font_title mb-2 subheader"><strong>VAGA TEMPORÁRIA - {{ number_format($carenciasBasicaTemp+$carenciasProfiTemp, 0, ',', '.') }} h</strong></p>
@@ -83,7 +84,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4 mb-2 stretch-card transparent">
+                <div class="col-md-3 mb-2 stretch-card transparent">
                     <div class="card card-dark-blue">
                         <div class="card-body">
                             <p class="text-center font_title mb-2 subheader"><strong>VAGA ED. ESPECIAL - {{ number_format($carenciasRealEdEspecial+$carenciasTempEdEspecial, 0, ',', '.') }} h</strong></p>
@@ -96,6 +97,20 @@
                                     <p class="text-center subheader">TEMP.</p>
                                     <p class="text-center font_sub-title" style="font-size: 22px;">{{ number_format($carenciasTempEdEspecial, 0, ',', '.') }} h</p>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-2 stretch-card transparent">
+                    <div class="card card-dark-blue">
+                        <div class="card-body">
+                            <p class="text-center font_title mb-2 subheader"><strong>VAGA EMITEC - {{ number_format($vagaEmitec, 0, ',', '.') }} h </strong></p>
+                            <div class="d-flex justify-content-around" style="border-top: 2px solid #fbf8f3;">
+                                <div class="mt-2 d-flex flex-column justify-content-center align-middle">
+                                    <p class="text-center subheader">QTD. SERVIDORES EMITEC</p>
+                                    <p class="font_sub-title text-center">{{ number_format($vagaEmitec/20, 0, ',', '.') }}</p>
+                                </div>
+
                             </div>
                         </div>
                     </div>
@@ -201,6 +216,7 @@
         </div>
     </div>
 </div>
+
 <div id="status_system" class="mobile-hidden row">
     <div class="col-md-12 grid-margin stretch-card">
         <div class="shadow card position-relative">

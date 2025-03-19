@@ -330,6 +330,30 @@ function homologar() {
     });
 }
 
+function homologar_by_detail() {
+    const button_homologar = document.getElementById("button_homologar");
+
+    button_homologar.addEventListener("click", function (e) {
+
+        const title_situacao = document.getElementById("title_situacao");
+        const cod_ue = document.getElementById("cod_unidade");
+
+    
+            title_situacao.classList.remove("badge-danger");
+            title_situacao.classList.add("badge-success");
+            title_situacao.innerHTML =
+                "<strong>UNIDADE HOMOLOGADA</strong> <button id='button_homologar' class='btn btn-sm btn-primary'><strong>RETIRAR HOMOLOGAÇÃO</strong></button>";
+            $.get(
+                "/homologarUnidade/" + cod_ue.value + "/HOMOLOGADA",
+                function (response) {
+                    Swal.fire("Sucesso!", `A UEE FOI HOMOLOGADA!`, "success");
+                }
+            );
+            homologar_by_detail();
+    
+    });
+}
+
 function resetPass(id) {
     $.ajax({
         url: "/users/update/pass/" + id,

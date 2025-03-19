@@ -86,6 +86,7 @@
                             <a class=" dropdown-item" onclick="addTipoCarencia(1)">EDUCAÇÃO BÁSICA</a>
                             <a class="dropdown-item" onclick="addTipoCarencia(2)">PROFISSIONALIZANTE</a>
                             <a class="dropdown-item" onclick="addTipoCarencia(3)">EDUCAÇÃO ESPECIAL</a>
+                            <a class="dropdown-item" onclick="addTipoCarencia(4)">EMITEC</a>
                         </div>
                     </div>
                 </div>

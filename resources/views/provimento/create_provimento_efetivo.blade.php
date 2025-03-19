@@ -453,7 +453,7 @@
                                 <label class="control-label" for="vinculo">VINCULO</label>
                                 <select name="vinculo" id="vinculo" class="form-control form-control-sm " required>
                                     <option></option>
-                                    <option value="REDA">REDA</option>
+                                    <option value="REDA SELETIVO">REDA SELETIVO</option>
                                     <option value="EFETIVO">EFETIVO</option>
                                 </select>
                             </div>

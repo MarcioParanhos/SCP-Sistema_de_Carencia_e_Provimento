@@ -216,7 +216,7 @@
                                     <a class="nav-link sub-title" href="#">MANUTENÇÕES</a>
                                 </li>
                                 @endif
-                                @if ((Auth::user()->profile === "cpg_tecnico") || (Auth::user()->profile === "administrador") || (Auth::user()->profile === "consulta"))
+                                @if ((Auth::user()->profile === "cpg_tecnico") || (Auth::user()->profile === "administrador") || (Auth::user()->profile === "consulta") || (Auth::user()->profile === "cpm_coordenador"))
                                 <li class="nav-item">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-home-search">
                                         <path stroke="none" d="M0 0h24v24H0z" fill="none" />

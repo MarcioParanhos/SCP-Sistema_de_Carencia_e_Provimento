@@ -150,15 +150,8 @@
     }
 </style>
 <div class="card shadow rounded">
-    @if ($uee->desativation_situation == "Desativada")
-    <div class="d-flex bg-danger justify-content-center align-items-center">
-        <h5 class="pt-3 text-white">UNIDADE DESATIVADA NO DIA {{ \Carbon\Carbon::parse($uee->desativation_status_date)->format('d/m/Y') }}</h5>
-    </div>
-    @else
-    <div class="d-flex bg-success justify-content-center align-items-center">
-        <h5 class="pt-3 text-white">UNIDADE ATIVA</h5>
-    </div>
-    @endif
+<h4 id="title_situacao" class="badge d-flex justify-content-between align-items-center {{ $uee->situacao === 'PENDENTE' ? 'badge-danger' : 'badge-success' }}"><strong>{{ $uee->situacao === 'PENDENTE' ? 'PENDENTE HOMOLOGAÇÃO' : 'UNIDADE HOMOLOGADA' }}</strong> <button id='button_homologar' onclick="homologar_by_detail()" class='btn btn-sm btn-primary'><strong>{{ $uee->situacao === 'PENDENTE' ? 'HOMOLOGAR' : 'RETIRAR HOMOLOGAÇÃO' }}</strong></button></h4>
+
     <div class="shadow bg-primary text-white card_title">
         <h4 class=" title_show_carencias">DETALHES UNIDADE ESCOLAR</h4>
         <a class="mr-2" title="Voltar" href="{{ Session::get('previous_url') }}">
@@ -169,7 +162,6 @@
                 <span>VOLTAR</span>
             </button>
         </a>
-
     </div>
     <form class="p-4" action="/uees/update/{{ $uee->id }}" method="post">
         @csrf
@@ -327,6 +319,8 @@
                         <option value="TURMAS DE EDUCAÇÃO ESPECIAL">TURMAS DE EDUCAÇÃO ESPECIAL</option>
                         <option value="TURMAS DAS OFICINAS CJCC">TURMAS DAS OFICINAS CJCC</option>
                         <option value="INTEGRAÇÃO SIGEDUC X SPE">INTEGRAÇÃO SIGEDUC X SPE</option>
+                        <option value="SEM PROFESSOR">SEM PROFESSOR</option>
+                        <option value="CRIAR MEDIADOR MUNICIPAL E/OU TERCEIRIZADO">CRIAR MEDIADOR MUNICIPAL E/OU TERCEIRIZADO</option>
                     </select>
                 </div>
             </div>
@@ -349,6 +343,8 @@
                         <option value="TURMAS DE EDUCAÇÃO ESPECIAL">TURMAS DE EDUCAÇÃO ESPECIAL</option>
                         <option value="TURMAS DAS OFICINAS CJCC">TURMAS DAS OFICINAS CJCC</option>
                         <option value="INTEGRAÇÃO SIGEDUC X SPE">INTEGRAÇÃO SIGEDUC X SPE</option>
+                        <option value="SEM PROFESSOR">SEM PROFESSOR</option>
+                        <option value="CRIAR MEDIADOR MUNICIPAL E/OU TERCEIRIZADO">CRIAR MEDIADOR MUNICIPAL E/OU TERCEIRIZADO</option>
                     </select>
                 </div>
             </div>
@@ -411,6 +407,7 @@
                         <option value="TURMAS DE EDUCAÇÃO ESPECIAL">TURMAS DE EDUCAÇÃO ESPECIAL</option>
                         <option value="TURMAS DAS OFICINAS CJCC">TURMAS DAS OFICINAS CJCC</option>
                         <option value="INTEGRAÇÃO SIGEDUC X SPE">INTEGRAÇÃO SIGEDUC X SPE</option>
+                        <option value="CRIAR MEDIADOR MUNICIPAL E/OU TERCEIRIZADO">CRIAR MEDIADOR MUNICIPAL E/OU TERCEIRIZADO</option>
                     </select>
                     </select>
                 </div>
@@ -434,6 +431,7 @@
                         <option value="TURMAS DE EDUCAÇÃO ESPECIAL">TURMAS DE EDUCAÇÃO ESPECIAL</option>
                         <option value="TURMAS DAS OFICINAS CJCC">TURMAS DAS OFICINAS CJCC</option>
                         <option value="INTEGRAÇÃO SIGEDUC X SPE">INTEGRAÇÃO SIGEDUC X SPE</option>
+                        <option value="CRIAR MEDIADOR MUNICIPAL E/OU TERCEIRIZADO">CRIAR MEDIADOR MUNICIPAL E/OU TERCEIRIZADO</option>
                     </select>
                     </select>
                 </div>

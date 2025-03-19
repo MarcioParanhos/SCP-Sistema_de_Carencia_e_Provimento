@@ -16,7 +16,7 @@
     $html = '';
     $html .= '<table border="1">';
     $html .= '<tr>';
-    $html .= '<td bgcolor="##9cc2e5" align="center" colspan="11"><b><font size="4">STATUS DE DIGITAÇÃO - 2024</font></b></tr>';
+    $html .= '<td bgcolor="##9cc2e5" align="center" colspan="11"><b><font size="4">STATUS DE DIGITAÇÃO - 2025</font></b></tr>';
     $html .= '</tr>';
 
     $html .= '<tr>';

@@ -510,7 +510,7 @@ class RegularizacaoFuncionalController extends Controller
             });
         }
 
-        $regularizacões_funcionais = $regularizacões_funcionais->get();
+        $regularizacões_funcionais = $regularizacões_funcionais->where('ano_ref', $anoRef)->get();
 
 
 

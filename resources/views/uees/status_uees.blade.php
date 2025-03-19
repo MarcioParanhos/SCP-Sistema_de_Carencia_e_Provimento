@@ -70,7 +70,9 @@
 </div>
 
 <div class="pb-0 bg-primary card text-white card_title">
-    <h4 class="title_show_carencias">STATUS DE DIGITAÇÃO - 2024</h4>
+    <h4 class="title_show_carencias">STATUS DE DIGITAÇÃO - <script>
+                                document.write(new Date().getFullYear());
+                            </script></h4>
 </div>
 
 

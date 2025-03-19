@@ -351,6 +351,7 @@ class CarenciaController extends Controller
                 ->orderBy('nte', 'asc')
                 ->orderBy('municipio', 'asc')
                 ->orderBy('unidade_escolar', 'asc')
+                ->orderBy('servidor', 'asc')
                 ->get();
         }
 

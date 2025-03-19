@@ -96,8 +96,9 @@ table {
 }
 
 .img-logo {
-    width: 550px !important;
-    height: 350px;
+    padding: 50px;
+    width: 100% !important;
+    height: auto;
 }
 
 .card {
