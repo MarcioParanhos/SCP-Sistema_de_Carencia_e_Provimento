@@ -82,7 +82,7 @@ class HomeController extends Controller
         $provimentosTemp = Provimento::where('situacao_provimento', 'provida')->where('ano_ref', $anoRef)->where('tipo_carencia_provida', 'Temp')->sum('total');
         $provimentosTramiteReal = Provimento::where('situacao_provimento', 'tramite')->where('ano_ref', $anoRef)->where('tipo_carencia_provida', 'real')->sum('total');
         $provimentosTramiteTemp = Provimento::where('situacao_provimento', 'tramite')->where('ano_ref', $anoRef)->where('tipo_carencia_provida', 'temp')->sum('total');
-        $vagaEmitec = Carencia::where('tipo_carencia', 'Real')->where('ano_ref', $anoRef)->where('motivo_vaga', "MEDIADOR EMITEC")->sum('total');
+        $vagaEmitec = Carencia::where('tipo_carencia', 'Real')->where('ano_ref', $anoRef)->where('tipo_vaga', 'Emitec')->where('motivo_vaga', "MEDIADOR EMITEC")->sum('total');
 
         if (!$existingStatus) {
             $actualDate = Carbon::now();

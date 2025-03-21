@@ -76,7 +76,7 @@ $(document).ready(function () {
             servidor.value = "VAGA MEDIADOR EMITEC"
             vinculo.value = "VAGA MEDIADOR EMITEC"
             regime.value = "20"
- 
+
         } else {
             // matricula_row.hidden = false
             servidor.value = ""
@@ -364,9 +364,16 @@ function searchServidor() {
 function addTipoCarencia(tipo) {
     if (tipo_carencia.value === "Real") {
         if (tipo == 1) {
+
+            let matricula_row = document.getElementById("matricula-row")
+            matricula_row.hidden = false;
             $('#disciplina').next('.select2').css('pointer-events', 'auto');
+            $("#disciplina").val(null).trigger("change");
             $('#area').next('.select2').css('pointer-events', 'auto');
+            $("#area").val(null).trigger("change");
             $('#motivo_vaga').next('.select2').css('pointer-events', 'auto');
+            $('#motivo_vaga option[value="MEDIADOR EMITEC"]').remove();
+            $("#motivo_vaga").val(null).trigger("change");
             buttonSelectTipo.innerHTML = "EDUCAÇÃO BÁSICA";
             typeTitle.innerHTML = "EDUCAÇÃO BÁSICA";
             btnCadastro.disabled = false;
@@ -391,10 +398,16 @@ function addTipoCarencia(tipo) {
             $("#curso").val(null).trigger("change");
             $("#motivo_vaga").val(null).trigger("change");
             $("#disciplina_especial").val(null).trigger("change");
+
         } else if (tipo == 2) {
+            let matricula_row = document.getElementById("matricula-row")
+            matricula_row.hidden = false;
             $('#disciplina').next('.select2').css('pointer-events', 'auto');
+            $("#disciplina").val(null).trigger("change");
             $('#area').next('.select2').css('pointer-events', 'auto');
+            $("#area").val(null).trigger("change");
             $('#motivo_vaga').next('.select2').css('pointer-events', 'auto');
+            $("#motivo_vaga").val(null).trigger("change");
             buttonSelectTipo.innerHTML = "PROFISSIONALIZANTE";
             typeTitle.innerHTML = "PROFISSIONALIZANTE";
             btnCadastro.disabled = false;
@@ -417,10 +430,18 @@ function addTipoCarencia(tipo) {
             $("#curso").val(null).trigger("change");
             $("#motivo_vaga").val(null).trigger("change");
         } else if (tipo == 3) {
+
             $("#componenteEspecial").modal({
                 show: true,
             });
-
+            let matricula_row = document.getElementById("matricula-row")
+            matricula_row.hidden = false;
+            $('#disciplina').next('.select2').css('pointer-events', 'auto');
+            $("#disciplina").val(null).trigger("change");
+            $('#area').next('.select2').css('pointer-events', 'auto');
+            $("#area").val(null).trigger("change");
+            $('#motivo_vaga').next('.select2').css('pointer-events', 'auto');
+            $("#motivo_vaga").val(null).trigger("change");
             buttonSelectTipo.innerHTML = "EDUCAÇÃO ESPECIAL";
             typeTitle.innerHTML = "EDUCAÇÃO ESPECIAL";
             btnCadastro.disabled = false;
@@ -452,7 +473,7 @@ function addTipoCarencia(tipo) {
             let vinculo = document.getElementById("vinculo")
             let regime = document.getElementById("regime")
 
-        
+
             buttonSelectTipo.innerHTML = "EMITEC";
             typeTitle.innerHTML = "EMITEC";
             btnCadastro.disabled = false;
@@ -463,6 +484,7 @@ function addTipoCarencia(tipo) {
             $('#disciplina').next('.select2').css('pointer-events', 'none');
             $('#area').val("MULTIDISCIPLINAR").trigger('change.select2');
             $('#area').next('.select2').css('pointer-events', 'none');
+            $('#motivo_vaga').append('<option value="MEDIADOR EMITEC">MEDIADOR EMITEC</option>');
             $("#motivo_vaga").val("MEDIADOR EMITEC").trigger('change.select2');
             $('#motivo_vaga').next('.select2').css('pointer-events', 'none');
             matricula_row.hidden = true
@@ -487,10 +509,7 @@ function addTipoCarencia(tipo) {
             $("#curso").val(null).trigger("change");
             $("#motivo_vaga").val("MEDIADOR EMITEC").trigger('change.select2');
             $("#disciplina_especial").val(null).trigger("change");
-          
-           
-            
-     
+
         }
     } else if (tipo_carencia.value === "Temp") {
 
@@ -521,8 +540,8 @@ function addTipoCarencia(tipo) {
             $("#motivo_vaga").val(null).trigger("change");
             $("#disciplina_especial").val(null).trigger("change");
 
-            
-            
+
+
         } else if (tipo == 2) {
             buttonSelectTipo.innerHTML = "PROFISSIONALIZANTE";
             typeTitle.innerHTML = "PROFISSIONALIZANTE";
@@ -546,6 +565,7 @@ function addTipoCarencia(tipo) {
             $("#eixo").val(null).trigger("change");
             $("#curso").val(null).trigger("change");
             $("#motivo_vaga").val(null).trigger("change");
+
         } else if (tipo == 3) {
             $("#componenteEspecial").modal({
                 show: true,
