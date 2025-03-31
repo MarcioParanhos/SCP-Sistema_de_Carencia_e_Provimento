@@ -47,7 +47,7 @@ $ano_atual = $data_atual->year;
                 <path d="M7 13m0 2a2 2 0 0 1 2 -2h6a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-6a2 2 0 0 1 -2 -2z" />
             </svg>
         </a>
-        <a class="mb-2 btn bg-primary text-white" target="_blank" href="/excel/carencias" data-toggle="tooltip" data-placement="top" title="Download em Excel">
+        <button class="mb-2 btn bg-primary text-white" data-toggle="modal" data-target="#exportModal">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-file-download">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                 <path d="M14 3v4a1 1 0 0 0 1 1h4" />
@@ -55,7 +55,7 @@ $ano_atual = $data_atual->year;
                 <path d="M12 17v-6" />
                 <path d="M9.5 14.5l2.5 2.5l2.5 -2.5" />
             </svg>
-        </a>
+        </button>
         <a class="mb-2 btn bg-info text-white" data-toggle="modal" data-target="#modalInfo">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-question-mark">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none" />
@@ -146,7 +146,7 @@ $ano_atual = $data_atual->year;
                     <select name="search_eixo" id="search_eixo" class="form-control form-control-sm select2">
                         <option></option>
                         @foreach ($eixo_cursos as $eixo_cursos)
-                            <option value="{{$eixo_cursos -> eixo}}">{{$eixo_cursos -> eixo}}</option>
+                        <option value="{{$eixo_cursos -> eixo}}">{{$eixo_cursos -> eixo}}</option>
                         @endforeach
                     </select>
                 </div>
@@ -460,7 +460,170 @@ $ano_atual = $data_atual->year;
         </div>
     </div>
 </div>
+
+<!-- Modal -->
+<div class="modal fade" id="exportModal" tabindex="-1" role="dialog" aria-labelledby="exportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title font-weight-bold" id="exportModalLabel">
+                    <i class="fas fa-file-export mr-2"></i>SELECIONAR COLUNAS PARA EXPORTAÇÃO
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Fechar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Botões ajustados com mesmo tamanho -->
+                <div class="row justify-content-center mb-5">
+                    <div class="col-md-10">
+                        <div class="d-flex">
+                            <button type="button" style="width: 150px;" class="btn btn-success flex-fill mx-1 py-2 subheader" id="selectAllBtn">
+                                Marcar Todas
+                            </button>
+                            <button type="button" style="width: 150px;" class="btn btn-danger flex-fill mx-1 py-2 subheader" id="deselectAllBtn">
+                            Desmarcar todas
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="exportForm">
+                    <div class="row">
+                        <?php
+                        $colunasDisponiveis = [
+                            'nte' => 'NTE',
+                            'municipio' => 'Município',
+                            'unidade_escolar' => 'UEE',
+                            'cod_ue' => 'Cod.',
+                            'tipo_carencia' => 'Tipo',
+                            'eixo' => 'Eixo',
+                            'curso' => 'Curso',
+                            'area' => 'Área',
+                            'disciplina' => 'Disciplina',
+                            'servidor' => 'Servidor',
+                            'cadastro' => 'Cadastro',
+                            'matutino' => 'MAT',
+                            'vespertino' => 'VESP',
+                            'noturno' => 'NOT',
+                            'total' => 'Total'
+                        ];
+
+                        $metade = ceil(count($colunasDisponiveis) / 2);
+                        $i = 0;
+
+                        echo '<div class="col-md-6 pr-2">';
+                        foreach ($colunasDisponiveis as $key => $label) {
+                            if ($i == $metade) {
+                                echo '</div><div class="col-md-6 pl-2">';
+                            }
+                            echo '<div class="custom-control custom-checkbox mb-3">';
+                            echo '<input type="checkbox" class="custom-control-input column-checkbox" id="col_' . $key . '" name="columns[]" value="' . $key . '" checked>';
+                            echo '<label class="custom-control-label" for="col_' . $key . '" style="cursor:pointer;">' . $label . '</label>';
+                            echo '</div>';
+                            $i++;
+                        }
+                        echo '</div>';
+                        ?>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary subheader" data-dismiss="modal">
+                    <i class="fas fa-times mr-1"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-success subheader" onclick="exportExcel()">
+                    <i class="fas fa-file-excel mr-1"></i>Exportar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .modal-content {
+        border-radius: 0.8rem;
+    }
+
+    .modal-header {
+        padding: 1rem 1.5rem;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+        max-height: 65vh;
+        overflow-y: auto;
+        flex-direction: column;
+    }
+
+    .custom-checkbox .custom-control-input:checked~.custom-control-label::before {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+
+    .col-md-6 {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+
+    .custom-control {
+        padding-left: 2rem;
+        min-height: 2rem;
+    }
+
+    .custom-control-label {
+        padding-top: 2px;
+        padding-left: 5px;
+    }
+
+    /* Estilo específico para os botões de seleção */
+    #selectAllBtn, #deselectAllBtn {
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+    }
+
+    #selectAllBtn:hover, #deselectAllBtn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Selecionar todas
+        document.getElementById('selectAllBtn').addEventListener('click', function() {
+            document.querySelectorAll('.column-checkbox').forEach(function(checkbox) {
+                checkbox.checked = true;
+            });
+        });
+
+        // Desmarcar todas
+        document.getElementById('deselectAllBtn').addEventListener('click', function() {
+            document.querySelectorAll('.column-checkbox').forEach(function(checkbox) {
+                checkbox.checked = false;
+            });
+        });
+    });
+</script>
 @endsection
+
+<script>
+    document.getElementById("selectAll").addEventListener("change", function() {
+        let checkboxes = document.querySelectorAll(".column-checkbox");
+        checkboxes.forEach(checkbox => checkbox.checked = this.checked);
+    });
+
+    function exportExcel() {
+        let selectedColumns = [];
+        document.querySelectorAll(".column-checkbox:checked").forEach(checkbox => {
+            selectedColumns.push(checkbox.value);
+        });
+
+        let url = "/excel/carencias?columns=" + selectedColumns.join(",");
+        window.open(url, "_blank");
+    }
+</script>
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
