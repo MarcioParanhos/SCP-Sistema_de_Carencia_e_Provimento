@@ -827,10 +827,17 @@ class ProvimentoController extends Controller
 
     public function createProvimentoEfetivo()
     {
+        $uees = Uee::leftJoin('unidades_organizacionais', 'uees.cod_unidade', '=', 'unidades_organizacionais.cod_sec')
+        ->where(function ($query) {
+            $query->where('uees.desativation_situation', 'Ativa')
+                ->orWhereNull('uees.desativation_situation');
+        })
+        ->get();;
         $disciplinas = Disciplina::orderBy('nome', 'asc')->get();
 
         return view('provimento.create_provimento_efetivo', compact([
             'disciplinas',
+            'uees',
         ]));
     }
 

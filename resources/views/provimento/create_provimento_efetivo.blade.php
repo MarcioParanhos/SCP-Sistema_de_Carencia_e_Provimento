@@ -127,20 +127,19 @@
                         <h5><strong>UNIDADE DE ENCAMINHAMENTO</strong></h5>
                         <br>
                         <div class="form-row">
-                            <div class=" col-md-2">
-                                <div class="display_btn position-relative form-group">
-                                    <div>
-                                        <label for="cod_ue" class="">Codigo SAP da UEE <span class="span_required">*</span></label>
-                                        <input value="" minlength="8" maxlength="9" name="" id="cod_ue" type="number" class="form-control form-control-sm" required>
-                                        <input value="" id="unidade_id" name="unidade_id" type="number" class="form-control form-control-sm" hidden>
-                                    </div>
-                                    <div class="btn_carencia_seacrh">
-                                        <button id="btn-cadastro" class="position-relative btn_search_carencia btn btn-sm btn-primary" type="button" onclick="searchUnidadeForCodSap()" required>
-                                            <i class="ti-search"></i>
-                                        </button>
-                                    </div>
+                            <div class="col-md-12">
+                                <div class=" form-group_disciplina">
+                                    <label for="cod_ue" class="">BUSQUE A UNIDADE ESCOLAR <span class="span_required">*</span></label>
+                                    <select name="cod_ue" id="cod_ue" class="form-control select2" required>
+                                        <option value="">Selecione uma unidade escolar...</option>
+                                        @foreach ($uees as $uee)
+                                        <option value="{{ $uee->uo }}">@if($uee->nte < 10 )NTE 0{{ $uee->nte }} @else NTE {{ $uee->nte }} @endif - {{ $uee->municipio }} - {{ $uee->cod_unidade }} - {{ $uee->uo }} -  {{ $uee->unidade_escolar }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
                             </div>
+                        </div>
+                        <div class="form-row">
                             <div class="col-md-1">
                                 <div class="form-group">
                                     <label for="nte" class="">NTE</label>
@@ -151,6 +150,12 @@
                                 <div class="form-group">
                                     <label for="municipio" class="">Município</label>
                                     <input value="" id="municipio" name="" type="text" class="form-control form-control-sm" readonly required>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label for="cod_unidade" class="">COD. UNIDADE</label>
+                                    <input value="" id="cod_unidade" name="" type="text" class="form-control form-control-sm" readonly required>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -502,27 +507,42 @@
     </div>
 </div>
 
+
 <!-- Scriptis for this page -->
 <script src="{{ asset('dist/js/encaminhamento.js') }}" defer></script>
 
 
 
+
 <Script>
     document.addEventListener("DOMContentLoaded", function() {
+
+        $(document).ready(function() {
+            $('#cod_ue').select2(); // Garante que o Select2 está inicializado
+
+            $('#cod_ue').on('change', function() {
+                searchUnidadeForCodSap();
+            });
+        });
+
         const session_message = document.getElementById("session_message");
 
         if (session_message) {
             if (session_message.value === "error") {
+
                 Swal.fire({
                     icon: 'error',
                     title: 'Atenção!',
                     text: 'Já existe um registro de servidor associado a este número de CPF na unidade escolar selecionada.',
                 })
+                
             } else if (session_message.value === "success") {
+
                 Swal.fire({
                     icon: 'success',
                     text: 'Encaminhamento adicionado com sucesso!',
                 })
+
             } else {
 
                 Swal.fire({
@@ -531,7 +551,6 @@
                     title: 'SERVIDOR ADICIONADO COM SUCESSO!',
                     showConfirmButton: true,
                 })
-
             }
         }
     });
