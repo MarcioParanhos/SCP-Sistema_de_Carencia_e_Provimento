@@ -198,25 +198,25 @@ $ano_atual = $data_atual->year;
         <div class="col-md-2">
             <div class="form-group_disciplina">
                 <label class="control-label" for="cadastro">Matricula</label>
-                <input value="{{ $carencia->cadastro }}" name="cadastro" id="cadastro" type="text" class="form-control form-control-sm" readonly>
+                <input value="{{ $carencia->cadastro }}" name="" id="" type="text" class="form-control form-control-sm" readonly>
             </div>
         </div>
         <div class="col-md-5">
             <div class="form-group_disciplina">
                 <label class="control-label" for="servidor">Servidor</label>
-                <input value="{{ $carencia->servidor }}" name="servidor" id="servidor" type="text" class="form-control form-control-sm" readonly>
+                <input value="{{ $carencia->servidor }}" name="" id="" type="text" class="form-control form-control-sm" readonly>
             </div>
         </div>
         <div class="col-md-3">
             <div class="form-group_disciplina">
                 <label class="control-label" for="vinculo">vinculo</label>
-                <input value="{{ $carencia->vinculo }}" name="vinculo" id="vinculo" type="text" class="form-control form-control-sm" readonly>
+                <input value="{{ $carencia->vinculo }}" name="" id="" type="text" class="form-control form-control-sm" readonly>
             </div>
         </div>
         <div class="col-md-2">
             <div class="form-group_disciplina">
                 <label for="regime" class="control-label">regime</label>
-                <input value="{{ $carencia->regime }}" name="regime" id="regime" type="text" class="form-control form-control-sm" readonly>
+                <input value="{{ $carencia->regime }}" name="" id="" type="text" class="form-control form-control-sm" readonly>
             </div>
         </div>
     </div>
@@ -354,7 +354,7 @@ $ano_atual = $data_atual->year;
         <div id="data_assuncao_row" class="col-md-12">
             <div class="form-group_disciplina">
                 <label for="obs">Observações<i class="ti-pencil"></i></label>
-                <textarea  class="form-control" id="obs_cpg" rows="4" readonly>{{ $carencia->obs_cpg }}</textarea>
+                <textarea class="form-control" id="obs_cpg" rows="4" readonly>{{ $carencia->obs_cpg }}</textarea>
             </div>
         </div>
     </div>
@@ -490,6 +490,137 @@ $ano_atual = $data_atual->year;
         </table>
     </div>
 </div>
+</div>
+<hr>
+
+<!-- Seção de Reserva de Vaga -->
+<div class="card mt-4 shadow">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">RESERVA DE VAGA</h4>
+
+    </div>
+
+    <div class="card-body">
+        @if ((Auth::user()->profile === "cpm_tecnico") || (Auth::user()->profile === "administrador"))
+        <form action="{{ route('reserva.create') }}" method="post">
+            @csrf
+            <input type="hidden" name="carencia_id" value="{{ $carencia->id  }}">
+            <input value="{{ Auth::user()->id }}" id="user_id" name="user_id" type="text" class="form-control form-control-sm" hidden>
+
+            <div class="form-row">
+                <div id="matricula-row" class="col-md-2">
+                    <div class="display_btn position-relative form-group">
+                        <div>
+                            <label for="cadastro" class="">Matrícula / CPF</label>
+                            <input value="" minlength="8" maxlength="11" name="cadastro" id="cadastro" type="cadastro" class="form-control form-control-sm">
+                        </div>
+                        <div class="btn_carencia_seacrh">
+                            <button id="cadastro_btn" class="position-relative btn_search_carencia btn btn-sm btn-primary" type="button" onclick="searchServidor()">
+                                <i class="ti-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="servidor" class="">nome do servidor</label>
+                        <input value="" id="servidor" type="text" class="form-control form-control-sm" readonly>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="vinculo" class="">vinculo</label>
+                        <input value="" id="vinculo" type="text" class="form-control form-control-sm" readonly>
+                    </div>
+                </div>
+                <div class="col-md-1">
+                    <div class="position-relative form-group">
+                        <label for="regime" class="">regime</label>
+                        <input value="" required id="regime" type="text" class="form-control form-control-sm" readonly>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="reserva_inicio">Data de Início da Reserva</label>
+                        <input type="date" class="form-control form-control-sm" id="reserva_inicio" name="reserva_inicio" required>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="reserva_fim">Data de Fim da Reserva</label>
+                        <input type="date" class="form-control form-control-sm" id="reserva_fim" name="reserva_fim">
+                    </div>
+                </div>
+
+                <div id="data_assuncao_row" class="col-md-12">
+                    <div class="form-group_disciplina">
+                        <label for="justificativa_reserva">Justificativa <i class="ti-pencil"></i></label>
+                        <textarea class="form-control" name="justificativa_reserva" id="justificativa_reserva" rows="5"></textarea>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="d-flex justify-content-end mt-3">
+                <div id="buttons" class="buttons">
+                    <button id="" class="button" type="submit">
+                        <span class="button__text">RESERVAR</span>
+                        <span class="button__icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-device-floppy">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M6 4h10l4 4v10a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2" />
+                                <path d="M12 14m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                                <path d="M14 4l0 4l-6 0l0 -4" />
+                            </svg>
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </form>
+        @endif
+
+        <!-- Lista de Reservas Existentes -->
+        <hr>
+        <div class="mt-4">
+            <h5>RESERVA EXISTENTE PARA ESTA VAGA</h5>
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered table-hover">
+                    <thead class="bg-primary text-white">
+                        <tr>
+                            <th class="text-center subheader">#</th>
+                            <th class="text-center subheader">Servidor</th>
+                            <th class="text-center subheader">Matrícula</th>
+                            <th class="text-center subheader">Vínculo</th>
+                            <th class="text-center subheader">Período</th>
+                            <th class="text-center subheader">Justificativa</th>
+                            <th class="text-center subheader">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($vaga_reserva as $reserva)
+                        <tr>
+                            <td class="text-center subheader">{{ $reserva->id }}</td>
+                            <td class="text-center subheader">{{ $reserva->servidor->nome }}</td>
+                            <td class="text-center subheader">{{ $reserva->servidor->cadastro }}</td>
+                            <td class="text-center subheader">{{ $reserva->servidor->vinculo }}</td>
+                            <td class="text-center subheader">
+                                <strong>Início:</strong> {{ \Carbon\Carbon::parse($reserva->data_inicio)->format('d/m/Y') }} <br>
+                                <strong>Fim:</strong> {{ \Carbon\Carbon::parse($reserva->data_fim)->format('d/m/Y') }}
+                            </td>
+                            <td class="text-center subheader">{{ $reserva->justificativa }}</td>
+                            <td></td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
 </div>
 
 @endsection

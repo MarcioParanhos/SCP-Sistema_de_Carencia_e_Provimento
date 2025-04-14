@@ -14,4 +14,9 @@ class Servidore extends Model
     {
         return $this->hasMany(RegularizacaoFuncional::class, 'servidor_id');
     }
+
+    public function vagasReservas()
+{
+    return $this->hasMany(VagaReserva::class);
+}
 }

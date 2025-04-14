@@ -321,6 +321,7 @@
                         <option value="INTEGRAÇÃO SIGEDUC X SPE">INTEGRAÇÃO SIGEDUC X SPE</option>
                         <option value="SEM PROFESSOR">SEM PROFESSOR</option>
                         <option value="CRIAR MEDIADOR MUNICIPAL E/OU TERCEIRIZADO">CRIAR MEDIADOR MUNICIPAL E/OU TERCEIRIZADO</option>
+                        <option value="RESPONSABILIDADE DO NTE">RESPONSABILIDADE DO NTE</option>
                     </select>
                 </div>
             </div>
@@ -345,6 +346,7 @@
                         <option value="INTEGRAÇÃO SIGEDUC X SPE">INTEGRAÇÃO SIGEDUC X SPE</option>
                         <option value="SEM PROFESSOR">SEM PROFESSOR</option>
                         <option value="CRIAR MEDIADOR MUNICIPAL E/OU TERCEIRIZADO">CRIAR MEDIADOR MUNICIPAL E/OU TERCEIRIZADO</option>
+                        <option value="RESPONSABILIDADE DO NTE">RESPONSABILIDADE DO NTE</option>
                     </select>
                 </div>
             </div>

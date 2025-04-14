@@ -17,6 +17,8 @@ use App\Http\Controllers\RegularizacaoFuncionalController;
 use App\Http\Controllers\ListasSuspensasController;
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\ManutencaoController;
+use App\Http\Controllers\VagareservaController;
+use App\Models\VagaReserva;
 
 Route::middleware('auth')->group(function () {
     //Home
@@ -167,6 +169,9 @@ Route::middleware('auth')->group(function () {
     //Manutenção
     Route::get('/manutencoes', [ManutencaoController::class, 'index'])->name("manutencao.show");
     Route::get('/manutencoes/create', [ManutencaoController::class, 'create'])->name("manutencao.create");
+    // Reserva de Vagas
+    Route::post('/reserva/create', [VagareservaController::class, 'create'])->name('reserva.create');
+    Route::get('/reserva/carencia/show', [VagareservaController::class, 'index'])->name('reserva.index');
 });
 
 require __DIR__ . '/auth.php';

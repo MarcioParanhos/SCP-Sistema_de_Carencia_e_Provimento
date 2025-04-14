@@ -282,6 +282,7 @@ $ano_atual = $data_atual->year;
     </form>
     <hr>
 </div>
+
 <div class="table-responsive">
     <table id="consultarCarencias" class=" table table-sm table-hover table-bordered">
         <caption class="mt-2 subheader">CARÊNCIAS NÃO SUPRIDAS</caption>
@@ -306,97 +307,95 @@ $ano_atual = $data_atual->year;
         </thead>
         <tbody>
             @foreach ($filteredCarencias as $carencia)
-            <tr>
-                @if ( $carencia -> nte < 10) <td class="text-center" scope="row">0{{ $carencia -> nte }}</td>
-                    @endif
-                    @if ( $carencia -> nte >= 10)
-                    <td class="text-center" scope="row">{{ $carencia -> nte }}</td>
-                    @endif
-                    <td class="">{{ $carencia -> municipio }}</td>
-                    <td>{{ $carencia -> unidade_escolar }}</td>
-                    <td class="text-center">{{ $carencia -> cod_ue }}</td>
-                    @if ($carencia->tipo_carencia === "Real")
-                    <td data-toggle="modal" data-target="#modalInfo" class="text-center cursor-pointer"><span class="tipo_carencia">R</span></td>
-                    @endif
-                    @if ($carencia->tipo_carencia === "Temp")
-                    <td data-toggle="modal" data-target="#modalInfo" class="text-center cursor-pointer"><span class="tipo_carencia">T</span></td>
-                    @endif
-                    @if ( $carencia -> hml === "SIM")
-                    <td class="text-success text-center"><strong>SIM</strong></td>
-                    @endif
-                    @if ( $carencia -> hml === "NÃO")
-                    <td class="text-danger text-center"><strong>NÃO</strong></td>
-                    @endif
-                    <td>{{ $carencia -> disciplina }}</td>
-                    <td class="text-center">{{ $carencia -> matutino }}</td>
-                    <td class="text-center">{{ $carencia -> vespertino }}</td>
-                    <td class="text-center">{{ $carencia -> noturno }}</td>
-                    <td class="text-center">{{ $carencia -> total }}</td>
-                    <td>{{ $carencia -> motivo_vaga }}</td>
-                    <td>{{ $carencia -> servidor }}</td>
-                    <td class="text-center">{{ $carencia -> cadastro }}</td>
-                    <td class="d-flex text-center">
-                        <a data-toggle="tooltip" data-placement="top" title="Detalhes" title="Detalhar" href="/detalhar_carencia/{{ $carencia -> id }}"><button id="" class=" btn btn-primary">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-search">
-                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                    <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
-                                    <path d="M21 21l-6 -6" />
-                                </svg>
-                            </button>
-                        </a>
-                        @if ( (Auth::user()->profile === "cpg_tecnico") || (Auth::user()->profile === "administrador"))
-                        @if ((Auth::user()->profile === "cpg_tecnico") || (Auth::user()->profile === "administrador"))
-                        @if ($carencia->hml === "SIM")
-                        <a data-toggle="tooltip" data-placement="top" title="Excluir" title="Excluir" id="" onclick="destroy('{{ $carencia -> id }}')" class="ml-1 btn btn-danger">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-trash">
+            <tr @if ($carencia->vagaReserva) class="table-warning" @endif>
+                <td class="text-center" scope="row">
+                    {{ str_pad($carencia->nte, 2, '0', STR_PAD_LEFT) }}
+                </td>
+                <td class="">{{ $carencia -> municipio }}</td>
+                <td>{{ $carencia -> unidade_escolar }}</td>
+                <td class="text-center">{{ $carencia -> cod_ue }}</td>
+                @if ($carencia->tipo_carencia === "Real")
+                <td data-toggle="modal" data-target="#modalInfo" class="text-center cursor-pointer"><span class="tipo_carencia">R</span></td>
+                @endif
+                @if ($carencia->tipo_carencia === "Temp")
+                <td data-toggle="modal" data-target="#modalInfo" class="text-center cursor-pointer"><span class="tipo_carencia">T</span></td>
+                @endif
+                @if ( $carencia -> hml === "SIM")
+                <td class="text-success text-center"><strong>SIM</strong></td>
+                @endif
+                @if ( $carencia -> hml === "NÃO")
+                <td class="text-danger text-center"><strong>NÃO</strong></td>
+                @endif
+                <td>{{ $carencia -> disciplina }}</td>
+                <td class="text-center">{{ $carencia -> matutino }}</td>
+                <td class="text-center">{{ $carencia -> vespertino }}</td>
+                <td class="text-center">{{ $carencia -> noturno }}</td>
+                <td class="text-center">{{ $carencia -> total }}</td>
+                <td>{{ $carencia -> motivo_vaga }}</td>
+                <td>{{ $carencia -> servidor }}</td>
+                <td class="text-center">{{ $carencia -> cadastro }}</td>
+                <td class="d-flex text-center">
+                    <a data-toggle="tooltip" data-placement="top" title="Detalhes" title="Detalhar" href="/detalhar_carencia/{{ $carencia -> id }}"><button id="" class=" btn btn-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-search">
                                 <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                <path d="M4 7l16 0" />
-                                <path d="M10 11l0 6" />
-                                <path d="M14 11l0 6" />
-                                <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
-                                <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                                <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+                                <path d="M21 21l-6 -6" />
                             </svg>
-                        </a>
-                        @elseif ($carencia->hml === "NÃO")
-                        <a data-toggle="tooltip" data-placement="top" title="Excluir" title="Excluir" id="" onclick="destroy('{{ $carencia -> id }}')" class="ml-1 btn btn-danger">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-trash">
-                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                <path d="M4 7l16 0" />
-                                <path d="M10 11l0 6" />
-                                <path d="M14 11l0 6" />
-                                <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
-                                <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
-                            </svg>
-                        </a>
-                        @endif
-                        @endif
-                        @endif
-                        @if ( (session('ano_ref') == $ano_atual) || (Auth::user()->profile === "administrador"))
-                        @if ((Auth::user()->profile === "cpm_tecnico") || (Auth::user()->profile === "administrador"))
-                        @if ($carencia->hml === "SIM")
-                        <a data-toggle="tooltip" data-placement="top" title="Prover" title="Prover" id="" href="/prover/{{ $carencia -> id }}/{{ $carencia -> cod_ue }}" class="ml-1 btn btn-info">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-replace">
-                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                <path d="M3 3m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
-                                <path d="M15 15m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
-                                <path d="M21 11v-3a2 2 0 0 0 -2 -2h-6l3 3m0 -6l-3 3" />
-                                <path d="M3 13v3a2 2 0 0 0 2 2h6l-3 -3m0 6l3 -3" />
-                            </svg>
-                        </a>
-                        @elseif ($carencia->hml === "NÃO")
-                        <a data-toggle="tooltip" data-placement="top" title="Prover" title="Prover" id="" href="/prover/{{ $carencia -> id }}/{{ $carencia -> cod_ue }}" class="ml-1 btn btn-info" hidden>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-replace">
-                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                <path d="M3 3m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
-                                <path d="M15 15m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
-                                <path d="M21 11v-3a2 2 0 0 0 -2 -2h-6l3 3m0 -6l-3 3" />
-                                <path d="M3 13v3a2 2 0 0 0 2 2h6l-3 -3m0 6l3 -3" />
-                            </svg>
-                        </a>
-                        @endif
-                        @endif
-                        @endif
-                    </td>
+                        </button>
+                    </a>
+                    @if ( (Auth::user()->profile === "cpg_tecnico") || (Auth::user()->profile === "administrador"))
+                    @if ((Auth::user()->profile === "cpg_tecnico") || (Auth::user()->profile === "administrador"))
+                    @if ($carencia->hml === "SIM")
+                    <a data-toggle="tooltip" data-placement="top" title="Excluir" title="Excluir" id="" onclick="destroy('{{ $carencia -> id }}')" class="ml-1 btn btn-danger">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-trash">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M4 7l16 0" />
+                            <path d="M10 11l0 6" />
+                            <path d="M14 11l0 6" />
+                            <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                            <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                        </svg>
+                    </a>
+                    @elseif ($carencia->hml === "NÃO")
+                    <a data-toggle="tooltip" data-placement="top" title="Excluir" title="Excluir" id="" onclick="destroy('{{ $carencia -> id }}')" class="ml-1 btn btn-danger">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-trash">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M4 7l16 0" />
+                            <path d="M10 11l0 6" />
+                            <path d="M14 11l0 6" />
+                            <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                            <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                        </svg>
+                    </a>
+                    @endif
+                    @endif
+                    @endif
+                    @if ( (session('ano_ref') == $ano_atual) || (Auth::user()->profile === "administrador"))
+                    @if ((Auth::user()->profile === "cpm_tecnico") || (Auth::user()->profile === "administrador"))
+                    @if ($carencia->hml === "SIM")
+                    <a data-toggle="tooltip" data-placement="top" title="Prover" title="Prover" id="" href="/prover/{{ $carencia -> id }}/{{ $carencia -> cod_ue }}" class="ml-1 btn btn-info">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-replace">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M3 3m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+                            <path d="M15 15m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+                            <path d="M21 11v-3a2 2 0 0 0 -2 -2h-6l3 3m0 -6l-3 3" />
+                            <path d="M3 13v3a2 2 0 0 0 2 2h6l-3 -3m0 6l3 -3" />
+                        </svg>
+                    </a>
+                    @elseif ($carencia->hml === "NÃO")
+                    <a data-toggle="tooltip" data-placement="top" title="Prover" title="Prover" id="" href="/prover/{{ $carencia -> id }}/{{ $carencia -> cod_ue }}" class="ml-1 btn btn-info" hidden>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-replace">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M3 3m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+                            <path d="M15 15m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+                            <path d="M21 11v-3a2 2 0 0 0 -2 -2h-6l3 3m0 -6l-3 3" />
+                            <path d="M3 13v3a2 2 0 0 0 2 2h6l-3 -3m0 6l3 -3" />
+                        </svg>
+                    </a>
+                    @endif
+                    @endif
+                    @endif
+                </td>
             </tr>
             @endforeach
         </tbody>
@@ -421,7 +420,6 @@ $ano_atual = $data_atual->year;
 </div>
 
 
-
 <!-- Modal -->
 <div class="modal fade" id="modalInfo" tabindex="-1" role="dialog" aria-labelledby="TitulomodalInfo" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
@@ -439,6 +437,11 @@ $ano_atual = $data_atual->year;
                         <div class="mt-3">
                             <span class="tipo_carencia">T</span> - Temporária
                         </div>
+                        <div class="mt-3 d-flex align-items-center">
+                            <span class="tipo_carencia mr-1" style="display: inline-block; width: 80px; height: 30px; background-color: #ffeeb8;"></span>
+                            <span class="ms-2"> - Carência com Reserva</span>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -482,7 +485,7 @@ $ano_atual = $data_atual->year;
                                 Marcar Todas
                             </button>
                             <button type="button" style="width: 150px;" class="btn btn-danger flex-fill mx-1 py-2 subheader" id="deselectAllBtn">
-                            Desmarcar todas
+                                Desmarcar todas
                             </button>
                         </div>
                     </div>
@@ -577,15 +580,17 @@ $ano_atual = $data_atual->year;
     }
 
     /* Estilo específico para os botões de seleção */
-    #selectAllBtn, #deselectAllBtn {
+    #selectAllBtn,
+    #deselectAllBtn {
         font-weight: 500;
         letter-spacing: 0.5px;
         transition: all 0.3s ease;
     }
 
-    #selectAllBtn:hover, #deselectAllBtn:hover {
+    #selectAllBtn:hover,
+    #deselectAllBtn:hover {
         transform: translateY(-1px);
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     }
 </style>
 

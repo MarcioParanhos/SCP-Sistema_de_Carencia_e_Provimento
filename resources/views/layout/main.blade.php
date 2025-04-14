@@ -119,6 +119,7 @@
                                 @endif
                                 <li class="nav-item"><i class="ti-search"></i><a class="nav-link sub-title" href="/buscar/provimento/all_provimentos">Buscar</a></li>
                                 @if ( (Auth::user()->profile === "cpm_tecnico") || (Auth::user()->profile === "administrador") || (Auth::user()->profile === "cpm_coordenador"))
+                                <li class="nav-item"><i class="ti-file"></i><a class="nav-link sub-title" href="{{ route('reserva.index') }}">RESERVA</a></li>
                                 <li class="nav-item"><i class="ti-download"></i><a class="nav-link sub-title" href="{{ route('provimentos.servidores_encaminhamento') }}">TERMOS</a></li>
                                 @endif
                             </ul>

@@ -15,6 +15,7 @@ use App\Models\Provimento;
 use App\Models\Area;
 use App\Models\Log;
 use App\Models\ComponenteEspecial;
+use App\Models\VagaReserva;
 
 class CarenciaController extends Controller
 {
@@ -121,7 +122,7 @@ class CarenciaController extends Controller
         $anoRef = session()->get('ano_ref');
 
         if ($tipo === "all_carencias") {
-            $filteredCarencias = Carencia::where('total', '>', 0)
+            $filteredCarencias = Carencia::with('vagaReserva')->where('total', '>', 0)
                 ->where(function ($query) use ($formattedDate) {
                     $query->where('fim_vaga', '>=', $formattedDate)
                         ->orWhereNull('fim_vaga');
@@ -394,7 +395,9 @@ class CarenciaController extends Controller
         $motivo_vagaTemp = Motivo_vaga::where('tipo', 'Temp')->get();
         $eixo_cursos = Eixo_curso::distinct()->get(['curso']);
 
-        return view('carencia.detail_carencia', compact('carencia', 'detailUeeHomologacao', 'detailProvimentos', 'motivo_vagaReal', 'disciplinas', 'motivo_vagaTemp', 'eixo_cursos'));
+        $vaga_reserva = VagaReserva::with(['servidor', 'carencia'])->where("carencia_id", $carencia->id)->get();
+
+        return view('carencia.detail_carencia', compact('vaga_reserva', 'carencia', 'detailUeeHomologacao', 'detailProvimentos', 'motivo_vagaReal', 'disciplinas', 'motivo_vagaTemp', 'eixo_cursos'));
     }
 
     public function destroy(Carencia $carencia)

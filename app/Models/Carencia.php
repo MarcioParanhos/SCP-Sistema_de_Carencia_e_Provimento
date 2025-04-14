@@ -14,4 +14,15 @@ class Carencia extends Model
     {
         return $this->belongsTo(Uee::class, 'uee_id', 'id');
     }
+
+    public function vagasReservas()
+    {
+        return $this->hasMany(VagaReserva::class);
+    }
+
+    public function vagaReserva()
+{
+    return $this->hasOne(VagaReserva::class, 'carencia_id'); // ou a foreign key correta
+}
+
 }
