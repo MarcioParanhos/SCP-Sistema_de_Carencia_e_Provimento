@@ -21,8 +21,12 @@ class Carencia extends Model
     }
 
     public function vagaReserva()
-{
-    return $this->hasOne(VagaReserva::class, 'carencia_id'); // ou a foreign key correta
-}
+    {
+        return $this->hasOne(VagaReserva::class, 'carencia_id'); // ou a foreign key correta
+    }
 
+    public function disciplinas()
+    {
+        return $this->belongsToMany(Disciplina::class, 'carencia_disciplina', 'carencia_id', 'disciplina_id');
+    }
 }

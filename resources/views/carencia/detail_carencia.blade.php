@@ -542,20 +542,58 @@ $ano_atual = $data_atual->year;
             </div>
 
             <div class="form-row">
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="form-group">
                         <label for="reserva_inicio">Data de Início da Reserva</label>
                         <input type="date" class="form-control form-control-sm" id="reserva_inicio" name="reserva_inicio" required>
                     </div>
                 </div>
 
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="form-group">
                         <label for="reserva_fim">Data de Fim da Reserva</label>
                         <input type="date" class="form-control form-control-sm" id="reserva_fim" name="reserva_fim">
                     </div>
                 </div>
 
+
+                    <div class="col-md-3" id="motivo_vaga_row">
+                        <div class="form-group_disciplina">
+                            <label class="control-label" for="forma_suprimento">FORMA DE SUPRIMENTO</label>
+                            <select name="forma_suprimento" id="forma_suprimento" class="form-control select2" required>
+                                <option value=""></option>
+                                @foreach ($forma_suprimentos as $forma_suprimento)
+                                <option value="{{$forma_suprimento->forma}}">{{$forma_suprimento->forma}}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3" id="motivo_vaga_row">
+                        <div class="form-group_disciplina">
+                            <label class="control-label" for="tipo_movimentacao">TIPO de movimentação</label>
+                            <select name="tipo_movimentacao" id="tipo_movimentacao" class="form-control select2" required>
+                                <option value="">SELECIONE...</option>
+                                <option value="INGRESSO">INGRESSO</option>
+                                <option value="RELOTAÇÃO">RELOTAÇÃO</option>
+                                <option value="REMOÇÃO">REMOÇÃO</option>
+                                <option value="PRÓPRIA UE">NA PRÓPRIA UE</option>
+                                <option value="COMPLEMENTAÇÃO">COMPLEMENTAÇÃO</option>
+                                <option value="COMPLEMENTAÇÃO">COMPLEMENTAÇÃO</option>
+                                <option value="CONVOCAÇÃO SELETIVO">CONVOCAÇÃO SELETIVO</option>
+                                <option value="AUTORIZAÇÃO EMERGENCIAL">AUTORIZAÇÃO EMERGENCIAL</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-2 id="motivo_vaga_row">
+                        <div class="form-group_disciplina">
+                            <label class="control-label" for="tipo_aula">Tipo de Aula </label>
+                            <select name="tipo_aula" id="tipo_aula" class="form-control select2" required>
+                                <option value="">SELECIONE...</option>
+                                <option value="NORMAL">NORMAL</option>
+                                <option value="EXTRA">EXTRA</option>
+                            </select>
+                        </div>
+                    </div>
                 <div id="data_assuncao_row" class="col-md-12">
                     <div class="form-group_disciplina">
                         <label for="justificativa_reserva">Justificativa <i class="ti-pencil"></i></label>

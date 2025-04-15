@@ -16,6 +16,7 @@ use App\Models\Area;
 use App\Models\Log;
 use App\Models\ComponenteEspecial;
 use App\Models\VagaReserva;
+use App\Models\Forma_suprimento;
 
 class CarenciaController extends Controller
 {
@@ -394,10 +395,11 @@ class CarenciaController extends Controller
         $motivo_vagaReal = Motivo_vaga::where('tipo', 'Real')->get();
         $motivo_vagaTemp = Motivo_vaga::where('tipo', 'Temp')->get();
         $eixo_cursos = Eixo_curso::distinct()->get(['curso']);
+        $forma_suprimentos = Forma_suprimento::all();
 
         $vaga_reserva = VagaReserva::with(['servidor', 'carencia'])->where("carencia_id", $carencia->id)->get();
 
-        return view('carencia.detail_carencia', compact('vaga_reserva', 'carencia', 'detailUeeHomologacao', 'detailProvimentos', 'motivo_vagaReal', 'disciplinas', 'motivo_vagaTemp', 'eixo_cursos'));
+        return view('carencia.detail_carencia', compact('forma_suprimentos', 'vaga_reserva', 'carencia', 'detailUeeHomologacao', 'detailProvimentos', 'motivo_vagaReal', 'disciplinas', 'motivo_vagaTemp', 'eixo_cursos'));
     }
 
     public function destroy(Carencia $carencia)

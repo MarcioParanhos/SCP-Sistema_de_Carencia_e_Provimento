@@ -172,6 +172,7 @@ Route::middleware('auth')->group(function () {
     // Reserva de Vagas
     Route::post('/reserva/create', [VagareservaController::class, 'create'])->name('reserva.create');
     Route::get('/reserva/carencia/show', [VagareservaController::class, 'index'])->name('reserva.index');
+    Route::post('/reserva/prover', [VagareservaController::class, 'createProvimento'])->name('reserva.createProvimento');
 });
 
 require __DIR__ . '/auth.php';
