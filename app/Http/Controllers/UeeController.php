@@ -439,7 +439,6 @@ class UeeController extends Controller
                 $uee->typing_started = "SIM";
                 $uee->description_typing_started = null;
                 $uee->save();
-
             } else if ($request->typing_started == "NÃO") {
 
                 $uee = Uee::findOrFail($request->id);
@@ -448,22 +447,19 @@ class UeeController extends Controller
                 $uee->description_typing_started = $request->description_typing_started;
                 $uee->finished_typing_description = null;
                 $uee->save();
-
             }
-           
+
 
             if ($request->finished_typing == "SIM") {
                 $uee->finished_typing_description = null;
                 $uee->finished_typing = $request->finished_typing; // Correção aqui
                 $uee->save();
-
             } else {
 
                 $uee->finished_typing_description = $request->finished_typing_description;
                 $uee->finished_typing = $request->finished_typing; // Correção aqui
                 $uee->save();
             }
-
         } else if (!$request->filled('typing_started')) {
             $uee = Uee::findOrFail($request->id);
             $uee->typing_started = null;
@@ -488,41 +484,46 @@ class UeeController extends Controller
             $uee->save();
         }
 
-        if (($request->check_2_pch === "on") && ($request->check_3_pch === null) && ($request->check_4_pch === null)) {
+        $check2 = $request->has('check_2_pch');
+        $check3 = $request->has('check_3_pch');
+        $check4 = $request->has('check_4_pch');
+
+        if ($check2 && !$check3 && !$check4) {
 
             $uee = Uee::findOrFail($request->id);
             $uee->fill($request->except('check_2_pch'));
             $uee->programming_stage = 2;
             $uee->save();
-        } else if (($request->check_2_pch === "on") && ($request->check_3_pch === "on") && ($request->check_4_pch === null)) {
+        } else if ($check2 && $check3 && !$check4) {
 
             $uee = Uee::findOrFail($request->id);
             $uee->fill($request->except('check_2_pch', 'check_3_pch'));
             $uee->programming_stage = 3;
             $uee->save();
-        } else if (($request->check_2_pch === "on") && ($request->check_3_pch === "on") && ($request->check_4_pch === "on")) {
+        } else if ($check2 && $check3 && $check4) {
 
             $uee = Uee::findOrFail($request->id);
             $uee->fill($request->except('check_2_pch', 'check_3_pch', 'check_4_pch'));
             $uee->programming_stage = 4;
             $uee->save();
-        } else if (($request->check_2_pch === null) && ($request->check_3_pch === "on") && ($request->check_4_pch === null)) {
+        } else if (!$check2 && $check3 && !$check4) {
 
             $uee = Uee::findOrFail($request->id);
             $uee->fill($request->except('check_2_pch', 'check_3_pch'));
             $uee->programming_stage = 3;
             $uee->save();
-        } else if (($request->check_2_pch === null) && ($request->check_3_pch === null) && ($request->check_4_pch === "on")) {
+        } else if (!$check2 && !$check3 && $check4) {
 
             $uee = Uee::findOrFail($request->id);
             $uee->fill($request->except('check_2_pch', 'check_3_pch', 'check_4_pch'));
             $uee->programming_stage = 4;
             $uee->save();
         } else {
-
+            // Nenhum checkbox marcado
             $uee = Uee::findOrFail($request->id);
-            $uee->fill($request->except('check_2_pch'));
+            $uee->fill($request->except('check_2_pch', 'check_3_pch', 'check_4_pch'));
             $uee->programming_stage = 0;
+            $uee->save();
         }
 
         // Recupera todas as carências e provimentos que correspondem ao cod_ue fornecido
@@ -541,7 +542,7 @@ class UeeController extends Controller
             $provimento->save();  // Salva as alterações
         }
 
-      
+
 
         return  redirect()->to(url()->previous())->with('msg', 'Registros Alterados com Sucesso!');
     }

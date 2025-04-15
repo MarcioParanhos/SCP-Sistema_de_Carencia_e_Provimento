@@ -88,6 +88,8 @@ class VagareservaController extends Controller
 
     public function createProvimento(Request $request)
     {
+
+        $user = Auth::user();
         $carencia_ids = explode(', ', $request->input('carencia_ids'));
 
         // Buscando as carências associadas aos IDs
@@ -115,9 +117,11 @@ class VagareservaController extends Controller
             $provimento->total = $carencia->total;
             $provimento->id_carencia = $carencia->id;
             $provimento->disciplina = $carencia->disciplina;
+            $provimento->usuario = $user->name;
             $provimento->pch = "PENDENTE";
             $provimento->situacao = "DESBLOQUEADO";
             $provimento->situacao_provimento = "provida";
+            $provimento->obs = "Vaga provida mediante a reserva de vaga";
             $provimento->tipo_carencia_provida = $carencia->tipo_carencia;
 
             // Adicionando informações do servidor e da reserva
@@ -130,21 +134,22 @@ class VagareservaController extends Controller
                 // Campos da reserva
                 $provimento->tipo_movimentacao = $vaga_reserva->tipo_movimentacao;
                 $provimento->tipo_aula = $vaga_reserva->tipo_aula;
+                $provimento->forma_suprimento = $vaga_reserva->forma_suprimento;
             }
 
             // Salvando o provimento
-            $provimento->save();
+            if ($provimento->save()) {
+                // Zerando os campos da carência
+                $carencia->matutino = 0;
+                $carencia->vespertino = 0;
+                $carencia->noturno = 0;
+                $carencia->total = 0;
+                $carencia->save();
 
-            // Zerando os campos da carência
-            $carencia->matutino = 0;
-            $carencia->vespertino = 0;
-            $carencia->noturno = 0;
-            $carencia->total = 0;
-            $carencia->save();
-
-            // Excluindo a vaga reserva vinculada
-            if ($vaga_reserva) {
-                $vaga_reserva->delete();
+                // Excluindo a vaga reserva vinculada
+                if ($vaga_reserva) {
+                    $vaga_reserva->delete();
+                }
             }
         }
 
