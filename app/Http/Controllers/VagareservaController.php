@@ -36,7 +36,7 @@ class VagareservaController extends Controller
 
 
         if ($vaga_reserva->save()) {
-            return  redirect()->to(url()->previous())->with('msg', 'success');
+            return  redirect()->to(url()->previous())->with('msg', 'Vaga reservada com sucesso!');
         }
     }
 
@@ -90,7 +90,7 @@ class VagareservaController extends Controller
     {
 
         $user = Auth::user();
-        $carencia_ids = explode(', ', $request->input('carencia_ids'));
+        $carencia_ids = array_map('trim', explode(',', $request->input('carencia_ids')));
 
         // Buscando as carências associadas aos IDs
         $carencias = Carencia::whereIn('id', $carencia_ids)->get();
@@ -118,6 +118,8 @@ class VagareservaController extends Controller
             $provimento->id_carencia = $carencia->id;
             $provimento->disciplina = $carencia->disciplina;
             $provimento->usuario = $user->name;
+            $provimento->data_assuncao = $request->data_assuncao;
+            $provimento->data_encaminhamento = $request->data_assuncao;
             $provimento->pch = "PENDENTE";
             $provimento->situacao = "DESBLOQUEADO";
             $provimento->situacao_provimento = "provida";
@@ -153,6 +155,6 @@ class VagareservaController extends Controller
             }
         }
 
-        return redirect()->route('reserva.index')->with('success', 'Provimento criado com sucesso!');
+        return redirect()->route('reserva.index')->with('msg', 'success');
     }
 }

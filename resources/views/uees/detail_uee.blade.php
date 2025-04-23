@@ -410,6 +410,7 @@
                         <option value="TURMAS DAS OFICINAS CJCC">TURMAS DAS OFICINAS CJCC</option>
                         <option value="INTEGRAÇÃO SIGEDUC X SPE">INTEGRAÇÃO SIGEDUC X SPE</option>
                         <option value="CRIAR MEDIADOR MUNICIPAL E/OU TERCEIRIZADO">CRIAR MEDIADOR MUNICIPAL E/OU TERCEIRIZADO</option>
+                        <option value="RESPONSABILIDADE DO NTE">RESPONSABILIDADE DO NTE</option>
                     </select>
                     </select>
                 </div>
@@ -434,6 +435,7 @@
                         <option value="TURMAS DAS OFICINAS CJCC">TURMAS DAS OFICINAS CJCC</option>
                         <option value="INTEGRAÇÃO SIGEDUC X SPE">INTEGRAÇÃO SIGEDUC X SPE</option>
                         <option value="CRIAR MEDIADOR MUNICIPAL E/OU TERCEIRIZADO">CRIAR MEDIADOR MUNICIPAL E/OU TERCEIRIZADO</option>
+                        <option value="RESPONSABILIDADE DO NTE">RESPONSABILIDADE DO NTE</option>
                     </select>
                     </select>
                 </div>
