@@ -48,9 +48,10 @@ class ProvimentoController extends Controller
             ->where(function ($query) use ($formattedDate) {
                 $query->whereNull('fim_vaga')
                     ->orWhere('fim_vaga', '>', $formattedDate);
-            })
-            ->get();
-        $provimentos = Provimento::all()->where('cod_unidade', $codigo_unidade_provimento)->where('ano_ref', $anoRef);
+            })->get();
+
+        $provimentos = Provimento::where('cod_unidade', $codigo_unidade_provimento)->where('ano_ref', $anoRef)->get();
+
         $uee = Uee::where('cod_unidade', $codigo_unidade_provimento)->firstOrFail();
         $forma_suprimentos = Forma_suprimento::all();
 
@@ -828,11 +829,11 @@ class ProvimentoController extends Controller
     public function createProvimentoEfetivo()
     {
         $uees = Uee::leftJoin('unidades_organizacionais', 'uees.cod_unidade', '=', 'unidades_organizacionais.cod_sec')
-        ->where(function ($query) {
-            $query->where('uees.desativation_situation', 'Ativa')
-                ->orWhereNull('uees.desativation_situation');
-        })
-        ->get();;
+            ->where(function ($query) {
+                $query->where('uees.desativation_situation', 'Ativa')
+                    ->orWhereNull('uees.desativation_situation');
+            })
+            ->get();;
         $disciplinas = Disciplina::orderBy('nome', 'asc')->get();
 
         return view('provimento.create_provimento_efetivo', compact([
@@ -846,7 +847,7 @@ class ProvimentoController extends Controller
         $verify_servidor = ProvimentosEncaminhado::where('servidor_encaminhado_id', $request->servidor_id)
             ->where('uee_id', $request->unidade_id)
             ->first();
-    
+
         if ($verify_servidor) {
             return redirect()->to(url()->previous())->with('msg', 'error');
         } else {
@@ -862,35 +863,35 @@ class ProvimentoController extends Controller
             $provimentos_encaminhados->ano_ref = $anoRef;
             $provimentos_encaminhados->user_id = $request->usuario;
             $provimentos_encaminhados->servidor_substituido_id = $request->servidor_subistituido;
-    
+
             if ($request->id_segundo_servidor_subistituido) {
                 $provimentos_encaminhados->segundo_servidor_subistituido = $request->id_segundo_servidor_subistituido;
             }
-    
+
             $servidor_encaminhado = ServidoresEncaminhado::find($request->servidor_id);
             $servidor_encaminhado->formacao = $request->disciplina_efetivo;
-    
+
             $disciplinas = $request->input('disciplinas');
             $matutino = $request->input('matutino');
             $vespertino = $request->input('vespertino');
             $noturno = $request->input('noturno');
-    
+
             // Concatenar as disciplinas e os turnos
             $disciplinas_str = implode(', ', $disciplinas);
             $matutino_str = implode(', ', $matutino);
             $vespertino_str = implode(', ', $vespertino);
             $noturno_str = implode(', ', $noturno);
-    
+
             // Salvar os dados no banco de dados
             $provimentos_encaminhados->disciplina = $disciplinas_str;
             $provimentos_encaminhados->matutino = $matutino_str;
             $provimentos_encaminhados->vespertino = $vespertino_str;
             $provimentos_encaminhados->noturno = $noturno_str;
-    
+
             if ($servidor_encaminhado->save() && $provimentos_encaminhados->save()) {
                 return redirect()->to(url()->previous())->with('msg', 'success');
             }
-    
+
             return redirect()->to(url()->previous())->with('msg', 'error');
         }
     }
@@ -1207,7 +1208,6 @@ class ProvimentoController extends Controller
             ])) {
                 return response()->json(['value' => 0]);
             }
-            
         } else {
 
             $encaminhamento = ProvimentosEncaminhado::findOrFail($id);
@@ -1281,23 +1281,23 @@ class ProvimentoController extends Controller
         return response()->json(['message' => $encaminhamento]);
     }
 
-    public function gerarEncaminhamento($encaminhamento) {
+    public function gerarEncaminhamento($encaminhamento)
+    {
 
 
         $provimentos_encaminhado = ProvimentosEncaminhado::where('id', $encaminhamento)
             ->first();
 
-             // Verifica se há dados antes de calcular
-    if ($provimentos_encaminhado) {
-        $provimentos_encaminhado->total_matutino = array_sum(array_map('intval', explode(',', $provimentos_encaminhado->matutino)));
-        $provimentos_encaminhado->total_vespertino = array_sum(array_map('intval', explode(',', $provimentos_encaminhado->vespertino)));
-        $provimentos_encaminhado->total_noturno = array_sum(array_map('intval', explode(',', $provimentos_encaminhado->noturno)));
-    }
+        // Verifica se há dados antes de calcular
+        if ($provimentos_encaminhado) {
+            $provimentos_encaminhado->total_matutino = array_sum(array_map('intval', explode(',', $provimentos_encaminhado->matutino)));
+            $provimentos_encaminhado->total_vespertino = array_sum(array_map('intval', explode(',', $provimentos_encaminhado->vespertino)));
+            $provimentos_encaminhado->total_noturno = array_sum(array_map('intval', explode(',', $provimentos_encaminhado->noturno)));
+        }
 
 
         return view('relatorios.termo_encaminhamento', [
             'provimentos_encaminhado' => $provimentos_encaminhado,
         ]);
     }
-    
 }
