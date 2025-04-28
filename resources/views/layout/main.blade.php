@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    
+
     <title>@yield('title')</title>
 
     <link rel="stylesheet" href="/vendors/feather/feather.css">
@@ -352,6 +352,7 @@
     <script src="/js/Chart.roundedBarCharts.js"></script>
 
     <script src="/js/scriptsAddCarencia.js"></script>
+    <script src="/js/datatables.js"></script>
     <script src="/js/scriptsAddProvimento.js"></script>
     <script src="/js/scriptsConsultarCarencia.js"></script>
     <script src="/js/scripts.js"></script>
@@ -392,52 +393,8 @@
         });
     </script>
 
-    <script>
-        $(document).ready(function() {
-            $('#consultarCarencias').DataTable({
-                "paging": true,
-                "lengthChange": true,
-                "searching": true,
-                "ordering": false,
-                "info": false,
-                "autoWidth": false,
-                "serverSide": false,
-                "language": {
-                    "lengthMenu": "Exibindo _MENU_ Registros por página",
-                    "zeroRecords": "Nenhum registro encontrado",
-                    "info": "Mostrando pagina _PAGE_ de _PAGES_",
-                    "infoEmpty": "Nenhum Registro Disponivel",
-                    "infoFiltered": "(Filtrado _MAX_ Registros no Total)",
-                    "sSearch": "Pesquisa Dinâmica dos Filtros (Não é filtro)",
-                    "oPaginate": {
-                        "sFirst": "Primeira",
-                        "sNext": "Proxima",
-                        "sPrevious": "Anterior",
-                        "sLast": "Ultima",
-                    }
-                },
-            });
-        });
-    </script>
-
-
 </body>
-<!-- Modal Provimento Efetivo -->
-<!-- <div class="modal fade" id="incluirProvimentoEfetivo" tabindex="-1" role="dialog" aria-labelledby="incluirProvimentoEfetivo" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered " role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="incluirProvimentoEfetivo">SELECIONE</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body divEducEspecial">
-                <a id="btn_temp" class="buttonEducEspecial btn btn-primary" href="/provimento/efetivo/prover">EFETIVO</a>
-            </div>
-        </div>
-    </div>
-</div> -->
+
 <!-- Modal Selecionar Carencia -->
 <div class="modal fade" id="ExemploModalCentralizado" tabindex="-1" role="dialog" aria-labelledby="TituloModalCentralizado" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">

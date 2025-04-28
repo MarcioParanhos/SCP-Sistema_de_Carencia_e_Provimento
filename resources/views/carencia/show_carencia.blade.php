@@ -307,7 +307,7 @@ $ano_atual = $data_atual->year;
         </thead>
         <tbody>
             @foreach ($filteredCarencias as $carencia)
-            <tr @if ($carencia->vagaReserva) class="table-warning" @endif>
+            <tr @if (!empty($carencia->vagaReserva)) class="table-warning" @endif>
                 <td class="text-center" scope="row">
                     {{ str_pad($carencia->nte, 2, '0', STR_PAD_LEFT) }}
                 </td>
