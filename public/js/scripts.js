@@ -101,6 +101,7 @@ $('#finished_typing').on('change', function () {
 
         finished_typing_description.value = ""
         remove_finished_typing_description.hidden = true;
+        $("#finished_typing_description").val(null).trigger("change");
 
     } if (selectedValue == "NÃO") {
         const remove_finished_typing_description = document.getElementById("remove_finished_typing_description")

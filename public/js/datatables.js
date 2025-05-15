@@ -7,7 +7,7 @@ $(document).ready(function() {
         "info": false,
         "autoWidth": false,
         "serverSide": false,
-        "stateSave": true, // <-- ESTA LINHA aqui faz guardar a página atual
+        "stateSave": true,
         "language": {
             "lengthMenu": "Exibindo _MENU_ Registros por página",
             "zeroRecords": "Nenhum registro encontrado",

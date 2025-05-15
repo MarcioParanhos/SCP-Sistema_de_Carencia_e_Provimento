@@ -24,15 +24,16 @@
 
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css">
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/habibmhamadi/multi-select-tag/dist/css/multi-select-tag.css">
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/habibmhamadi/multi-select-tag/dist/css/multi-select-tag.css">
 </head>
 
 <body class="">
 
     <?php
-
+    
     use Carbon\Carbon;
-
+    
     $data_atual = Carbon::now();
     $ano_atual = $data_atual->year;
     ?>
@@ -40,12 +41,15 @@
         <!-- Nav logo | Notificações | Usuario -->
         <nav class="navbar col-lg-12 col-12 p-0 fixed-top d-flex flex-row print-hidden">
             <div class="text-center navbar-brand-wrapper d-flex align-items-center justify-content-center">
-                @if (Auth::user()->profile != "cgi_tecnico")
-                <a class="navbar-brand brand-logo mr-5" href="/"><img src="/images/logo.svg" class="mr-2" alt="logo" /></a>
-                <a class="navbar-brand brand-logo-mini" href="/"><img src="/images/logo.svg" alt="logo" /></a>
+                @if (Auth::user()->profile != 'cgi_tecnico')
+                    <a class="navbar-brand brand-logo mr-5" href="/"><img src="/images/logo.svg" class="mr-2"
+                            alt="logo" /></a>
+                    <a class="navbar-brand brand-logo-mini" href="/"><img src="/images/logo.svg"
+                            alt="logo" /></a>
                 @else
-                <a class="navbar-brand brand-logo mr-5"><img src="/images/logo.svg" class="mr-2" alt="logo" /></a>
-                <a class="navbar-brand brand-logo-mini"><img src="/images/logo.svg" alt="logo" /></a>
+                    <a class="navbar-brand brand-logo mr-5"><img src="/images/logo.svg" class="mr-2"
+                            alt="logo" /></a>
+                    <a class="navbar-brand brand-logo-mini"><img src="/images/logo.svg" alt="logo" /></a>
                 @endif
             </div>
             <div class="print-none  navbar-menu-wrapper d-flex align-items-center justify-content-end">
@@ -55,7 +59,8 @@
                         <span id="recolhermenu"></span>
                     </button>
                 </div> -->
-                <span class="mobile-hidden subheader"><strong><span class="">ANO DE REFERÊNCIA - </span>{{ session('ano_ref') }}</strong></span>
+                <span class="mobile-hidden subheader"><strong><span class="">ANO DE REFERÊNCIA -
+                        </span>{{ session('ano_ref') }}</strong></span>
 
                 <ul class="d-flex align-items-center navbar-nav navbar-nav-right">
                     <li class="nav-item nav-profile dropdown">
@@ -63,16 +68,20 @@
                             <span class="name_profile subheader"><strong>{{ Auth::user()->name }}</strong></span>
                             <i class="ti-angle-down"></i>
                         </a>
-                        <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="profileDropdown">
-                            <a href="/profile" class="dropdown-item"><i class="ti-settings text-primary"></i>Configurações</a>
+                        <div class="dropdown-menu dropdown-menu-right navbar-dropdown"
+                            aria-labelledby="profileDropdown">
+                            <a href="/profile" class="dropdown-item"><i
+                                    class="ti-settings text-primary"></i>Configurações</a>
                             <form id="logout-form" action="/logout" method="POST">
                                 @csrf
-                                <a class="dropdown-item" onclick="logout()"><i class="ti-power-off text-primary"></i>Sair</a>
+                                <a class="dropdown-item" onclick="logout()"><i
+                                        class="ti-power-off text-primary"></i>Sair</a>
                             </form>
                         </div>
                     </li>
                 </ul>
-                <button class="navbar-toggler navbar-toggler-right d-lg-none align-self-center" type="button" data-toggle="offcanvas">
+                <button class="navbar-toggler navbar-toggler-right d-lg-none align-self-center" type="button"
+                    data-toggle="offcanvas">
                     <span class="icon-menu"></span>
                 </button>
             </div>
@@ -80,235 +89,294 @@
         <div class="container-fluid page-body-wrapper">
             <nav class="print-none  sidebar shadow rounded sidebar-offcanvas print-hidden" id="sidebar">
                 <ul class="nav">
-                    @if ((Auth::user()->profile != "cad_tecnico") && (Auth::user()->profile != "cgi_tecnico") && (Auth::user()->name != "Usuario CPG" && Auth::user()->name != "Usuario CPM"))
-                    <li class="nav-item">
-                        <a class="nav-link" href="/">
-                            <i class="icon-grid menu-icon"></i>
-                            <span id="new-venda" class="menu-title">Home</span>
-                        </a>
-                    </li>
+                    @if (Auth::user()->profile != 'cad_tecnico' &&
+                            Auth::user()->profile != 'cgi_tecnico' &&
+                            (Auth::user()->name != 'Usuario CPG' && Auth::user()->name != 'Usuario CPM'))
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">
+                                <i class="icon-grid menu-icon"></i>
+                                <span id="new-venda" class="menu-title">Home</span>
+                            </a>
+                        </li>
 
-                    <li class="nav-item">
-                        <a class="nav-link" data-toggle="collapse" href="#ui-basic" aria-expanded="false" aria-controls="ui-basic">
-                            <i class="icon-square-plus menu-icon"></i>
-                            <span class="menu-title">CARÊNCIA</span>
-                            <i class="menu-arrow"></i>
-                        </a>
-                        <div class="collapse subheader" id="ui-basic">
-                            <ul class="nav flex-column sub-menu">
-                                @if ( (Auth::user()->profile === "cpg_tecnico") || (Auth::user()->profile === "administrador"))
-                                @if ( (session('ano_ref') == $ano_atual) || (Auth::user()->profile === "administrador"))
-                                <li class="nav-item"><i class="ti-plus"></i><a class="nav-link sub-title" href="" data-toggle="modal" data-target="#ExemploModalCentralizado">Incluir</a></li>
-                                @endif
-                                @endif
-                                <li class="nav-item"><i class="ti-search"></i><a class="nav-link sub-title" href="/carencias/all_carencias">Buscar</a></li>
-                                <!-- <li class="nav-item"><i class="ti-plus"></i><a class="nav-link sub-title" href="{{ route('carencia.real.apoioPedagogico') }}">A. PEDAGÓGICO</a></li> -->
-                            </ul>
-                        </div>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" data-toggle="collapse" href="#form-elements" aria-expanded="false" aria-controls="form-elements">
-                            <i class="ti-user menu-icon"></i>
-                            <span class="menu-title">Provimento</span>
-                            <i class="menu-arrow"></i>
-                        </a>
-                        <div class="collapse subheader" id="form-elements">
-                            <ul class="nav flex-column sub-menu">
-                                @if ( (Auth::user()->profile === "cpm_tecnico") || (Auth::user()->profile === "administrador") || (Auth::user()->profile === "cpm_coordenador") || (Auth::user()->profile === "cpg_tecnico"))
-                                @if ( (session('ano_ref') == $ano_atual) || (Auth::user()->profile === "administrador"))
-                                <li class="nav-item"><i class="ti-plus"></i><a class="nav-link sub-title" href="{{ route('provimentos.add') }}">Incluir</a></li>
-                                @endif
-                                @endif
-                                <li class="nav-item"><i class="ti-search"></i><a class="nav-link sub-title" href="/buscar/provimento/all_provimentos">Buscar</a></li>
-                                @if ( (Auth::user()->profile === "cpm_tecnico") || (Auth::user()->profile === "administrador") || (Auth::user()->profile === "cpm_coordenador"))
-                                <li class="nav-item"><i class="ti-file"></i><a class="nav-link sub-title" href="{{ route('reserva.index') }}">RESERVA</a></li>
-                                <li class="nav-item"><i class="ti-download"></i><a class="nav-link sub-title" href="{{ route('provimentos.servidores_encaminhamento') }}">TERMOS</a></li>
-                                @endif
-                            </ul>
-                        </div>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" data-toggle="collapse" href="#encaminhamentos" aria-expanded="false" aria-controls="encaminhamentos">
-                            <i class="ti-share menu-icon"></i>
-                            <span class="menu-title">Encaminhamento</span>
-                            <i class="menu-arrow"></i>
-                        </a>
-                        <div class="collapse subheader" id="encaminhamentos">
-                            <ul class="nav flex-column sub-menu">
-                                @if ( (Auth::user()->profile === "cpm_tecnico") || (Auth::user()->profile === "administrador") || (Auth::user()->profile === "cpm_coordenador"))
-                                <li class="nav-item"><i class="ti-plus"></i><a class="nav-link sub-title" href="{{ route('provimento_efetivo.create') }}">Incluir</a></li>
-                                @endif
-                                <li class="nav-item"><i class="ti-search"></i><a class="nav-link sub-title" href="/provimento/efetivo/show">Buscar</a></li>
-                            </ul>
-                        </div>
-                    </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-toggle="collapse" href="#ui-basic" aria-expanded="false"
+                                aria-controls="ui-basic">
+                                <i class="icon-square-plus menu-icon"></i>
+                                <span class="menu-title">CARÊNCIA</span>
+                                <i class="menu-arrow"></i>
+                            </a>
+                            <div class="collapse subheader" id="ui-basic">
+                                <ul class="nav flex-column sub-menu">
+                                    @if (Auth::user()->profile === 'cpg_tecnico' || Auth::user()->profile === 'administrador')
+                                        @if (session('ano_ref') == $ano_atual || Auth::user()->profile === 'administrador')
+                                            <li class="nav-item"><i class="ti-plus"></i><a class="nav-link sub-title"
+                                                    href="" data-toggle="modal"
+                                                    data-target="#ExemploModalCentralizado">Incluir</a></li>
+                                        @endif
+                                    @endif
+                                    <li class="nav-item"><i class="ti-search"></i><a class="nav-link sub-title"
+                                            href="/carencias/all_carencias">Buscar</a></li>
+                                    <!-- <li class="nav-item"><i class="ti-plus"></i><a class="nav-link sub-title" href="{{ route('carencia.real.apoioPedagogico') }}">A. PEDAGÓGICO</a></li> -->
+                                </ul>
+                            </div>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-toggle="collapse" href="#form-elements" aria-expanded="false"
+                                aria-controls="form-elements">
+                                <i class="ti-user menu-icon"></i>
+                                <span class="menu-title">Provimento</span>
+                                <i class="menu-arrow"></i>
+                            </a>
+                            <div class="collapse subheader" id="form-elements">
+                                <ul class="nav flex-column sub-menu">
+                                    @if (Auth::user()->profile === 'cpm_tecnico' ||
+                                            Auth::user()->profile === 'administrador' ||
+                                            Auth::user()->profile === 'cpm_coordenador' ||
+                                            Auth::user()->profile === 'cpg_tecnico')
+                                        @if (session('ano_ref') == $ano_atual || Auth::user()->profile === 'administrador')
+                                            <li class="nav-item"><i class="ti-plus"></i><a class="nav-link sub-title"
+                                                    href="{{ route('provimentos.add') }}">Incluir</a></li>
+                                        @endif
+                                    @endif
+                                    <li class="nav-item"><i class="ti-search"></i><a class="nav-link sub-title"
+                                            href="/buscar/provimento/all_provimentos">Buscar</a></li>
+                                    @if (Auth::user()->profile === 'cpm_tecnico' ||
+                                            Auth::user()->profile === 'administrador' ||
+                                            Auth::user()->profile === 'cpm_coordenador')
+                                        <li class="nav-item"><i class="ti-file"></i><a class="nav-link sub-title"
+                                                href="{{ route('reserva.index') }}">RESERVA</a></li>
+                                        <li class="nav-item"><i class="ti-download"></i><a class="nav-link sub-title"
+                                                href="{{ route('provimentos.servidores_encaminhamento') }}">TERMOS</a>
+                                        </li>
+                                    @endif
+                                </ul>
+                            </div>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-toggle="collapse" href="#encaminhamentos" aria-expanded="false"
+                                aria-controls="encaminhamentos">
+                                <i class="ti-share menu-icon"></i>
+                                <span class="menu-title">Encaminhamento</span>
+                                <i class="menu-arrow"></i>
+                            </a>
+                            <div class="collapse subheader" id="encaminhamentos">
+                                <ul class="nav flex-column sub-menu">
+                                    @if (Auth::user()->profile === 'cpm_tecnico' ||
+                                            Auth::user()->profile === 'administrador' ||
+                                            Auth::user()->profile === 'cpm_coordenador')
+                                        <li class="nav-item"><i class="ti-plus"></i><a class="nav-link sub-title"
+                                                href="{{ route('provimento_efetivo.create') }}">Incluir</a></li>
+                                    @endif
+                                    <li class="nav-item"><i class="ti-search"></i><a class="nav-link sub-title"
+                                            href="/provimento/efetivo/show">Buscar</a></li>
+                                </ul>
+                            </div>
+                        </li>
                     @endif
-                    @if (Auth::user()->profile != "cgi_tecnico")
-                    <li class="nav-item">
-                        <a class="nav-link" data-toggle="collapse" href="#aposentadoria" aria-expanded="false" aria-controls="encaminhamentos">
-                            <i class="ti-files menu-icon"></i>
-                            <span class="menu-title">Afastamentos</span>
-                            <i class="menu-arrow"></i>
-                        </a>
-                        <div class="collapse subheader" id="aposentadoria">
-                            <ul class="nav flex-column sub-menu">
-                                <li class="nav-item"><i class="ti-zoom-in"></i><a class="nav-link sub-title" href="/aposentadorias">Definitivo</a></li>
-                                <!-- <li class="nav-item"><i class="ti-search"></i><a class="nav-link sub-title" href="/aposentadorias">Temporário</a></li> -->
-                            </ul>
-                        </div>
-                    </li>
+                    @if (Auth::user()->profile != 'cgi_tecnico')
+                        <li class="nav-item">
+                            <a class="nav-link" data-toggle="collapse" href="#aposentadoria" aria-expanded="false"
+                                aria-controls="encaminhamentos">
+                                <i class="ti-files menu-icon"></i>
+                                <span class="menu-title">Afastamentos</span>
+                                <i class="menu-arrow"></i>
+                            </a>
+                            <div class="collapse subheader" id="aposentadoria">
+                                <ul class="nav flex-column sub-menu">
+                                    <li class="nav-item"><i class="ti-zoom-in"></i><a class="nav-link sub-title"
+                                            href="/aposentadorias">Definitivo</a></li>
+                                    <!-- <li class="nav-item"><i class="ti-search"></i><a class="nav-link sub-title" href="/aposentadorias">Temporário</a></li> -->
+                                </ul>
+                            </div>
+                        </li>
                     @endif
                     <li class="nav-item">
-                        <a class="nav-link" data-toggle="collapse" href="#regfuncional" aria-expanded="false" aria-controls="regfuncional">
+                        <a class="nav-link" data-toggle="collapse" href="#regfuncional" aria-expanded="false"
+                            aria-controls="regfuncional">
                             <i class="ti-layers-alt menu-icon"></i>
                             <span class="menu-title">Reg. Funcional</span>
                             <i class="menu-arrow"></i>
                         </a>
                         <div class="collapse subheader" id="regfuncional">
                             <ul class="nav flex-column sub-menu">
-                                @if ((Auth::user()->profile === "cpg_tecnico") || (Auth::user()->profile === "administrador"))
-                                <li class="nav-item">
-                                    <i class="ti-plus"></i>
-                                    <a class="nav-link sub-title" href="{{ route('regularizacao_funcional.create') }}">Incluir</a>
-                                </li>
+                                @if (Auth::user()->profile === 'cpg_tecnico' || Auth::user()->profile === 'administrador')
+                                    <li class="nav-item">
+                                        <i class="ti-plus"></i>
+                                        <a class="nav-link sub-title"
+                                            href="{{ route('regularizacao_funcional.create') }}">Incluir</a>
+                                    </li>
                                 @endif
                                 <li class="nav-item">
                                     <i class="ti-search"></i>
-                                    <a class="nav-link sub-title" href="{{ route('regularizacao_funcional.show') }}">Buscar</a>
+                                    <a class="nav-link sub-title"
+                                        href="{{ route('regularizacao_funcional.show') }}">Buscar</a>
                                 </li>
                             </ul>
                         </div>
                     </li>
-                    @if ((Auth::user()->profile != "cad_tecnico") && (Auth::user()->profile != "cgi_tecnico") && (Auth::user()->name != "Usuario CPG" && Auth::user()->name != "Usuario CPM"))
-                    <li class="nav-item">
-                        <a class="nav-link" data-toggle="collapse" href="#charts" aria-expanded="false" aria-controls="charts">
-                            <i class="icon-bar-graph menu-icon"></i>
-                            <span class="menu-title">Gerencial</span>
-                            <i class="menu-arrow"></i>
-                        </a>
-                        <div class="collapse subheader" id="charts">
-                            <ul class="nav flex-column sub-menu">
-                                @if ( (Auth::user()->profile === "cpg_tecnico") || (Auth::user()->profile === "administrador"))
-                                <li class="nav-item">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f3f8fb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-keyboard">
-                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                        <path d="M2 6m0 2a2 2 0 0 1 2 -2h16a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-16a2 2 0 0 1 -2 -2z" />
-                                        <path d="M6 10l0 .01" />
-                                        <path d="M10 10l0 .01" />
-                                        <path d="M14 10l0 .01" />
-                                        <path d="M18 10l0 .01" />
-                                        <path d="M6 14l0 .01" />
-                                        <path d="M18 14l0 .01" />
-                                        <path d="M10 14l4 .01" />
-                                    </svg>
-                                    <a class="nav-link sub-title" href="/status/digitacao">DIGITAÇÃO</a>
-                                </li>
-                                <li class="nav-item">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-keyboard-hide">
-                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                        <path d="M2 3m0 2a2 2 0 0 1 2 -2h16a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-16a2 2 0 0 1 -2 -2z" />
-                                        <path d="M6 7l0 .01" />
-                                        <path d="M10 7l0 .01" />
-                                        <path d="M14 7l0 .01" />
-                                        <path d="M18 7l0 .01" />
-                                        <path d="M6 11l0 .01" />
-                                        <path d="M18 11l0 .01" />
-                                        <path d="M10 11l4 0" />
-                                        <path d="M10 21l2 -2l2 2" />
-                                    </svg>
-                                    <a class="nav-link sub-title" href="#">MANUTENÇÕES</a>
-                                </li>
-                                @endif
-                                @if ((Auth::user()->profile === "cpg_tecnico") || (Auth::user()->profile === "administrador") || (Auth::user()->profile === "consulta") || (Auth::user()->profile === "cpm_coordenador"))
-                                <li class="nav-item">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-home-search">
-                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                        <path d="M21 12l-9 -9l-9 9h2v7a2 2 0 0 0 2 2h4.7" />
-                                        <path d="M9 21v-6a2 2 0 0 1 2 -2h2" />
-                                        <path d="M18 18m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
-                                        <path d="M20.2 20.2l1.8 1.8" />
-                                    </svg>
+                    @if (Auth::user()->profile != 'cad_tecnico' &&
+                            Auth::user()->profile != 'cgi_tecnico' &&
+                            (Auth::user()->name != 'Usuario CPG' && Auth::user()->name != 'Usuario CPM'))
+                        <li class="nav-item">
+                            <a class="nav-link" data-toggle="collapse" href="#charts" aria-expanded="false"
+                                aria-controls="charts">
+                                <i class="icon-bar-graph menu-icon"></i>
+                                <span class="menu-title">Gerencial</span>
+                                <i class="menu-arrow"></i>
+                            </a>
+                            <div class="collapse subheader" id="charts">
+                                <ul class="nav flex-column sub-menu">
+                                    @if (Auth::user()->profile === 'cpg_tecnico' || Auth::user()->profile === 'administrador')
+                                        <li class="nav-item">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                viewBox="0 0 24 24" fill="none" stroke="#f3f8fb" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round"
+                                                class="icon icon-tabler icons-tabler-outline icon-tabler-keyboard">
+                                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                <path
+                                                    d="M2 6m0 2a2 2 0 0 1 2 -2h16a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-16a2 2 0 0 1 -2 -2z" />
+                                                <path d="M6 10l0 .01" />
+                                                <path d="M10 10l0 .01" />
+                                                <path d="M14 10l0 .01" />
+                                                <path d="M18 10l0 .01" />
+                                                <path d="M6 14l0 .01" />
+                                                <path d="M18 14l0 .01" />
+                                                <path d="M10 14l4 .01" />
+                                            </svg>
+                                            <a class="nav-link sub-title" href="/status/digitacao">DIGITAÇÃO</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round"
+                                                class="icon icon-tabler icons-tabler-outline icon-tabler-keyboard-hide">
+                                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                <path
+                                                    d="M2 3m0 2a2 2 0 0 1 2 -2h16a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-16a2 2 0 0 1 -2 -2z" />
+                                                <path d="M6 7l0 .01" />
+                                                <path d="M10 7l0 .01" />
+                                                <path d="M14 7l0 .01" />
+                                                <path d="M18 7l0 .01" />
+                                                <path d="M6 11l0 .01" />
+                                                <path d="M18 11l0 .01" />
+                                                <path d="M10 11l4 0" />
+                                                <path d="M10 21l2 -2l2 2" />
+                                            </svg>
+                                            <a class="nav-link sub-title" href="#">MANUTENÇÕES</a>
+                                        </li>
+                                    @endif
+                                    @if (Auth::user()->profile === 'cpg_tecnico' ||
+                                            Auth::user()->profile === 'administrador' ||
+                                            Auth::user()->profile === 'consulta' ||
+                                            Auth::user()->profile === 'cpm_coordenador')
+                                        <li class="nav-item">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round"
+                                                class="icon icon-tabler icons-tabler-outline icon-tabler-home-search">
+                                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                <path d="M21 12l-9 -9l-9 9h2v7a2 2 0 0 0 2 2h4.7" />
+                                                <path d="M9 21v-6a2 2 0 0 1 2 -2h2" />
+                                                <path d="M18 18m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
+                                                <path d="M20.2 20.2l1.8 1.8" />
+                                            </svg>
 
-                                    <a class="nav-link sub-title" href="/uees/all_uees">Unidades</a>
-                                </li>
-                                @endif
-                                @if (Auth::user()->profile != "consulta")
-                                <li class="nav-item">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f3f8fb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-code">
-                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                        <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
-                                        <path d="M6 21v-2a4 4 0 0 1 4 -4h3.5" />
-                                        <path d="M20 21l2 -2l-2 -2" />
-                                        <path d="M17 17l-2 2l2 2" />
-                                    </svg>
+                                            <a class="nav-link sub-title" href="/uees/all_uees">Unidades</a>
+                                        </li>
+                                    @endif
+                                    @if (Auth::user()->profile != 'consulta')
+                                        <li class="nav-item">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                viewBox="0 0 24 24" fill="none" stroke="#f3f8fb" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round"
+                                                class="icon icon-tabler icons-tabler-outline icon-tabler-user-code">
+                                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
+                                                <path d="M6 21v-2a4 4 0 0 1 4 -4h3.5" />
+                                                <path d="M20 21l2 -2l-2 -2" />
+                                                <path d="M17 17l-2 2l2 2" />
+                                            </svg>
 
-                                    <a class="nav-link sub-title" href="{{ route('servidores.show') }}">Servidores</a>
+                                            <a class="nav-link sub-title"
+                                                href="{{ route('servidores.show') }}">Servidores</a>
 
-                                </li>
-                                @endif
-                            </ul>
-                        </div>
-                    </li>
+                                        </li>
+                                    @endif
+                                </ul>
+                            </div>
+                        </li>
 
-                    <li class="nav-item" id="active_relatorios">
-                        <a class="nav-link" href="/relatorios">
-                            <i class="icon-paper menu-icon"></i>
-                            <span id="new-venda" class="menu-title">RELATÓRIOS</span>
-                        </a>
-                    </li>
+                        <li class="nav-item" id="active_relatorios">
+                            <a class="nav-link" href="/relatorios">
+                                <i class="icon-paper menu-icon"></i>
+                                <span id="new-venda" class="menu-title">RELATÓRIOS</span>
+                            </a>
+                        </li>
                     @endif
-                    @if (Auth::user()->profile === "administrador")
-                    <li class="nav-item" id="administracao_collapse">
-                        <a class="nav-link" data-toggle="collapse" href="#administracao" aria-expanded="false" aria-controls="administracao">
-                            <i class="ti-settings menu-icon"></i>
-                            <span class="menu-title">Administração</span>
-                            <i class="menu-arrow"></i>
-                        </a>
-                        <div class="collapse subheader" id="administracao">
-                            <ul class="nav flex-column sub-menu">
-                                <li class="nav-item">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f3f8fb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-scan">
-                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                        <path d="M10 9a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
-                                        <path d="M4 8v-2a2 2 0 0 1 2 -2h2" />
-                                        <path d="M4 16v2a2 2 0 0 0 2 2h2" />
-                                        <path d="M16 4h2a2 2 0 0 1 2 2v2" />
-                                        <path d="M16 20h2a2 2 0 0 0 2 -2v-2" />
-                                        <path d="M8 16a2 2 0 0 1 2 -2h4a2 2 0 0 1 2 2" />
-                                    </svg>
-                                    <a class="nav-link sub-title" href="{{ route('users.show') }}">Usuários</a>
-                                </li>
-                                <li class="nav-item">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f3f8fb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-menu-order">
-                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                        <path d="M4 10h16" />
-                                        <path d="M4 14h16" />
-                                        <path d="M9 18l3 3l3 -3" />
-                                        <path d="M9 6l3 -3l3 3" />
-                                    </svg>
-                                    <a class="nav-link sub-title" href="{{ route('listas_suspensas.index') }}">Listas Susp.</a>
-                                </li>
+                    @if (Auth::user()->profile === 'administrador')
+                        <li class="nav-item" id="administracao_collapse">
+                            <a class="nav-link" data-toggle="collapse" href="#administracao" aria-expanded="false"
+                                aria-controls="administracao">
+                                <i class="ti-settings menu-icon"></i>
+                                <span class="menu-title">Administração</span>
+                                <i class="menu-arrow"></i>
+                            </a>
+                            <div class="collapse subheader" id="administracao">
+                                <ul class="nav flex-column sub-menu">
+                                    <li class="nav-item">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                            viewBox="0 0 24 24" fill="none" stroke="#f3f8fb" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round"
+                                            class="icon icon-tabler icons-tabler-outline icon-tabler-user-scan">
+                                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                            <path d="M10 9a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                                            <path d="M4 8v-2a2 2 0 0 1 2 -2h2" />
+                                            <path d="M4 16v2a2 2 0 0 0 2 2h2" />
+                                            <path d="M16 4h2a2 2 0 0 1 2 2v2" />
+                                            <path d="M16 20h2a2 2 0 0 0 2 -2v-2" />
+                                            <path d="M8 16a2 2 0 0 1 2 -2h4a2 2 0 0 1 2 2" />
+                                        </svg>
+                                        <a class="nav-link sub-title" href="{{ route('users.show') }}">Usuários</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                            viewBox="0 0 24 24" fill="none" stroke="#f3f8fb" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round"
+                                            class="icon icon-tabler icons-tabler-outline icon-tabler-menu-order">
+                                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                            <path d="M4 10h16" />
+                                            <path d="M4 14h16" />
+                                            <path d="M9 18l3 3l3 -3" />
+                                            <path d="M9 6l3 -3l3 3" />
+                                        </svg>
+                                        <a class="nav-link sub-title"
+                                            href="{{ route('listas_suspensas.index') }}">Listas Susp.</a>
+                                    </li>
 
-                                <li class="nav-item">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f3f8fb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-logs">
-                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                        <path d="M4 12h.01" />
-                                        <path d="M4 6h.01" />
-                                        <path d="M4 18h.01" />
-                                        <path d="M8 18h2" />
-                                        <path d="M8 12h2" />
-                                        <path d="M8 6h2" />
-                                        <path d="M14 6h6" />
-                                        <path d="M14 12h6" />
-                                        <path d="M14 18h6" />
-                                    </svg>
-                                    <a class="nav-link sub-title" href="{{ route('logs.show') }}">Logs</a>
-                                </li>
+                                    <li class="nav-item">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                            viewBox="0 0 24 24" fill="none" stroke="#f3f8fb" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round"
+                                            class="icon icon-tabler icons-tabler-outline icon-tabler-logs">
+                                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                            <path d="M4 12h.01" />
+                                            <path d="M4 6h.01" />
+                                            <path d="M4 18h.01" />
+                                            <path d="M8 18h2" />
+                                            <path d="M8 12h2" />
+                                            <path d="M8 6h2" />
+                                            <path d="M14 6h6" />
+                                            <path d="M14 12h6" />
+                                            <path d="M14 18h6" />
+                                        </svg>
+                                        <a class="nav-link sub-title" href="{{ route('logs.show') }}">Logs</a>
+                                    </li>
 
-                                <!-- <li class="nav-item"><i class="fa-solid fa-user-slash"></i><a class="nav-link sub-title" href="{{ route('motivo_vagas.show') }}">Motivo Vagas</a></li> -->
-                            </ul>
-                        </div>
-                    </li>
+                                    <!-- <li class="nav-item"><i class="fa-solid fa-user-slash"></i><a class="nav-link sub-title" href="{{ route('motivo_vagas.show') }}">Motivo Vagas</a></li> -->
+                                </ul>
+                            </div>
+                        </li>
                     @endif
                 </ul>
             </nav>
@@ -396,7 +464,8 @@
 </body>
 
 <!-- Modal Selecionar Carencia -->
-<div class="modal fade" id="ExemploModalCentralizado" tabindex="-1" role="dialog" aria-labelledby="TituloModalCentralizado" aria-hidden="true">
+<div class="modal fade" id="ExemploModalCentralizado" tabindex="-1" role="dialog"
+    aria-labelledby="TituloModalCentralizado" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -413,47 +482,57 @@
     </div>
 </div>
 <!-- Modal Delete -->
-<div class="modal fade" id="modalDelete" tabindex="-1" role="dialog" aria-labelledby="TitulommodalDelete" aria-hidden="true">
+<div class="modal fade" id="modalDelete" tabindex="-1" role="dialog" aria-labelledby="TitulommodalDelete"
+    aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document" style=" margin-top: 0px; margin-bottom: 0px;">
         <div class="modal-content">
             <div class="modal-header d-flex justify-content-center">
-                <h4 class="modal-title text-center text-dark" id="TitulommodalDelete"><strong>Excluir Dados</strong></h4>
+                <h4 class="modal-title text-center text-dark" id="TitulommodalDelete"><strong>Excluir Dados</strong>
+                </h4>
             </div>
             <div class="modal-body modal-destroy">
                 <h4><strong>Tem certeza?</strong></h4>
                 <h4><strong>O registro sera excluido permanentemente !</strong></h4>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-dismiss="modal"><i class="fa-solid fa-xmark"></i> Fechar</button>
-                <a title="Excluir Carência"><button id="btn-delete" type="button" class="btn float-right btn-danger"><i class="fas fa-trash-alt"></i> Excluir</button></a>
+                <button type="button" class="btn btn-primary" data-dismiss="modal"><i
+                        class="fa-solid fa-xmark"></i> Fechar</button>
+                <a title="Excluir Carência"><button id="btn-delete" type="button"
+                        class="btn float-right btn-danger"><i class="fas fa-trash-alt"></i> Excluir</button></a>
             </div>
         </div>
     </div>
 </div>
 <!-- Modal Delete Provimento-->
-<div class="modal fade" id="modalDeleteProvimento" tabindex="-1" role="dialog" aria-labelledby="TituloModalDeleteProvimento aria-hidden=" true">
+<div class="modal fade" id="modalDeleteProvimento" tabindex="-1" role="dialog"
+    aria-labelledby="TituloModalDeleteProvimento aria-hidden=" true">
     <div class="modal-dialog modal-dialog-centered" role="document" style=" margin-top: 0px; margin-bottom: 0px;">
         <div class="modal-content">
             <div class="modal-header d-flex justify-content-center">
-                <h4 class="modal-title text-center text-dark" id="TituloModalDeleteProvimento"><strong>Excluir Dados</strong></h4>
+                <h4 class="modal-title text-center text-dark" id="TituloModalDeleteProvimento"><strong>Excluir
+                        Dados</strong></h4>
             </div>
             <div class="modal-body modal-destroy">
                 <h4><strong>Tem certeza?</strong></h4>
-                <h4><strong>O registro sera excluido permanentemente e a carência de origem será atualizada!</strong></h4>
+                <h4><strong>O registro sera excluido permanentemente e a carência de origem será atualizada!</strong>
+                </h4>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" data-dismiss="modal">Fechar</button>
-                <a title="Excluir Provimento"><button id="btn_delete_provimento" type="button" class="btn float-right btn-danger"><i class="fas fa-trash-alt"></i> Excluir</button></a>
+                <a title="Excluir Provimento"><button id="btn_delete_provimento" type="button"
+                        class="btn float-right btn-danger"><i class="fas fa-trash-alt"></i> Excluir</button></a>
             </div>
         </div>
     </div>
 </div>
 <!-- Modal Delete Vacancy Pedagogical-->
-<div class="modal fade" id="ModalDeletvacancyPedagogical" tabindex="-1" role="dialog" aria-labelledby="TituloModalDeletvacancyPedagogical" aria-hidden=" true">
+<div class="modal fade" id="ModalDeletvacancyPedagogical" tabindex="-1" role="dialog"
+    aria-labelledby="TituloModalDeletvacancyPedagogical" aria-hidden=" true">
     <div class="modal-dialog modal-dialog-centered" role="document" style=" margin-top: 0px; margin-bottom: 0px;">
         <div class="modal-content">
             <div class="modal-header d-flex justify-content-center">
-                <h4 class="modal-title text-center text-dark" id="TituloModalDeletvacancyPedagogical"><strong>Excluir Dados</strong></h4>
+                <h4 class="modal-title text-center text-dark" id="TituloModalDeletvacancyPedagogical"><strong>Excluir
+                        Dados</strong></h4>
             </div>
             <div class="modal-body modal-destroy">
                 <h4><strong>Tem certeza?</strong></h4>
@@ -461,18 +540,21 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" data-dismiss="modal">Fechar</button>
-                <a title="Excluir Provimento"><button id="btn_delete_provimento" type="button" class="btn float-right btn-danger"><i class="fa-solid fa-trash"></i> Excluir</button></a>
+                <a title="Excluir Provimento"><button id="btn_delete_provimento" type="button"
+                        class="btn float-right btn-danger"><i class="fa-solid fa-trash"></i> Excluir</button></a>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Modal Delete Provimentos Efetivos-->
-<div class="modal fade" id="ModalDeleteProvimentosEfetivos" tabindex="-1" role="dialog" aria-labelledby="TituloModalDeleteProvimentosEfetivos" aria-hidden=" true">
+<div class="modal fade" id="ModalDeleteProvimentosEfetivos" tabindex="-1" role="dialog"
+    aria-labelledby="TituloModalDeleteProvimentosEfetivos" aria-hidden=" true">
     <div class="modal-dialog modal-dialog-centered" role="document" style=" margin-top: 0px; margin-bottom: 0px;">
         <div class="modal-content">
             <div class="modal-header d-flex justify-content-center">
-                <h4 class="modal-title text-center text-dark" id="TituloModalDeleteProvimentosEfetivos"><strong>Excluir Dados</strong></h4>
+                <h4 class="modal-title text-center text-dark" id="TituloModalDeleteProvimentosEfetivos">
+                    <strong>Excluir Dados</strong></h4>
             </div>
             <div class="modal-body modal-destroy">
                 <h4 class="subheader"><strong>Tem certeza?</strong></h4>
@@ -480,7 +562,8 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" data-dismiss="modal">Fechar</button>
-                <a title="Excluir Encaminhamento"><button id="btn_delete_provimento" type="button" class="btn float-right btn-danger">Excluir</button></a>
+                <a title="Excluir Encaminhamento"><button id="btn_delete_provimento" type="button"
+                        class="btn float-right btn-danger">Excluir</button></a>
             </div>
         </div>
     </div>

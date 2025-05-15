@@ -10,6 +10,7 @@ use App\Models\Carencia;
 use App\Models\Provimento;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Str;
 
 class UeeController extends Controller
 {
@@ -409,6 +410,11 @@ class UeeController extends Controller
     {
         $uees = session()->get('uees');
         $ueesCateroriasForExcel = session()->get('ueesCategorias');
+
+        // Filtra as UEE's que NÃO começam com "NÚCLEO"
+        $uees = collect($uees)->filter(function ($uee) {
+            return !Str::startsWith($uee['unidade_escolar'], 'NÚCLEO');
+        });
 
         return view('excel.excel_uees', compact('uees', 'ueesCateroriasForExcel'));
     }
