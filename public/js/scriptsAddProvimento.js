@@ -87,76 +87,53 @@ function addNewProvimento() {
     })
 }
 
-//   foreach para pegar todos os botoes onde a classe é transferir
+// Pega todos os botões com a classe "transferir"
 transferButtons.forEach(function (button) {
-    // adiciona um evento de click em cada botão
     button.addEventListener("click", function () {
-
-        const row = button.parentNode.parentNode;
+        const row = button.closest("tr");
         const table2 = document.getElementById("table2");
+
+        // Verifica se a linha já foi transferida
+        if (row.dataset.transferred === "true") return;
+
+        // Cria botão de voltar
         const transferBackButton = document.createElement("button");
-        transferBackButton.id = BackButtonID
         transferBackButton.innerHTML = "<i class='ti-close'></i>";
-        transferBackButton.classList.add('btn', 'btn-sm', 'btn-danger', 'btn-show-carência')
+        transferBackButton.classList.add("btn", "btn-sm", "btn-danger", "btn-show-carência");
 
-        // ao clicar no botão de voltar, volta com a linha para sua tabela de origem
+        // Lógica do botão de voltar
         transferBackButton.addEventListener("click", function () {
-
-            let index = arrID.indexOf(transferBackButton.id);
-
-            if (index > -1) {
-                arrID.splice(index, 1);
-            }
-
             const table1 = document.getElementById("table1");
-            table1.appendChild(row);
-            row.removeChild(row.lastChild);
+            row.removeChild(row.lastChild); // Remove célula do botão de voltar
             const newCell = row.insertCell(-1);
             newCell.appendChild(button);
-            row.lastChild.classList.add("text-center")
-            // seleciona as classes especificas da linha movida e adiciona o atriburo hidden nele
-            const elements = row.querySelectorAll(".remove_hidden")
-            elements.forEach(function (element) {
-                element.setAttribute("hidden", "")
-            })
+            row.lastChild.classList.add("text-center");
+
+            // Oculta elementos específicos da linha
+            row.querySelectorAll(".remove_hidden").forEach(function (el) {
+                el.setAttribute("hidden", "");
+            });
+
+            row.dataset.transferred = "false";
+            table1.appendChild(row);
         });
-        // deleta a ultima celula e adiciona o botao de voltar no lugar da celula deletada
 
-        let rows = table2.getElementsByTagName("tr")
+        // Remove última célula e adiciona o botão de voltar
+        row.deleteCell(-1);
+        const newCell = row.insertCell(-1);
+        newCell.appendChild(transferBackButton);
+        row.lastChild.classList.add("text-center");
 
-        if (rows.length > 1) {
-            Swal.fire({
+        // Remove atributos "hidden" ao transferir
+        row.querySelectorAll("[hidden]").forEach(function (el) {
+            el.removeAttribute("hidden");
+        });
 
-                icon: 'warning',
-                title: 'Atenção!',
-                text: 'Selecione apenas uma disciplina!.',
-            })
-
-            let index = arrID.indexOf(BackButtonID);
-
-            if (index > -1) {
-                arrID.splice(index, 1);
-            }
-
-        } else {
-            row.deleteCell(-1);
-            const newCell = row.insertCell(-1);
-            newCell.appendChild(transferBackButton);
-            table2.appendChild(row);
-
-        }
-
-        row.lastChild.classList.add("text-center")
-
-        // ao mover para a nova tabela onde ira suprir as vagas retorna todas os atriburos hidden 
-        const elements = document.querySelectorAll("[hidden]")
-        elements.forEach(function (element) {
-            if (table2.contains(row)) {
-                row.querySelector("[hidden]").removeAttribute("hidden");
-            }
-        })
+        row.dataset.transferred = "true";
+        table2.appendChild(row);
     });
 });
+
 
 function destroyProvimento(id) {
 
@@ -170,7 +147,6 @@ function destroyProvimento(id) {
         show: true
     });
 }
-
 
 
 let selectedSituacao = $("#situacao_provimento")

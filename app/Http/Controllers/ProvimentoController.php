@@ -85,9 +85,19 @@ class ProvimentoController extends Controller
 
         foreach ($data as $item) {
 
-            $carencia = Carencia::select('disciplina', 'id')->where('id', $item)->first();
+            $carencia = Carencia::where('id', $item)->first();
 
-            $total = $request->provimento_matutino + $request->provimento_vespertino + $request->provimento_noturno;
+            // 🟡 Coleta valores específicos para esta carência
+            $matutino = $request->provimento_matutino[$item] ?? 0;
+            $vespertino = $request->provimento_vespertino[$item] ?? 0;
+            $noturno = $request->provimento_noturno[$item] ?? 0;
+
+            $total = $matutino + $vespertino + $noturno;
+    
+
+            if ($total === 0) {
+                return redirect()->to(url()->previous())->with('msg', 'error');
+            }
 
             $provimentos = new Provimento;
             $provimentos->nte = $request->nte;
@@ -103,29 +113,22 @@ class ProvimentoController extends Controller
             $provimentos->tipo_aula = $request->tipo_aula;
             $provimentos->data_assuncao = $request->data_assuncao;
             $provimentos->data_encaminhamento = $request->data_encaminhamento;
-            $provimentos->tipo_movimentacao = $request->tipo_movimentacao;
-            $provimentos->provimento_matutino = $request->provimento_matutino;
-            $provimentos->provimento_vespertino = $request->provimento_vespertino;
-            $provimentos->provimento_noturno = $request->provimento_noturno;
-            $provimentos->total = $request->provimento_noturno + $request->provimento_vespertino + $request->provimento_matutino;
+            $provimentos->provimento_matutino = $matutino;
+            $provimentos->provimento_vespertino = $vespertino;
+            $provimentos->provimento_noturno = $noturno;
+            $provimentos->total = $total;
+
             if (!$carencia) {
                 return  redirect()->to(url()->previous())->with('msg', 'carência inexistente');
-            } else {
-                $provimentos->id_carencia = $carencia->id;
             }
 
+            $provimentos->id_carencia = $carencia->id;
             $provimentos->obs = $request->obs;
             $provimentos->ano_ref = $anoRef;
 
-            if ($request->profile === "cpg_tecnico") {
-                $provimentos->pch = "OK";
-            } else if ($request->profile != "cpg_tecnico") {
-                $provimentos->pch = "PENDENTE";
-            }
+            $provimentos->pch = $request->profile === "cpg_tecnico" ? "OK" : "PENDENTE";
 
-            $carencia = Carencia::find($provimentos->id_carencia);
-
-            if ($carencia && $carencia->tipo_carencia === "Temp") {
+            if ($carencia->tipo_carencia === "Temp") {
                 $provimentos->tipo_carencia_provida = $carencia->tipo_carencia;
                 $provimentos->data_fim_by_temp = $carencia->fim_vaga;
             } else {
@@ -134,39 +137,23 @@ class ProvimentoController extends Controller
 
             $provimentos->disciplina = $carencia->disciplina;
             $provimentos->situacao_provimento = $request->situacao_provimento;
-
-            if ($request->situacao_provimento === "tramite") {
-                $provimentos->situacao = "DESBLOQUEADO";
-            } else {
-                $provimentos->situacao = "BLOQUEADO";
-            }
-
+            $provimentos->situacao = $request->situacao_provimento === "tramite" ? "DESBLOQUEADO" : "BLOQUEADO";
             $provimentos->usuario = $request->usuario;
 
-            if ($request->provimento_noturno + $request->provimento_vespertino + $request->provimento_matutino === 0) {
-                return  redirect()->to(url()->previous())->with('msg', 'error');
-            }
-
-            // $provimentos->save();
-
             if ($provimentos->save()) {
-                $log = new Log;
-                $log->user_id = $request->user_id;
-                $log->action = "Inclusion";
-                $log->module = "Provimento";
-                $log->provimento_id = $provimentos->id;
-                $log->save();
+                Log::create([
+                    'user_id' => $request->user_id,
+                    'action' => 'Inclusion',
+                    'module' => 'Provimento',
+                    'provimento_id' => $provimentos->id,
+                ]);
             }
-
-            $carencias = Carencia::where('id', $carencia->id)->first();
-
-
 
             Carencia::where('id', $carencia->id)->update([
-                'matutino' => $carencias->matutino - $request->provimento_matutino,
-                'vespertino' => $carencias->vespertino - $request->provimento_vespertino,
-                'noturno' => $carencias->noturno - $request->provimento_noturno,
-                'total' => $carencias->total - $total,
+                'matutino' => $carencia->matutino - $matutino,
+                'vespertino' => $carencia->vespertino - $vespertino,
+                'noturno' => $carencia->noturno - $noturno,
+                'total' => $carencia->total - $total,
             ]);
         }
 
