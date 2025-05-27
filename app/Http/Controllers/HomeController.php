@@ -119,7 +119,31 @@ class HomeController extends Controller
         $percentAnexos = $totalUnitsAnexosAll > 0 ? ($totalUnitsAnexos / $totalUnitsAnexosAll) * 100 : 0;
         $percentCemits = $totalUnitsCemitAll > 0 ? ($totalUnitsCemits / $totalUnitsCemitAll) * 100 : 0;
 
+        $pendingUnitsCemits = $totalUnitsCemitAll - $totalUnitsCemits;
+        $percentPendingCemits = $totalUnitsCemitAll > 0
+            ? ($pendingUnitsCemits / $totalUnitsCemitAll) * 100
+            : 0;
+
+        $pendingUnitsAnexos = $totalUnitsAnexosAll - $totalUnitsAnexos;
+        $percentPendingAnexos = $totalUnitsAnexosAll > 0
+            ? ($pendingUnitsAnexos / $totalUnitsAnexosAll) * 100
+            : 0;
+
+        $pendingUnitsSedes = $totalUnitsSedesAll - $totalUnitsSedes;
+        $percentPendingSedes = $totalUnitsSedesAll > 0
+            ? ($pendingUnitsSedes / $totalUnitsSedesAll) * 100
+            : 0;
+
         return view('home.home', compact(
+            'pendingUnitsSedes',
+            'percentPendingSedes',
+            'pendingUnitsAnexos',
+            'percentPendingAnexos',
+            'pendingUnitsCemits',
+            'percentPendingCemits',
+            'totalUnitsSedesAll',
+            'totalUnitsAnexosAll',
+            'totalUnitsCemitAll',
             'totalUnitsCemits',
             'totalUnitsSedes',
             'provimentosPCH',
