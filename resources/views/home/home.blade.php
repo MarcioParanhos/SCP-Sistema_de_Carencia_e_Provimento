@@ -191,16 +191,15 @@
                     <div class="card card-dark-blue">
                         <div class="card-body">
                             <p class="text-center font_title mb-4 subheader"><strong>UNIDADES SEDE HOMOLOGADAS</strong></p>
-                            <p class="text-center font_sub-title fs-30 mb-0">{{ number_format($totalUnitsSedes, 0, ',', '.') }}</p>
+                            <p class="text-center font_sub-title fs-30 mb-0">{{ number_format($totalUnitsSedes, 0, ',', '.') }} - {{ number_format($percentSedes, 1, ',', '') }}%</p>
                         </div>
                     </div>
                 </div>
-
                 <div class="col-md-4 mb-2 stretch-card transparent">
                     <div class="card card-dark-blue">
                         <div class="card-body">
                             <p class="text-center  font_title mb-4 subheader"><strong>ANEXOS HOMOLOGADOS</strong></p>
-                            <p class="text-center  font_sub-title fs-30">{{ number_format($totalUnitsAnexos, 0, ',', '.') }}</p>
+                            <p class="text-center  font_sub-title fs-30">{{ number_format($totalUnitsAnexos, 0, ',', '.') }} - {{ number_format($percentAnexos, 1, ',', '') }}%</p>
                         </div>
                     </div>
                 </div>
@@ -208,7 +207,7 @@
                     <div class="card card-dark-blue">
                         <div class="card-body">
                             <p class="text-center font_title mb-4 subheader"><strong>CEMIT/EMITEC HOMOLOGADOS</strong></p>
-                            <p class="text-center  font_sub-title fs-30">{{ number_format($totalUnitsCemits, 0, ',', '.') }}</p>
+                            <p class="text-center  font_sub-title fs-30">{{ number_format($totalUnitsCemits, 0, ',', '.') }} - {{ number_format($percentCemits, 1, ',', '') }}%</p>
                         </div>
                     </div>
                 </div>
