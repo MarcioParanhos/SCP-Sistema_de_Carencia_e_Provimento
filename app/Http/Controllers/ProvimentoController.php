@@ -93,7 +93,7 @@ class ProvimentoController extends Controller
             $noturno = $request->provimento_noturno[$item] ?? 0;
 
             $total = $matutino + $vespertino + $noturno;
-    
+
 
             if ($total === 0) {
                 return redirect()->to(url()->previous())->with('msg', 'error');
@@ -140,13 +140,15 @@ class ProvimentoController extends Controller
             $provimentos->situacao = $request->situacao_provimento === "tramite" ? "DESBLOQUEADO" : "BLOQUEADO";
             $provimentos->usuario = $request->usuario;
 
+
             if ($provimentos->save()) {
-                Log::create([
-                    'user_id' => $request->user_id,
-                    'action' => 'Inclusion',
-                    'module' => 'Provimento',
-                    'provimento_id' => $provimentos->id,
-                ]);
+                $log = new Log;
+                $log->user_id = $request->user_id;
+                $log->action = "Inclusion";
+                $log->module = "Provimento";
+                $log->provimento_id = $provimentos->id;
+                $log->ano_ref = $anoRef;
+                $log->save();
             }
 
             Carencia::where('id', $carencia->id)->update([
@@ -463,6 +465,7 @@ class ProvimentoController extends Controller
 
     public function update(Request $request)
     {
+        $anoRef = session()->get('ano_ref');
         if (($request->profile_cpg_update === 'cpm_tecnico') || ($request->profile_cpg_update === 'cpm_coordenador')) {
             Provimento::findOrFail($request->id)->update($request->all());
         } else if (($request->profile_cpg_update === "cpg_tecnico") || ($request->profile_cpg_update === "administrador")) {
@@ -473,7 +476,19 @@ class ProvimentoController extends Controller
             } else {
                 $requestData['obs_cpg'] = $request->user_cpg_update . ' - ' . $request->obs_cpg;
             }
-            $provimento->update($requestData);
+            // $provimento->update($requestData);
+
+            if ($provimento->update($requestData)) {
+
+                $log = new Log;
+                $log->user_id = $request->user_id;
+                $log->action = "Update";
+                $log->module = "Provimento";
+                $log->provimento_id = $request->provimento_id;
+                $log->ano_ref = $anoRef;
+                $log->save();
+
+            }
         }
 
 

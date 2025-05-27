@@ -9,7 +9,9 @@ class LogController extends Controller
 {
     public function index()
     {
-        $logs = Log::with('user')->get(); // Assumindo que você tem uma relação user no modelo Log
+        $anoRef = session()->get('ano_ref');
+
+        $logs = Log::with('user')->where('ano_ref', $anoRef)->get();
         return view('logs.show_logs', compact('logs'));
     }
 }

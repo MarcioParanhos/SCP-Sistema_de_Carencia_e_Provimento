@@ -36,7 +36,6 @@
                 <th>SERVIÇO</th>
                 <th>DATA</th>
                 <th>USUÁRIO</th>
-                <th>DETALHES</th>
             </tr>
         </thead>
         <tbody>

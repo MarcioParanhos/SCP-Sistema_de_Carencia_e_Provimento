@@ -99,6 +99,7 @@ class CarenciaController extends Controller
             $log->action = "Inclusion";
             $log->module = "Carência";
             $log->carencia_id = $carencias->id;
+            $log->ano_ref = $anoRef;
             $log->save();
         }
     }
@@ -450,6 +451,7 @@ class CarenciaController extends Controller
 
     public function update(Request $request)
     {
+        $anoRef = session()->get('ano_ref');
         // Encontra o registro ou falha
         $carencia = Carencia::findOrFail($request->id);
 
@@ -472,6 +474,7 @@ class CarenciaController extends Controller
             $log->carencia_id = $request->id;
             $log->old_record = $oldRecord;
             $log->new_record = $newRecord;
+            $log->ano_ref = $anoRef;
             $log->save();
 
             return redirect()->to(url()->previous())->with('msg', 'Registros Alterados com Sucesso!');

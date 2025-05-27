@@ -245,7 +245,6 @@
                                                             @endif
                                                             {{ $new_total = $total * 100 }}
                                                         </div>
-
                                                         <td class="text-muted subheader">{{ $disciplina->disciplina }}</td>
                                                         <td>
                                                             {{ $new_total = number_format($new_total, 1) }}%
@@ -260,11 +259,9 @@
                                                         </td>
                                                     </tr>
                                                     @endforeach
-
                                                 </table>
                                             </div>
                                         </div>
-
                                     </div>
                                 </div>
                             </div>
