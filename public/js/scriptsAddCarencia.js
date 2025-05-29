@@ -636,6 +636,7 @@ $("#InsertForm").submit(function (e) {
         motivo_vaga.value !== "VAGA DE SERVIDOR MUNICIPAL" &&
         motivo_vaga.value !== "AULAS RESIDUAIS" &&
         motivo_vaga.value !== "INCLUSÃO TURMA - CLIENTELA NOVA" &&
+        motivo_vaga.value !== "NÃO INGRESSADO REDA" &&
         motivo_vaga.value !== "RPP - MULTIDISCIPLINAR"
     ) {
         Swal.fire({
