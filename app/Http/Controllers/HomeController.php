@@ -10,6 +10,8 @@ use App\Models\Status_diario;
 use Illuminate\Support\Facades\DB;
 
 
+
+
 class HomeController extends Controller
 {
     public function index()
@@ -29,9 +31,31 @@ class HomeController extends Controller
         $provimentosTramiteReal = Provimento::where('situacao_provimento', 'tramite')->where('ano_ref', $anoRef)->where('tipo_carencia_provida', 'real')->sum('total');
         $provimentosTramiteTemp = Provimento::where('situacao_provimento', 'tramite')->where('ano_ref', $anoRef)->where('tipo_carencia_provida', 'temp')->sum('total');
         $provimentosPCH = Provimento::where('pch', 'OK')->where('ano_ref', $anoRef)->sum('total');
-        $totalUnitsAnexos = DB::table('uees')->where('situacao', 'HOMOLOGADA')->where('tipo', 'ANEXO')->count();
-        $totalUnitsSedes = DB::table('uees')->where('situacao', 'HOMOLOGADA')->where('tipo', 'SEDE')->count();
-        $totalUnitsCemits = DB::table('uees')->where('situacao', 'HOMOLOGADA')->where('tipo', 'CEMIT')->count();
+
+        $totalUnitsAnexos = DB::table('uees')
+            ->where('tipo', 'ANEXO')
+            ->where('situacao', 'HOMOLOGADA')
+            ->where(function ($query) {
+                $query->whereNull('desativation_situation')
+                    ->orWhere('desativation_situation', '!=', 'Desativada');
+            })
+            ->count();
+        $totalUnitsSedes = DB::table('uees')
+            ->where('tipo', 'SEDE')
+            ->where('situacao', 'HOMOLOGADA')
+            ->where(function ($query) {
+                $query->whereNull('desativation_situation')
+                    ->orWhere('desativation_situation', '!=', 'Desativada');
+            })
+            ->count();
+        $totalUnitsCemits = DB::table('uees')
+            ->where('tipo', 'CEMIT')
+            ->where('situacao', 'HOMOLOGADA')
+            ->where(function ($query) {
+                $query->whereNull('desativation_situation')
+                    ->orWhere('desativation_situation', '!=', 'Desativada');
+            })
+            ->count();
         $totalCarencia = Carencia::where('ano_ref', $anoRef)->sum('total');
 
         $disciplinas = DB::table('carencias')
