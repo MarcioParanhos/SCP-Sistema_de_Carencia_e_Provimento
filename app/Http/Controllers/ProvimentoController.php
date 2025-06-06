@@ -111,6 +111,7 @@ class ProvimentoController extends Controller
             $provimentos->forma_suprimento = $request->forma_suprimento;
             $provimentos->tipo_movimentacao = $request->tipo_movimentacao;
             $provimentos->tipo_aula = $request->tipo_aula;
+            $provimentos->num_cop = $request->num_cop;
             $provimentos->data_assuncao = $request->data_assuncao;
             $provimentos->data_encaminhamento = $request->data_encaminhamento;
             $provimentos->provimento_matutino = $matutino;

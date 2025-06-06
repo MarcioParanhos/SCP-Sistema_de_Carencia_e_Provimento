@@ -412,7 +412,15 @@
                                     </div>
                                 </div>
                             @endif
+                            <div id="num_cop_row" class="col-md-2">
+                                <div class="form-group_disciplina">
+                                    <label for="num_cop" class="">Nº COP</label>
+                                    <input value="" name="num_cop" id="num_cop"
+                                        type="text" class="form-control form-control-sm">
+                                </div>
+                            </div>
                         </div>
+                       
                         <div class="form-row">
                             <div id="data_assuncao_row" class="col-md-12">
                                 <div class="form-group_disciplina">
