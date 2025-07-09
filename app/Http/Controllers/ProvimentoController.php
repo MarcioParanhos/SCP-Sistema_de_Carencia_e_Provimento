@@ -346,7 +346,16 @@ class ProvimentoController extends Controller
         }
 
         if ($request->filled('search_pch')) {
-            $provimentos = $provimentos->where('pch', $request->search_pch);
+            $valorBusca = $request->search_pch;
+            $statusEspeciais = ['NO ACOMPANHAMENTO', 'EM SUBISTITUIÇÃO'];
+
+            if (in_array($valorBusca, $statusEspeciais)) {
+                // Se o valor for um dos status especiais, filtra pela coluna 'situacao_programacao'
+                $provimentos->where('situacao_programacao', $valorBusca);
+            } else {
+                // Caso contrário, filtra pela coluna 'pch'
+                $provimentos->where('pch', $valorBusca);
+            }
         }
 
         if ($request->filled('search_eixo')) {
@@ -472,12 +481,29 @@ class ProvimentoController extends Controller
         } else if (($request->profile_cpg_update === "cpg_tecnico") || ($request->profile_cpg_update === "administrador")) {
             $provimento = Provimento::findOrFail($request->id);
             $requestData = $request->all();
-            if ($request->obs_cpg == '') {
-                $requestData['obs_cpg'] = $request->obs_cpg;
+
+            $observacao = $request->obs_cpg;
+            $usuario = $request->user_cpg_update;
+
+            // Verifica se a observação foi preenchida
+            if (!empty($observacao)) {
+                // Constrói o prefixo que estamos procurando (ex: "ERICA DE OLIVEIRA - ")
+                $prefixo = $usuario . ' - ';
+
+                // VERIFICAÇÃO PRINCIPAL:
+                // Se a observação NÃO começa com o prefixo do usuário, nós o adicionamos.
+                // str_starts_with() é a função moderna e ideal para isso (PHP 8.0+).
+                if (!str_starts_with($observacao, $prefixo)) {
+                    // Concatena o nome do usuário apenas se ele não estiver lá
+                    $requestData['obs_cpg'] = $prefixo . $observacao;
+                } else {
+                    // Se já começa com o nome, apenas usa o valor como está, sem adicionar de novo
+                    $requestData['obs_cpg'] = $observacao;
+                }
             } else {
-                $requestData['obs_cpg'] = $request->user_cpg_update . ' - ' . $request->obs_cpg;
+                // Se a observação estiver vazia, apenas atribui o valor vazio
+                $requestData['obs_cpg'] = $observacao; // ou simplesmente $requestData['obs_cpg'] = '';
             }
-            // $provimento->update($requestData);
 
             if ($provimento->update($requestData)) {
 
@@ -488,7 +514,6 @@ class ProvimentoController extends Controller
                 $log->provimento_id = $request->provimento_id;
                 $log->ano_ref = $anoRef;
                 $log->save();
-
             }
         }
 

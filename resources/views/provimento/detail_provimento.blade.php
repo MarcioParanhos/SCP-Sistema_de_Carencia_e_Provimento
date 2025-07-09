@@ -220,9 +220,9 @@
         </div>
     @endif
 
-    <div class="header print-visible">
+    {{-- <div class="header print-visible">
         <img class="img-logo" src="/images/SCP.png" alt="people">
-    </div>
+    </div> --}}
     <div class="card">
         <div class="shadow bg-primary text-white card_title ">
             @if ($provimento->pch === 'PENDENTE')
@@ -640,6 +640,41 @@
                                     type="date" class="form-control form-control-sm" readonly>
                             </div>
                         </div>
+
+                    @endif
+                    @if (Auth::user()->profile === 'cpg_tecnico' || Auth::user()->profile === 'administrador')
+                        <div class="col-md-3" id="">
+                            <div class="form-group_disciplina">
+                                <label class="control-label" for="situacao_programacao">situação da
+                                    Programação</label>
+                                <select name="situacao_programacao" id="situacao_programacao"
+                                    class="form-control select2">
+
+                                    {{-- Opção para limpar/deixar em branco --}}
+                                    <option value=""
+                                        {{ old('situacao_programacao', $provimento->situacao_programacao ?? '') == '' ? 'selected' : '' }}>
+                                        Selecione uma opção...
+                                    </option>
+
+                                    {{-- Opções existentes --}}
+                                    <option value="NO ACOMPANHAMENTO"
+                                        {{ old('situacao_programacao', $provimento->situacao_programacao ?? '') == 'NO ACOMPANHAMENTO' ? 'selected' : '' }}>
+                                        NO ACOMPANHAMENTO
+                                    </option>
+
+                                    <option value="EM SUBISTITUIÇÃO"
+                                        {{ old('situacao_programacao', $provimento->situacao_programacao ?? '') == 'EM SUBISTITUIÇÃO' ? 'selected' : '' }}>
+                                        EM SUBISTITUIÇÃO
+                                    </option>
+
+                                    <option value="SEM INICIO DAS ATIVIDADES"
+                                        {{ old('situacao_programacao', $provimento->situacao_programacao ?? '') == 'SEM INICIO DAS ATIVIDADES' ? 'selected' : '' }}>
+                                        SEM INICIO DAS ATIVIDADES
+                                    </option>
+
+                                </select>
+                            </div>
+                        </div>
                     @endif
                     @if (Auth::user()->profile === 'cpg_tecnico' || Auth::user()->profile === 'administrador')
                         @if ($provimento->situacao_provimento === 'provida' || $provimento->situacao_provimento === 'tramite')
@@ -726,7 +761,6 @@
                 <div class="buttons d-flex justify-content-between align-middle print-none">
                     @if (Auth::user()->profile != 'consulta')
                         <div id="buttons" class="buttons">
-                            <!-- <button id="btn_submit_carencia" type="submit" class="btn btn-primary mr-2" >CADASTRAR</button> -->
                             <button id="" class="button" type="submit">
                                 <span class="button__text">ATUALIZAR</span>
                                 <span class="button__icon">

@@ -150,6 +150,7 @@
                 <th scope="col">VESP</th>
                 <th scope="col">NOT</th>
                 <th scope="col">TOTAL</th>
+                <th scope="col">PCH</th>
             </tr>
         </thead>
         <tbody>
@@ -185,6 +186,13 @@
                     <td class="text-center" style="vertical-align: middle;">{{ $provimento -> provimento_vespertino }}</td>
                     <td class="text-center" style="vertical-align: middle;">{{ $provimento -> provimento_noturno }}</td>
                     <td class="text-center" style="vertical-align: middle;">{{ $provimento -> total }}</td>
+                    <td class="text-center" style="vertical-align: middle;">
+                        @if ($provimento -> pch === "OK")
+                        PROGRAMADO
+                        @else
+                        PENDENTE
+                        @endif
+                    </td>
             </tr>
             <div hidden>
                 {{ $total = $total + $provimento->total  }}
