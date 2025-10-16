@@ -15,6 +15,8 @@ use App\Models\Forma_suprimento;
 use App\Models\ProvimentosEncaminhado;
 use App\Models\ServidoresEncaminhado;
 use App\Models\Log;
+use App\Models\NumCop;
+
 
 use Illuminate\Http\Request;
 
@@ -48,9 +50,12 @@ class ProvimentoController extends Controller
             ->where(function ($query) use ($formattedDate) {
                 $query->whereNull('fim_vaga')
                     ->orWhere('fim_vaga', '>', $formattedDate);
-            })->get();
+            })
+            ->doesntHave('vagaReserva')
+            ->get();
 
         $provimentos = Provimento::where('cod_unidade', $codigo_unidade_provimento)->where('ano_ref', $anoRef)->get();
+        $num_cop = NumCop::all();
 
         $uee = Uee::where('cod_unidade', $codigo_unidade_provimento)->firstOrFail();
         $forma_suprimentos = Forma_suprimento::all();
@@ -59,121 +64,112 @@ class ProvimentoController extends Controller
             'provimentos' => $provimentos,
             'carencias' => $carencias,
             'uee' => $uee,
-            'forma_suprimentos' => $forma_suprimentos
+            'forma_suprimentos' => $forma_suprimentos,
+            'num_cop' => $num_cop,
         ]);
     }
 
     public function addNewProvimento(Request $request)
     {
+        // O set_time_limit(0) é uma medida de segurança, mas a otimização abaixo
+        // é a solução real para o problema de performance.
+        set_time_limit(0);
 
+        // A sua lógica para prevenir submissões duplicadas é uma excelente prática de UX.
         $lastExecution = $request->session()->get('last_execution');
         if ($lastExecution && Carbon::now()->diffInSeconds($lastExecution) < 5) {
-            // A função já foi executada recentemente, não faça nada
             return redirect()->to(url()->previous());
         }
-
-        // Armazene o horário atual para uso posterior
         $request->session()->put('last_execution', Carbon::now());
 
-
-        $actualDate = Carbon::now();
-        $formattedDate = $actualDate->format('Y');
-
         $data = $request->session()->get('data');
-        $anoRef = session()->get('ano_ref');
-
-
-        foreach ($data as $item) {
-
-            $carencia = Carencia::where('id', $item)->first();
-
-            // 🟡 Coleta valores específicos para esta carência
-            $matutino = $request->provimento_matutino[$item] ?? 0;
-            $vespertino = $request->provimento_vespertino[$item] ?? 0;
-            $noturno = $request->provimento_noturno[$item] ?? 0;
-
-            $total = $matutino + $vespertino + $noturno;
-
-
-            if ($total === 0) {
-                return redirect()->to(url()->previous())->with('msg', 'error');
-            }
-
-            $provimentos = new Provimento;
-            $provimentos->nte = $request->nte;
-            $provimentos->cod_unidade = $request->cod_unidade;
-            $provimentos->unidade_escolar = $request->unidade_escolar;
-            $provimentos->municipio = $request->municipio;
-            $provimentos->cadastro = $request->cadastro;
-            $provimentos->servidor = $request->servidor;
-            $provimentos->vinculo = $request->vinculo;
-            $provimentos->regime = $request->regime;
-            $provimentos->forma_suprimento = $request->forma_suprimento;
-            $provimentos->tipo_movimentacao = $request->tipo_movimentacao;
-            $provimentos->tipo_aula = $request->tipo_aula;
-            $provimentos->num_cop = $request->num_cop;
-            $provimentos->data_assuncao = $request->data_assuncao;
-            $provimentos->data_encaminhamento = $request->data_encaminhamento;
-            $provimentos->provimento_matutino = $matutino;
-            $provimentos->provimento_vespertino = $vespertino;
-            $provimentos->provimento_noturno = $noturno;
-            $provimentos->total = $total;
-
-            if (!$carencia) {
-                return  redirect()->to(url()->previous())->with('msg', 'carência inexistente');
-            }
-
-            $provimentos->id_carencia = $carencia->id;
-            $provimentos->obs = $request->obs;
-            $provimentos->ano_ref = $anoRef;
-
-            $provimentos->pch = $request->profile === "cpg_tecnico" ? "OK" : "PENDENTE";
-
-            if ($carencia->tipo_carencia === "Temp") {
-                $provimentos->tipo_carencia_provida = $carencia->tipo_carencia;
-                $provimentos->data_fim_by_temp = $carencia->fim_vaga;
-            } else {
-                $provimentos->tipo_carencia_provida = $carencia->tipo_carencia;
-            }
-
-            $provimentos->disciplina = $carencia->disciplina;
-            $provimentos->situacao_provimento = $request->situacao_provimento;
-            $provimentos->situacao = $request->situacao_provimento === "tramite" ? "DESBLOQUEADO" : "BLOQUEADO";
-            $provimentos->usuario = $request->usuario;
-
-
-            if ($provimentos->save()) {
-                $log = new Log;
-                $log->user_id = $request->user_id;
-                $log->action = "Inclusion";
-                $log->module = "Provimento";
-                $log->provimento_id = $provimentos->id;
-                $log->ano_ref = $anoRef;
-                $log->save();
-            }
-
-            Carencia::where('id', $carencia->id)->update([
-                'matutino' => $carencia->matutino - $matutino,
-                'vespertino' => $carencia->vespertino - $vespertino,
-                'noturno' => $carencia->noturno - $noturno,
-                'total' => $carencia->total - $total,
-            ]);
+        if (empty($data)) {
+            return redirect()->to(url()->previous())->with('msg', 'carência inexistente');
         }
 
-        $carenciaExists = Carencia::where('cod_ue', $request->cod_unidade)->where('ano_ref', $anoRef)->where('total', '>', '0')->exists();
-        $uee = Uee::where('cod_unidade', $request->cod_unidade)->firstOrFail();
-        if ($carenciaExists) {
+        // Usar uma transação é crucial para garantir a integridade dos dados.
+        // Se qualquer parte falhar, tudo é revertido.
+        try {
+            DB::transaction(function () use ($request, $data) {
+                $anoRef = session()->get('ano_ref');
 
-            $uee->update([
-                'carencia' => 'SIM',
-            ]);
-        } else {
-            $uee->update([
-                'carencia' => 'NÃO',
-            ]);
+                foreach ($data as $carenciaId) {
+                    $matutino = $request->provimento_matutino[$carenciaId] ?? 0;
+                    $vespertino = $request->provimento_vespertino[$carenciaId] ?? 0;
+                    $noturno = $request->provimento_noturno[$carenciaId] ?? 0;
+                    $total = $matutino + $vespertino + $noturno;
+
+                    // Pula para a próxima iteração se nenhum provimento foi feito para esta carência.
+                    if ($total <= 0) {
+                        continue;
+                    }
+
+                    // Busca a carência. findOrFail é mais limpo e seguro.
+                    $carencia = Carencia::findOrFail($carenciaId);
+
+                    // Cria o provimento usando Mass Assignment (requer a propriedade $fillable no Model).
+                    $provimento = Provimento::create([
+                        'nte' => $request->nte,
+                        'cod_unidade' => $request->cod_unidade,
+                        'unidade_escolar' => $request->unidade_escolar,
+                        'municipio' => $request->municipio,
+                        'cadastro' => $request->cadastro,
+                        'servidor' => $request->servidor,
+                        'vinculo' => $request->vinculo,
+                        'regime' => $request->regime,
+                        'forma_suprimento' => $request->forma_suprimento,
+                        'tipo_movimentacao' => $request->tipo_movimentacao,
+                        'tipo_aula' => $request->tipo_aula,
+                        'num_cop' => $request->num_cop,
+                        'data_assuncao' => $request->data_assuncao,
+                        'data_encaminhamento' => $request->data_encaminhamento,
+                        'provimento_matutino' => $matutino,
+                        'provimento_vespertino' => $vespertino,
+                        'provimento_noturno' => $noturno,
+                        'total' => $total,
+                        'id_carencia' => $carencia->id,
+                        'obs' => $request->obs,
+                        'ano_ref' => $anoRef,
+                        'pch' => $request->profile === "cpg_tecnico" ? "OK" : "PENDENTE",
+                        'tipo_carencia_provida' => $carencia->tipo_carencia,
+                        'data_fim_by_temp' => $carencia->tipo_carencia === "Temp" ? $carencia->fim_vaga : null,
+                        'disciplina' => $carencia->disciplina,
+                        'situacao_provimento' => $request->forma_suprimento === "RESERVA DE VAGA" ? "tramite" : $request->situacao_provimento,
+                        'situacao' => $request->situacao_provimento === "tramite" ? "DESBLOQUEADO" : "BLOQUEADO",
+                        'usuario' => $request->usuario,
+                    ]);
+
+                    // Cria o log.
+                    Log::create([
+                        'user_id' => $request->user_id,
+                        'action' => "Inclusion",
+                        'module' => "Provimento",
+                        'provimento_id' => $provimento->id,
+                        'ano_ref' => $anoRef,
+                    ]);
+
+                    // OTIMIZAÇÃO: Atualiza a carência com uma única query atômica.
+                    $carencia->update([
+                        'matutino'   => DB::raw("matutino - {$matutino}"),
+                        'vespertino' => DB::raw("vespertino - {$vespertino}"),
+                        'noturno'    => DB::raw("noturno - {$noturno}"),
+                        'total'      => DB::raw("total - {$total}"),
+                    ]);
+                }
+
+                // Atualiza o status da UEE após o loop.
+                $carenciaExists = Carencia::where('cod_ue', $request->cod_unidade)->where('ano_ref', $anoRef)->where('total', '>', 0)->exists();
+                Uee::where('cod_unidade', $request->cod_unidade)->update([
+                    'carencia' => $carenciaExists ? 'SIM' : 'NÃO',
+                ]);
+            });
+
+            return redirect()->to(url()->previous())->with('msg', 'Vaga suprida com Sucesso!');
+        } catch (\Exception $e) {
+            // Se qualquer coisa dentro da transação falhar, o erro é capturado aqui.
+
+            return redirect()->to(url()->previous())->with('error', 'Ocorreu um erro ao processar o provimento: ' . $e->getMessage());
         }
-
-        return  redirect()->to(url()->previous())->with('alert', 'bg-success')->with('msg', 'Vaga suprida com Sucesso!');
     }
 
     public function processData(Request $request)
@@ -325,6 +321,11 @@ class ProvimentoController extends Controller
             }
         }
 
+        if ($request->filled('search_created')) {
+            // Aplica a condição para buscar carências criadas a partir da data informada.
+            $provimentos->whereDate('created_at', '>=', $request->search_created);
+        }
+
         if ($request->filled('search_codigo_unidade_escolar')) {
             $provimentos = $provimentos->where('cod_unidade', $request->search_codigo_unidade_escolar);
         }
@@ -347,13 +348,21 @@ class ProvimentoController extends Controller
 
         if ($request->filled('search_pch')) {
             $valorBusca = $request->search_pch;
-            $statusEspeciais = ['NO ACOMPANHAMENTO', 'EM SUBISTITUIÇÃO'];
 
-            if (in_array($valorBusca, $statusEspeciais)) {
-                // Se o valor for um dos status especiais, filtra pela coluna 'situacao_programacao'
-                $provimentos->where('situacao_programacao', $valorBusca);
+            $statusEspeciais = ['NO ACOMPANHAMENTO', 'EM SUBSTITUICAO', 'SEM INICIO DAS ATIVIDADES', 'NAO ASSUMIU'];
+
+            if ($valorBusca === 'PENDENTE') {
+                $provimentos->where('pch', 'PENDENTE')
+                    ->where(function ($query) {
+                        $query->whereNull('situacao_programacao')
+                            ->orWhere('situacao_programacao', '');
+                    });
+            } elseif (in_array($valorBusca, $statusEspeciais)) {
+
+                $provimentos->where('situacao_programacao', $valorBusca)
+                    ->where('pch', '!=', 'OK');
             } else {
-                // Caso contrário, filtra pela coluna 'pch'
+
                 $provimentos->where('pch', $valorBusca);
             }
         }
@@ -1327,5 +1336,81 @@ class ProvimentoController extends Controller
         return view('relatorios.termo_encaminhamento', [
             'provimentos_encaminhado' => $provimentos_encaminhado,
         ]);
+    }
+
+    public function validarDocs()
+    {
+
+        $anoRef = session()->get('ano_ref');
+
+        $query = Provimento::query();
+
+        $query->where(function ($subQuery) {
+            $subQuery->where('metodo', '!=', 'RESERVA')
+                ->orWhereNull('metodo');
+        });
+
+        $query->select('servidor', 'cadastro', 'vinculo', 'situacao_provimento', 'num_cop');
+
+        $query->where('ano_ref', $anoRef);
+
+        $servidores = $query->distinct()->get();
+
+        return view('provimento.validar_docs', compact('servidores'));
+    }
+
+    public function update_cop(Request $request)
+    {
+        // AVISO: A validação foi removida a pedido, mas é crucial para produção.
+
+        try {
+            // Usar a closure de DB::transaction garante que o commit e rollback
+            // sejam tratados automaticamente, mantendo a integridade dos dados.
+            $affectedRows = DB::transaction(function () use ($request) {
+                $servidorCadastro = $request->servidor_cadastro;
+                $numCopNovo = $request->num_cop;
+
+                // 1. Encontra o estado atual para saber qual era o COP antigo.
+                $primeiroProvimento = Provimento::where('cadastro', $servidorCadastro)->first();
+
+                // Se não houver provimentos para este servidor, não há o que atualizar.
+                if (!$primeiroProvimento) {
+                    return 0;
+                }
+
+                $numCopAntigo = $primeiroProvimento->num_cop;
+
+                // 2. Lógica de atualização da quantidade (só executa se houver mudança).
+                if ($numCopAntigo !== $numCopNovo) {
+                    // Se existia um COP antigo, devolvemos a unidade ao estoque.
+                    if ($numCopAntigo) {
+                        NumCop::where('num', $numCopAntigo)->increment('quantidade');
+                    }
+
+                    // Se um novo COP foi atribuído, removemos a unidade do estoque.
+                    if ($numCopNovo) {
+                        // firstOrFail() lança uma exceção se o COP não for encontrado,
+                        // o que reverte a transação de forma segura.
+                        $copParaDebitar = NumCop::where('num', $numCopNovo)->firstOrFail();
+                        $copParaDebitar->decrement('quantidade');
+                    }
+                }
+
+                // 3. Operação de Atualização em Massa principal.
+                return Provimento::where('cadastro', $servidorCadastro)
+                    ->update(['num_cop' => $numCopNovo]);
+            });
+
+            // FEEDBACK DE SUCESSO
+            return redirect()->back()->with('msg', "O Nº COP foi atualizado para {$affectedRows} provimento(s) do servidor.");
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // Captura o erro específico se o NumCop não for encontrado.
+            Log::error('Falha ao atualizar Nº COP: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Operação cancelada: O número de COP informado não é válido.');
+        } catch (\Exception $e) {
+            // Captura qualquer outro erro que possa ocorrer durante a transação.
+            Log::error('Falha ao atualizar Nº COP do servidor: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Ocorreu um erro ao tentar atualizar o Nº COP.');
+        }
     }
 }

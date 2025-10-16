@@ -9,7 +9,6 @@
 </div>
 
 <div class="row">
-
     <div class="col-md-3">
         <div class="accordion mb-2 card" id="accordionExampleOne">
             <div class="card-header bg-primary d-flex justify-content-between align-items-center" id="headingOne" type="button" data-toggle="collapse" data-target="#carencia" aria-expanded="true" aria-controls="carencia">
@@ -46,7 +45,7 @@
                             <span class="ml-2 pt-1 subheader">NOTA TÉCNICA</span>
                         </div>
                     </a>
-                    @if ( (Auth::user()->profile === "cpg_tecnico") || (Auth::user()->profile === "administrador") || (Auth::user()->profile === "cpm_tecnico"))
+                    @if ( (Auth::user()->profile === "cpg_tecnico") || (Auth::user()->profile === "administrador") || (Auth::user()->profile === "cpm_tecnico") || (Auth::user()->profile === "cpm_coordenador"))
                     <a class="subheader text-primary mb-2 border-bottom" href="{{ route('provimento.status') }}">
                         <div class="d-flex align-items-center mb-1">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-users">
@@ -74,7 +73,6 @@
             </div>
         </div>
     </div>
-
     <div class="col-md-3">
         <div class="accordion mb-2 card" id="unidadesEscolares">
             <div class="card-header bg-primary d-flex justify-content-between align-items-center" id="unidades_escolares" type="button" data-toggle="collapse" data-target="#unidade" aria-expanded="true" aria-controls="unidade">
@@ -103,8 +101,6 @@
             </div>
         </div>
     </div>
-
 </div>
-
 
 @endsection

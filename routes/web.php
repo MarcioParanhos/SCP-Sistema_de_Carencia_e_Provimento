@@ -73,6 +73,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/update/situation_server2/{situation}/{id}', [ProvimentoController::class, 'update_situation_server2']);
     Route::get('/provimento/efetivo/filter', [ProvimentoController::class, 'showProvimentoEfetivoFilter']);
     Route::post('/update/inconsistencia/{id}', [ProvimentoController::class, 'update_inconsistencia']);
+    Route::get('/provimentos/provimento', [ProvimentoController::class, 'validarDocs'])->name("provimentos.validarDocs");
+    Route::post('/update/atualizarCOP', [ProvimentoController::class, 'update_cop']);
     //Unidades Escolares
     Route::get('/uees/{tipo}', [UeeController::class, 'showUees'])->name('uees.show');
     Route::get('/uees/detail/{id}', [UeeController::class, 'detailUee']);
@@ -146,7 +148,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/regularizacao_funcional/filter', [RegularizacaoFuncionalController::class, 'filtered'])->name('reg_funcional.showByForm');
     Route::get('/regularizacao_funcional/data/excel', [RegularizacaoFuncionalController::class, 'excel_regularizacao_funcional'])->name("regularizacao_funcional.excel");
     Route::get('/deletar_regularizacao/{id}', [RegularizacaoFuncionalController::class, 'destroy_regularizacao']);
-    // LISTAS SUSPENSAS
+    // Listas Suepensas
     Route::get('/relatorios', [ListasSuspensasController::class, 'relatorios'])->name("listas_suspensas.relatorios");
     Route::get('/listas_suspensas', [ListasSuspensasController::class, 'index'])->name("listas_suspensas.index");
     Route::get('/disciplinas', [ListasSuspensasController::class, 'index_disciplinas'])->name("listas_suspensas_disciplinas.index");
@@ -172,7 +174,16 @@ Route::middleware('auth')->group(function () {
     // Reserva de Vagas
     Route::post('/reserva/create', [VagareservaController::class, 'create'])->name('reserva.create');
     Route::get('/reserva/carencia/show', [VagareservaController::class, 'index'])->name('reserva.index');
+    Route::put('/reserva/carencia/update', [VagareservaController::class, 'update'])->name('reserva.update');
+    Route::put('/reserva/carencia/update/servidor', [VagareservaController::class, 'updateServidor'])->name('reserva.update_servidor');
     Route::post('/reserva/prover', [VagareservaController::class, 'createProvimento'])->name('reserva.createProvimento');
+    Route::post('/reservar-carencias', [VagareservaController::class, 'receberCarenciasParaReserva']);
+    Route::get('/reservas/bloco/{blocoId}', [VagareservaController::class, 'detalharBloco'])->name('reservas.detalharBloco');
+    Route::get('/reservas/bloco/{blocoId}/imprimir-termo', [VagareservaController::class, 'imprimirTermo'])->name('reservas.imprimirTermo');
+    Route::get('/reservas/data/excel', [VagareservaController::class, 'excel_reservas'])->name("reservas.excel");
+    Route::get('/reservas/bloco/destroy/{blocoId}', [VagareservaController::class, 'destroyBloco'])->name('reservas.bloco.destroy');
+    Route::post('/reservas/bloco/filter', [VagareservaController::class, 'index'])->name('reservas.index');
+    
 });
 
 require __DIR__ . '/auth.php';

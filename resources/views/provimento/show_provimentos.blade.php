@@ -35,6 +35,7 @@
             height: 16px;
         }
     </style>
+
     <div class="bg-primary card text-white card_title">
         <h3 class=" title_show_carencias">Pesquisa de PROVIMENTOS</h3>
     </div>
@@ -215,6 +216,7 @@
                             <option value="EXEDENTE REDA">EXEDENTE REDA</option>
                             <option value="REDA EMERGENCIAL">REDA EMERGENCIAL</option>
                             <option value="REDA CONCURSO">REDA CONCURSO</option>
+                            <option value="RESERVA DE VAGA">RESERVA DE VAGA</option>
                         </select>
                     </div>
                 </div>
@@ -242,8 +244,9 @@
                             <option value="OK">PROGRAMADO</option>
                             <option value="PENDENTE">PENDENTE</option>
                             <option value="NO ACOMPANHAMENTO">NO ACOMPANHAMENTO</option>
-                            <option value="EM SUBISTITUIÇÃO">EM SUBISTITUIÇÃO</option>
+                            <option value="EM SUBSTITUICAO">EM SUBSTITUIÇÃO</option>
                             <option value="SEM INICIO DAS ATIVIDADES">SEM INICIO DAS ATIVIDADES</option>
+                            <option value="NAO ASSUMIU">NÃO ASSUMIU</option>
                         </select>
                     </div>
                 </div>
@@ -274,6 +277,13 @@
                             <option value="sim">COM MATRICULA</option>
                             <option value="nao">SEM MATRICULA</option>
                         </select>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-group_disciplina">
+                        <label for="search_created" class="">LANÇAMENTO A PARTIR DE:</label>
+                        <input name="search_created" id="search_created" type="date"
+                            class="form-control form-control-sm">
                     </div>
                 </div>
             </div>
@@ -401,8 +411,8 @@
                                             d="M19 22.5a4.75 4.75 0 0 1 3.5 -3.5a4.75 4.75 0 0 1 -3.5 -3.5a4.75 4.75 0 0 1 -3.5 3.5a4.75 4.75 0 0 1 3.5 3.5" />
                                     </svg>
                                 </td>
-                            @elseif ($provimento->situacao_programacao === 'EM SUBISTITUIÇÃO')
-                                <td class="text-center" title="Em subistituição de licença">
+                            @elseif ($provimento->situacao_programacao === 'EM SUBSTITUIÇÃO')
+                                <td class="text-center" title="Em substituição de licença">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                         viewBox="0 0 24 24" fill="none" stroke="#007bff" stroke-width="2"
                                         stroke-linecap="round" stroke-linejoin="round"
@@ -410,6 +420,17 @@
                                         <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                                         <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
                                         <path d="M12 7v5l3 3" />
+                                    </svg>
+                                </td>
+                            @elseif ($provimento->situacao_programacao === 'NAO ASSUMIU')
+                                <td class="text-center" title="Não Assumiu as Atividades">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                        viewBox="0 0 24 24" fill="none" stroke="red" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round"
+                                        class="icon icon-tabler icons-tabler-outline icon-tabler-circle-x">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                        <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+                                        <path d="M10 10l4 4m0 -4l-4 4" />
                                     </svg>
                                 </td>
                             @elseif ($provimento->situacao_programacao === 'SEM INICIO DAS ATIVIDADES')
@@ -473,8 +494,8 @@
                                                 </svg>
                                             </a>
                                         @endif
-                                    @else
-                                        ($provimento->total < 0) <a title="Excluir" id=""
+                                    @elseif ($provimento->total < 0)
+                                        <a title="Excluir" id=""
                                             onclick="destroyProvimento('{{ $provimento->id }}')"
                                             class="ml-1 btn-show-carência btn btn-sm btn-danger">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
@@ -488,7 +509,7 @@
                                                 <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
                                                 <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
                                             </svg>
-                                            </a>
+                                        </a>
                                     @endif
                                 @endif
                             </div>
@@ -566,7 +587,18 @@
                     <path d="M19 22v.01" />
                     <path d="M19 19a2.003 2.003 0 0 0 .914 -3.782a1.98 1.98 0 0 0 -2.414 .483" />
                 </svg>
-                <span class="ml-2">Sem Iníco das Atividades na Unidade Escolar</span>
+                <span class="ml-2">Sem Início das Atividades na Unidade Escolar</span>
+            </div>
+            <div class="d-flex align-items-center ml-4 text-danger">
+                {{-- Ícone para SEM INICIO DAS ATIVIDADES --}}
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-circle-x">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+                    <path d="M10 10l4 4m0 -4l-4 4" />
+                </svg>
+                <span class="ml-2 text-dark">Não Assumiu</span>
             </div>
         </div>
     </div>
@@ -621,7 +653,7 @@
                                     <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                                     <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
                                     <path d="M12 7v5l3 3" />
-                                </svg> - Vaga de Subistituição de Licença.
+                                </svg> - Vaga de Substituição de Licença.
                             </div>
                             <div class="mt-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
@@ -633,7 +665,17 @@
                                     <path d="M6 21v-2a4 4 0 0 1 4 -4h3.5" />
                                     <path d="M19 22v.01" />
                                     <path d="M19 19a2.003 2.003 0 0 0 .914 -3.782a1.98 1.98 0 0 0 -2.414 .483" />
-                                </svg> - Sem Iníco das Atividades na Unidade Escolar.
+                                </svg> - Sem Início das Atividades na Unidade Escolar.
+                            </div>
+                            <div class="mt-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                    viewBox="0 0 24 24" fill="none" stroke="red" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round"
+                                    class="icon icon-tabler icons-tabler-outline icon-tabler-circle-x">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                    <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+                                    <path d="M10 10l4 4m0 -4l-4 4" />
+                                </svg> - Não Assumiu.
                             </div>
                         </div>
                     </div>

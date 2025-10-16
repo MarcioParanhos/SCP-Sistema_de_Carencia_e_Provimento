@@ -255,8 +255,7 @@
                                         <div>
                                             <label for="cadastro" class="">Matrícula / cpf</label>
                                             <input value="" minlength="8" maxlength="11" name="cadastro"
-                                                id="cadastro" type="cadastro" class="form-control form-control-sm"
-                                                required>
+                                                id="cadastro" type="cadastro" class="form-control form-control-sm">
                                         </div>
                                         <div class="btn_carencia_seacrh">
                                             <button id="cadastro_btn"
@@ -364,7 +363,7 @@
                                         <label class="control-label" for="situacao_provimento">situação do
                                             provimento</label>
                                         <select name="situacao_provimento" id="situacao_provimento"
-                                            class="form-control select2" required>
+                                            class="form-control select2">
                                             <option value="">SELECIONE...</option>
                                         </select>
                                     </div>
@@ -380,7 +379,7 @@
                                 </div>
                             @endif
                             @if (Auth::user()->profile != 'cpg_tecnico')
-                                <div id="data_encaminhamento_row" class="col-md-2" hidden>
+                                <div id="data_encaminhamento_row" class="col-md-2">
                                     <div class="form-group_disciplina">
                                         <label for="data_encaminhamento" class="">data de encaminhamento</label>
                                         <input value="data_encaminhamento" name="data_encaminhamento"
@@ -412,15 +411,26 @@
                                     </div>
                                 </div>
                             @endif
-                            <div id="num_cop_row" class="col-md-2">
+                            {{-- <div id="num_cop_row" class="col-md-2">
                                 <div class="form-group_disciplina">
                                     <label for="num_cop" class="">Nº COP</label>
                                     <input value="" name="num_cop" id="num_cop"
                                         type="text" class="form-control form-control-sm">
                                 </div>
+                            </div> --}}
+                            <div id="num_cop_row" class="col-md-2">
+                                <div class="form-group_disciplina">
+                                    <label class="control-label" for="num_cop">Nº COP</label>
+                                    <select name="num_cop" id="num_cop" class="form-control select2">
+                                        <option value="">SELECIONE...</option>
+                                        @foreach ($num_cop as $cop)
+                                            <option value="{{ $cop->num }}">{{ $cop->num }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
                         </div>
-                       
+
                         <div class="form-row">
                             <div id="data_assuncao_row" class="col-md-12">
                                 <div class="form-group_disciplina">

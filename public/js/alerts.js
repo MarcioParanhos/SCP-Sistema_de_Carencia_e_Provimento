@@ -1,102 +1,53 @@
-(function($) {
-  showSwal = function(type) {
-    'use strict';
-    if (type === 'basic') {
-      swal({
-        text: 'Any fool can use a computer',
-        button: {
-          text: "OK",
-          value: true,
-          visible: true,
-          className: "btn btn-primary"
-        }
-      })
+document.addEventListener("DOMContentLoaded", function () {
+    const session_message = document.getElementById("session_message");
 
-    } else if (type === 'title-and-text') {
-      swal({
-        title: 'Read the alert!',
-        text: 'Click OK to close this alert',
-        button: {
-          text: "OK",
-          value: true,
-          visible: true,
-          className: "btn btn-primary"
+    if (session_message) {
+        if (session_message.value === "error") {
+            Swal.fire({
+                icon: "error",
+                title: "Atenção!",
+                text: "Não é possível excluir a carência porque existem provimentos associados a ela.",
+            });
+        } else if (session_message.value === "success_provimento_de_reserva") {
+            Swal.fire({
+                icon: "success",
+                title: "Atenção!",
+                text: "Reserva incluida em estado de Trâmite.",
+            });
+        } else if (session_message.value === "delete_reserva") {
+            Swal.fire({
+                icon: "success",
+                title: "Atenção!",
+                text: "Bloco de reserva excluído e Nº COP devolvido ao estoque com sucesso!",
+            });
+        } else if (session_message.value === "success_update_reserva") {
+            Swal.fire({
+                icon: "success",
+                title: "Atenção!",
+                text: "Bloco de vagas atualizado com sucesso!",
+            });
+            
+        } else if (session_message.value === "error_update_reserva") {
+            Swal.fire({
+                icon: "info",
+                title: "Atenção!",
+                text: "Operação cancelada: O limite de 100 utilizações para o COP 365/2025 foi atingido.",
+            });
+            
+        } else if (session_message.value === "success_update_servidor") {
+            Swal.fire({
+                icon: "success",
+                title: "Atenção!",
+                text: "Dados do servidor atualizados com sucesso!",
+            });
+        } else {
+            Swal.fire({
+                position: "center",
+                icon: "success",
+                title: "Carência Excluída com sucesso!",
+                showConfirmButton: true,
+            });
         }
-      })
-
-    } else if (type === 'success-message') {
-      swal({
-        title: 'Congratulations!',
-        text: 'You entered the correct answer',
-        icon: 'success',
-        button: {
-          text: "Continue",
-          value: true,
-          visible: true,
-          className: "btn btn-primary"
-        }
-      })
-
-    } else if (type === 'auto-close') {
-      swal({
-        title: 'Auto close alert!',
-        text: 'I will close in 2 seconds.',
-        timer: 2000,
-        button: false
-      }).then(
-        function() {},
-        // handling the promise rejection
-        function(dismiss) {
-          if (dismiss === 'timer') {
-            console.log('I was closed by the timer')
-          }
-        }
-      )
-    } else if (type === 'warning-message-and-cancel') {
-      swal({
-        title: 'Are you sure?',
-        text: "You won't be able to revert this!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3f51b5',
-        cancelButtonColor: '#ff4081',
-        confirmButtonText: 'Great ',
-        buttons: {
-          cancel: {
-            text: "Cancel",
-            value: null,
-            visible: true,
-            className: "btn btn-danger",
-            closeModal: true,
-          },
-          confirm: {
-            text: "OK",
-            value: true,
-            visible: true,
-            className: "btn btn-primary",
-            closeModal: true
-          }
-        }
-      })
-
-    } else if (type === 'custom-html') {
-      swal({
-        content: {
-          element: "input",
-          attributes: {
-            placeholder: "Type your password",
-            type: "password",
-            class: 'form-control'
-          },
-        },
-        button: {
-          text: "OK",
-          value: true,
-          visible: true,
-          className: "btn btn-primary"
-        }
-      })
     }
-  }
+});
 
-})(jQuery);

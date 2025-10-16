@@ -500,6 +500,7 @@
         </tbody>
     </table>
 </div>
+
 <!-- Modal para adcicionar novo motivo de uma vaga -->
 <div class="modal fade" id="createUeesMoral" tabindex="-1" role="dialog" aria-labelledby="createUeesMoral" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl" role="document">

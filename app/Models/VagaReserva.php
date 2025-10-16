@@ -9,6 +9,7 @@ class VagaReserva extends Model
 {
 
     protected $table = 'vagas_reservas';
+    protected $guarded = [];
     use HasFactory;
 
     public function carencia()

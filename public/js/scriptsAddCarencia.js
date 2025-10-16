@@ -57,34 +57,27 @@ $(document).ready(function () {
     $("#motivo_vaga").on("select2:select change", function (e) {
         var selectedValue = $(this).val();
 
-        let matricula_row = document.getElementById("matricula-row")
-        let servidor = document.getElementById("servidor")
-        let vinculo = document.getElementById("vinculo")
-        let regime = document.getElementById("regime")
-
+        let matricula_row = document.getElementById("matricula-row");
+        let servidor = document.getElementById("servidor");
+        let vinculo = document.getElementById("vinculo");
+        let regime = document.getElementById("regime");
 
         if (selectedValue === "REDA DEMITIDO 2024") {
-
-            matricula_row.hidden = true
-            servidor.value = "REDA DEMITIDO 2024"
-            vinculo.value = "REDA DEMITIDO 2024"
-            regime.value = "20"
-
+            matricula_row.hidden = true;
+            servidor.value = "REDA DEMITIDO 2024";
+            vinculo.value = "REDA DEMITIDO 2024";
+            regime.value = "20";
         } else if (selectedValue === "MEDIADOR EMITEC") {
-
-            matricula_row.hidden = true
-            servidor.value = "VAGA MEDIADOR EMITEC"
-            vinculo.value = "VAGA MEDIADOR EMITEC"
-            regime.value = "20"
-
+            matricula_row.hidden = true;
+            servidor.value = "VAGA MEDIADOR EMITEC";
+            vinculo.value = "VAGA MEDIADOR EMITEC";
+            regime.value = "20";
         } else {
             // matricula_row.hidden = false
-            servidor.value = ""
-            vinculo.value = ""
-            regime.value = ""
-
+            servidor.value = "";
+            vinculo.value = "";
+            regime.value = "";
         }
-
     });
 });
 
@@ -121,7 +114,6 @@ function addTotal() {
 
 // PESQUISA UNIDADE ESCOLAR E ATUALIZA A TABELA COM AS INFORMAÇÕES VINDAS DO BANCO
 function addNewCarencia() {
-
     let codigo_unidade = cod_unidade.value;
 
     if (codigo_unidade == "") {
@@ -136,7 +128,6 @@ function addNewCarencia() {
         let data = response[0];
 
         if (data) {
-
             const unidade_id = document.getElementById("unidade_id");
             const uo_origem = document.getElementById("uo_origem");
 
@@ -151,7 +142,6 @@ function addNewCarencia() {
 
             if (unidade_id != null) {
                 unidade_id.value = data.id;
-
             }
 
             // Faz a validação se a unidade esta homologada e permite ou não lançar uma nova vaga
@@ -182,9 +172,9 @@ function addNewCarencia() {
 
             $.post(
                 "/consultarCarencias/" +
-                codigo_unidade +
-                "," +
-                tipo_carenciaParaConsulta,
+                    codigo_unidade +
+                    "," +
+                    tipo_carenciaParaConsulta,
                 function (response) {
                     // Função para verificar e converter o formato da data, se necessário
                     function formatDate(dateString) {
@@ -225,17 +215,17 @@ function addNewCarencia() {
                         });
 
                         dataSet.push([
-                            '',
-                            'TOTAL',
+                            "",
+                            "TOTAL",
                             matSum,
                             vespSum,
                             notSum,
                             totalSum,
-                            '',
-                            '',
-                            '',
-                            '',
-                            '',
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
                         ]);
 
                         $("#table_carencia").DataTable({
@@ -248,7 +238,10 @@ function addNewCarencia() {
                                 { title: "NOT", className: "text-center" },
                                 { title: "TOTAL", className: "text-center" },
                                 { title: "SERVIDOR" },
-                                { title: "MATRICULA", className: "text-center" },
+                                {
+                                    title: "MATRICULA",
+                                    className: "text-center",
+                                },
                                 { title: "MOTIVO" },
                                 { title: "TIPO", className: "text-center" },
                                 { title: "INICIO", className: "text-center" },
@@ -256,13 +249,18 @@ function addNewCarencia() {
                             ordering: false,
                             paging: true,
                             info: false,
-                            lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+                            lengthMenu: [
+                                [10, 25, 50, 100],
+                                [10, 25, 50, 100],
+                            ],
                             language: {
-                                lengthMenu: "Exibindo _MENU_ Registros por página",
+                                lengthMenu:
+                                    "Exibindo _MENU_ Registros por página",
                                 zeroRecords: "Nada encontrado! desculpe =(",
                                 info: "Mostrando Pagina _PAGE_ de _PAGES_",
                                 infoEmpty: "Não há registros disponíveis",
-                                infoFiltered: "(filtrado de _MAX_ registros totais)",
+                                infoFiltered:
+                                    "(filtrado de _MAX_ registros totais)",
                                 sSearch: "Buscar",
                                 oPaginate: {
                                     sFirst: "Primeira",
@@ -289,7 +287,7 @@ function addNewCarencia() {
 }
 
 function searchUnidadeEscolar() {
-    const cod_ue_destino = document.getElementById("cod_ue_destino")
+    const cod_ue_destino = document.getElementById("cod_ue_destino");
 
     if (cod_ue_destino.value == "") {
         Swal.fire({
@@ -303,17 +301,18 @@ function searchUnidadeEscolar() {
         let data = response[0];
 
         if (data) {
-
-            const nte_destino = document.getElementById("nte_destino")
-            const municipio_destino = document.getElementById("municipio_destino")
-            const unidade_escolar_destino = document.getElementById("unidade_escolar_destino")
+            const nte_destino = document.getElementById("nte_destino");
+            const municipio_destino =
+                document.getElementById("municipio_destino");
+            const unidade_escolar_destino = document.getElementById(
+                "unidade_escolar_destino"
+            );
             const uo_destino = document.getElementById("uo_destino");
 
             nte_destino.value = data.nte;
             municipio_destino.value = data.municipio;
             unidade_escolar_destino.value = data.unidade_escolar;
             uo_destino.value = data.uo_cod[0].uo;
-
         } else {
             Swal.fire({
                 icon: "error",
@@ -321,7 +320,6 @@ function searchUnidadeEscolar() {
                 text: "UE não Encontrada. Tente novamente.",
             });
         }
-
     });
 }
 
@@ -364,14 +362,13 @@ function searchServidor() {
 function addTipoCarencia(tipo) {
     if (tipo_carencia.value === "Real") {
         if (tipo == 1) {
-
-            let matricula_row = document.getElementById("matricula-row")
+            let matricula_row = document.getElementById("matricula-row");
             matricula_row.hidden = false;
-            $('#disciplina').next('.select2').css('pointer-events', 'auto');
+            $("#disciplina").next(".select2").css("pointer-events", "auto");
             $("#disciplina").val(null).trigger("change");
-            $('#area').next('.select2').css('pointer-events', 'auto');
+            $("#area").next(".select2").css("pointer-events", "auto");
             $("#area").val(null).trigger("change");
-            $('#motivo_vaga').next('.select2').css('pointer-events', 'auto');
+            $("#motivo_vaga").next(".select2").css("pointer-events", "auto");
             $('#motivo_vaga option[value="MEDIADOR EMITEC"]').remove();
             $("#motivo_vaga").val(null).trigger("change");
             buttonSelectTipo.innerHTML = "EDUCAÇÃO BÁSICA";
@@ -398,15 +395,14 @@ function addTipoCarencia(tipo) {
             $("#curso").val(null).trigger("change");
             $("#motivo_vaga").val(null).trigger("change");
             $("#disciplina_especial").val(null).trigger("change");
-
         } else if (tipo == 2) {
-            let matricula_row = document.getElementById("matricula-row")
+            let matricula_row = document.getElementById("matricula-row");
             matricula_row.hidden = false;
-            $('#disciplina').next('.select2').css('pointer-events', 'auto');
+            $("#disciplina").next(".select2").css("pointer-events", "auto");
             $("#disciplina").val(null).trigger("change");
-            $('#area').next('.select2').css('pointer-events', 'auto');
+            $("#area").next(".select2").css("pointer-events", "auto");
             $("#area").val(null).trigger("change");
-            $('#motivo_vaga').next('.select2').css('pointer-events', 'auto');
+            $("#motivo_vaga").next(".select2").css("pointer-events", "auto");
             $("#motivo_vaga").val(null).trigger("change");
             buttonSelectTipo.innerHTML = "PROFISSIONALIZANTE";
             typeTitle.innerHTML = "PROFISSIONALIZANTE";
@@ -430,17 +426,16 @@ function addTipoCarencia(tipo) {
             $("#curso").val(null).trigger("change");
             $("#motivo_vaga").val(null).trigger("change");
         } else if (tipo == 3) {
-
             $("#componenteEspecial").modal({
                 show: true,
             });
-            let matricula_row = document.getElementById("matricula-row")
+            let matricula_row = document.getElementById("matricula-row");
             matricula_row.hidden = false;
-            $('#disciplina').next('.select2').css('pointer-events', 'auto');
+            $("#disciplina").next(".select2").css("pointer-events", "auto");
             $("#disciplina").val(null).trigger("change");
-            $('#area').next('.select2').css('pointer-events', 'auto');
+            $("#area").next(".select2").css("pointer-events", "auto");
             $("#area").val(null).trigger("change");
-            $('#motivo_vaga').next('.select2').css('pointer-events', 'auto');
+            $("#motivo_vaga").next(".select2").css("pointer-events", "auto");
             $("#motivo_vaga").val(null).trigger("change");
             buttonSelectTipo.innerHTML = "EDUCAÇÃO ESPECIAL";
             typeTitle.innerHTML = "EDUCAÇÃO ESPECIAL";
@@ -465,14 +460,11 @@ function addTipoCarencia(tipo) {
             $("#curso").val(null).trigger("change");
             $("#motivo_vaga").val(null).trigger("change");
             area.required = true;
-
         } else if (tipo == 4) {
-
-            let matricula_row = document.getElementById("matricula-row")
-            let servidor = document.getElementById("servidor")
-            let vinculo = document.getElementById("vinculo")
-            let regime = document.getElementById("regime")
-
+            let matricula_row = document.getElementById("matricula-row");
+            let servidor = document.getElementById("servidor");
+            let vinculo = document.getElementById("vinculo");
+            let regime = document.getElementById("regime");
 
             buttonSelectTipo.innerHTML = "EMITEC";
             typeTitle.innerHTML = "EMITEC";
@@ -480,17 +472,19 @@ function addTipoCarencia(tipo) {
             cadastro.disabled = false;
             // btnFormCarencia.disabled = false
             tipo_vaga.value = "Emitec";
-            $('#disciplina').val("MEDIADOR EMITEC").trigger('change.select2');
-            $('#disciplina').next('.select2').css('pointer-events', 'none');
-            $('#area').val("MULTIDISCIPLINAR").trigger('change.select2');
-            $('#area').next('.select2').css('pointer-events', 'none');
-            $('#motivo_vaga').append('<option value="MEDIADOR EMITEC">MEDIADOR EMITEC</option>');
-            $("#motivo_vaga").val("MEDIADOR EMITEC").trigger('change.select2');
-            $('#motivo_vaga').next('.select2').css('pointer-events', 'none');
-            matricula_row.hidden = true
-            servidor.value = "VAGA MEDIADOR EMITEC"
-            vinculo.value = "VAGA MEDIADOR EMITEC"
-            regime.value = "20"
+            $("#disciplina").val("MEDIADOR EMITEC").trigger("change.select2");
+            $("#disciplina").next(".select2").css("pointer-events", "none");
+            $("#area").val("MULTIDISCIPLINAR").trigger("change.select2");
+            $("#area").next(".select2").css("pointer-events", "none");
+            $("#motivo_vaga").append(
+                '<option value="MEDIADOR EMITEC">MEDIADOR EMITEC</option>'
+            );
+            $("#motivo_vaga").val("MEDIADOR EMITEC").trigger("change.select2");
+            $("#motivo_vaga").next(".select2").css("pointer-events", "none");
+            matricula_row.hidden = true;
+            servidor.value = "VAGA MEDIADOR EMITEC";
+            vinculo.value = "VAGA MEDIADOR EMITEC";
+            regime.value = "20";
             disciplina_row.classList = "visible, col-md-4";
             motivo_vaga_row.classList = "visible, col-md-3";
             inicio_vaga_row.classList = "visible, col-md-2";
@@ -507,14 +501,11 @@ function addTipoCarencia(tipo) {
             num_rim.value = "";
             $("#eixo").val(null).trigger("change");
             $("#curso").val(null).trigger("change");
-            $("#motivo_vaga").val("MEDIADOR EMITEC").trigger('change.select2');
+            $("#motivo_vaga").val("MEDIADOR EMITEC").trigger("change.select2");
             $("#disciplina_especial").val(null).trigger("change");
-
         }
     } else if (tipo_carencia.value === "Temp") {
-
         if (tipo == 1) {
-
             buttonSelectTipo.innerHTML = "BÁSICA";
             typeTitle.innerHTML = "BÁSICA";
             btnCadastro.disabled = false;
@@ -539,9 +530,6 @@ function addTipoCarencia(tipo) {
             $("#curso").val(null).trigger("change");
             $("#motivo_vaga").val(null).trigger("change");
             $("#disciplina_especial").val(null).trigger("change");
-
-
-
         } else if (tipo == 2) {
             buttonSelectTipo.innerHTML = "PROFISSIONALIZANTE";
             typeTitle.innerHTML = "PROFISSIONALIZANTE";
@@ -565,7 +553,6 @@ function addTipoCarencia(tipo) {
             $("#eixo").val(null).trigger("change");
             $("#curso").val(null).trigger("change");
             $("#motivo_vaga").val(null).trigger("change");
-
         } else if (tipo == 3) {
             $("#componenteEspecial").modal({
                 show: true,
@@ -605,7 +592,14 @@ $("#InsertForm").submit(function (e) {
     e.preventDefault();
     // salva no banco
 
-    if ((mat.value || vesp.value || not.value) > 20 && servidor.value != "" && (motivo_vaga.value !== "MEDIADOR EMITEC") && (motivo_vaga.value !== "REDA DEMITIDO 2024")) {
+    
+
+    if (
+        (mat.value || vesp.value || not.value) > 20 &&
+        servidor.value != "" &&
+        motivo_vaga.value !== "MEDIADOR EMITEC" &&
+        motivo_vaga.value !== "REDA DEMITIDO 2024"
+    ) {
         Swal.fire({
             position: "center",
             icon: "warning",
@@ -637,6 +631,9 @@ $("#InsertForm").submit(function (e) {
         motivo_vaga.value !== "AULAS RESIDUAIS" &&
         motivo_vaga.value !== "INCLUSÃO TURMA - CLIENTELA NOVA" &&
         motivo_vaga.value !== "NÃO INGRESSADO REDA" &&
+        motivo_vaga.value !== "REFORMULAÇÃO DE HORÁRIO" &&
+        motivo_vaga.value !== "CRIAÇÃO DE NOVA UEE" &&
+        motivo_vaga.value !== "REDA NÂO GERADO MATRICULA" &&
         motivo_vaga.value !== "RPP - MULTIDISCIPLINAR"
     ) {
         Swal.fire({
@@ -649,9 +646,9 @@ $("#InsertForm").submit(function (e) {
 
         // Se for vaga temporaria valida se o RIM esta digitado
     } else if (tipo_carencia.value === "Temp") {
+        
         if (
             num_rim.value === "" &&
-
             motivo_vaga.value === "LICENÇA POR APRAZAMENTO"
         ) {
             Swal.fire({
@@ -663,6 +660,7 @@ $("#InsertForm").submit(function (e) {
             });
         } else {
             if (total.value > 0) {
+                console.log(num_rim.value);
                 $.ajax({
                     url: "/incluir_carencia",
                     type: "post",
@@ -707,7 +705,6 @@ $("#InsertForm").submit(function (e) {
         }
     } else {
         if (total.value > 0) {
-
             $.ajax({
                 url: "/incluir_carencia",
                 type: "post",
@@ -757,9 +754,9 @@ $("#InsertForm").submit(function (e) {
 
     $.post(
         "/consultarCarencias/" +
-        codigo_unidade +
-        "," +
-        tipo_carenciaParaConsulta,
+            codigo_unidade +
+            "," +
+            tipo_carenciaParaConsulta,
         function (response) {
             var generateTable = function () {
                 var dataSet = [];
@@ -874,3 +871,5 @@ function destroyVacancyPedagogical(id) {
         show: true,
     });
 }
+
+

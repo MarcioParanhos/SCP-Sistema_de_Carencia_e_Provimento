@@ -954,8 +954,8 @@ ul.ks-cboxtags li input[type="checkbox"]:focus + label {
     }
 
     .img-logo {
-        width: 80% !important;
-        height: 80% !important;
+        width: 100% !important;
+        height: 100% !important;
     }
 
     .stretch-card {
@@ -1180,4 +1180,9 @@ ul.ks-cboxtags li input[type="checkbox"]:focus + label {
     100% {
         transform: rotate(360deg);
     }
+}
+
+.swal-title-sm .swal2-title {
+    font-size: 1.2rem; /* Valor ajustado para ser visivelmente menor */
+    line-height: 1.4;  /* Melhora a legibilidade com o novo tamanho */
 }

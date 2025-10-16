@@ -154,6 +154,7 @@
                 width: 100vw !important;
                 flex-direction: column
             }
+
             #ckeck_programacao li {
                 width: 85% !important;
             }
@@ -261,6 +262,9 @@
                                 <option value="Oficinas Pedagogicas"
                                     {{ $uee->categorias && in_array('Oficinas Pedagogicas', json_decode($uee->categorias)) ? 'selected' : '' }}>
                                     OFICINAS PEDAGOGICAS</option>
+                                <option value="Segundo Semestre"
+                                    {{ $uee->categorias && in_array('Segundo Semestre', json_decode($uee->categorias)) ? 'selected' : '' }}>
+                                    SEGUNDO SEMESTRE</option>
                             </select>
                         </div>
                     </div>
@@ -347,6 +351,9 @@
                                 <option value="Oficinas Pedagogicas"
                                     {{ $uee->categorias && in_array('Oficinas Pedagogicas', json_decode($uee->categorias)) ? 'selected' : '' }}>
                                     OFICINAS PEDAGOGICAS</option>
+                                <option value="Segundo Semestre"
+                                    {{ $uee->categorias && in_array('Segundo Semestre', json_decode($uee->categorias)) ? 'selected' : '' }}>
+                                    SEGUNDO SEMESTRE</option>
                             </select>
                         </div>
                     </div>
@@ -563,7 +570,8 @@
                         @if ($uee->finished_typing == 'SIM')
                             <div class="form-row">
                                 <div id="pch_phases" class="pch_phases w-100 ">
-                                    <ul id="ckeck_programacao" style="gap: 20px" class="ks-cboxtags d-flex w-100 p-2 ml-3">
+                                    <ul id="ckeck_programacao" style="gap: 20px"
+                                        class="ks-cboxtags d-flex w-100 p-2 ml-3">
                                         <li class="w-100">
                                             <input name="check_2_pch" type="checkbox" id="checkboxOne"
                                                 {{ in_array($uee->programming_stage, [2, 3, 4]) ? 'checked' : '' }}>

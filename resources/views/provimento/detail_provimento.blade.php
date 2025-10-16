@@ -220,9 +220,6 @@
         </div>
     @endif
 
-    {{-- <div class="header print-visible">
-        <img class="img-logo" src="/images/SCP.png" alt="people">
-    </div> --}}
     <div class="card">
         <div class="shadow bg-primary text-white card_title ">
             @if ($provimento->pch === 'PENDENTE')
@@ -271,11 +268,24 @@
             </div>
             <div class="edit-container">
                 <div class="user-edit">
-                    <i class="ti-pencil-alt"></i>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+                        class="icon icon-tabler icons-tabler-outline icon-tabler-edit">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" />
+                        <path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" />
+                        <path d="M16 5l3 3" />
+                    </svg>
                     <h4>{{ $provimento->usuario }}</h4>
                 </div>
                 <div class="user-edit">
-                    <i class="ti-time"></i>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+                        class="icon icon-tabler icons-tabler-outline icon-tabler-clock">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+                        <path d="M12 7v5l3 3" />
+                    </svg>
                     <h4>{{ \Carbon\Carbon::parse($provimento->created_at)->format('d/m/Y') }}</h4>
                 </div>
             </div>
@@ -358,7 +368,7 @@
                                 </div>
                             </div>
                         @endif
-                        @if (Auth::user()->profile === 'cpm_coordenador' || Auth::user()->profile === 'administrador')
+                        @if (Auth::user()->profile === 'cpm_coordenador' || Auth::user()->profile === 'administrador' || Auth::user()->profile === 'cpg_tecnico')
                             <div class=" col-md-2">
                                 <div class="display_btn position-relative form-group">
                                     <div>
@@ -386,35 +396,28 @@
                         @endif
                     @endif
                     <div class="col-md-1">
-                        <div class="form-group">
+                        <div class="form-group_disciplina">
                             <label class="control-label" for="search_uee">VÍNCULO</label>
                             <input value="{{ $provimento->vinculo }}" name="vinculo" id="vinculo" type="text"
                                 class="form-control form-control-sm" readonly>
                         </div>
                     </div>
                     <div class="col-md-1">
-                        <div class="form-group">
+                        <div class="form-group_disciplina">
                             <label for="codigo_unidade_escolar" class="control-label">regime</label>
                             <input value="{{ $provimento->regime }}" name="regime" id="regime" type="text"
                                 class="form-control form-control-sm" readonly>
                         </div>
                     </div>
                     <div class="col-md-2">
-                        <div class="form-group">
+                        <div class="form-group_disciplina">
                             <label class="control-label" for="eixo">FORMA DO SUPRIMENTO</label>
                             <input value="{{ $provimento->forma_suprimento }}" name="tipo_movimentacao"
                                 id="tipo_movimentacao" type="text" class="form-control form-control-sm" readonly>
                         </div>
                     </div>
                     <div class="col-md-2">
-                        <div class="form-group">
-                            <label class="control-label" for="eixo">TIPO DE MOVIMENTAÇÃO</label>
-                            <input value="{{ $provimento->tipo_movimentacao }}" name="tipo_movimentacao"
-                                id="tipo_movimentacao" type="text" class="form-control form-control-sm" readonly>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-group">
+                        <div class="form-group_disciplina">
                             <label class="control-label" for="eixo">TIPO DE MOVIMENTAÇÃO</label>
                             <input value="{{ $provimento->tipo_movimentacao }}" name="tipo_movimentacao"
                                 id="tipo_movimentacao" type="text" class="form-control form-control-sm" readonly>
@@ -485,6 +488,24 @@
                             </div>
                         </div>
                     @endif
+                    @if ($provimento->num_cop)
+                        <div class="col-md-1">
+                            <div class="form-group_disciplina">
+                                <label for="num_cop" class="">Nº DO COPE</label>
+                                <input value="{{ $provimento->num_cop }}" name="" id="" type="text"
+                                    class="text-center form-control form-control-sm" readonly>
+                            </div>
+                        </div>
+                    @endif
+                    @if ($provimento->metodo)
+                        <div class="col-md-2">
+                            <div class="form-group_disciplina">
+                                <label for="num_cop" class="">METODO DE PROVIMENTO</label>
+                                <input value="{{ $provimento->metodo }}" name="" id="" type="text"
+                                    class="text-center form-control form-control-sm" readonly>
+                            </div>
+                        </div>
+                    @endif
                 </div>
                 <div class="form-row mb-2">
                     @if (Auth::user()->profile === 'cpm_tecnico' ||
@@ -510,7 +531,7 @@
                         @endif
                         @if ($provimento->situacao === 'BLOQUEADO' || $provimento->pch === 'OK')
                             <div class="col-md-2" id="">
-                                <div class="form-group_disciplina">
+                                {{-- <div class="form-group_disciplina">
                                     <label class="control-label" for="situacao_provimento">situação do provimento</label>
                                     <select name="situacao_provimento" id="situacao_provimento_detail"
                                         class="form-control select2" disabled>
@@ -521,6 +542,14 @@
                                             <option value="{{ $provimento->situacao_provimento }}">PROVIDO</option>
                                         @endif
                                     </select>
+                                </div> --}}
+                                <div class="form-group_disciplina">
+                                    <label for="codigo_unidade_escolar" class="">situação do provimento</label>
+                                    @if ($provimento->situacao_provimento === 'tramite')
+                                        <input value="EM TRÂMITE" name="" id="" type="text"class="text-center form-control form-control-sm" readonly>
+                                    @else
+                                        <input value="PROVIDO" name="" id="" type="text"class="text-center form-control form-control-sm" readonly>
+                                    @endif
                                 </div>
                             </div>
                         @endif
@@ -616,12 +645,12 @@
                             <div class="form-group_disciplina">
                                 <label class="control-label" for="situacao_provimento">situação do provimento</label>
                                 @if ($provimento->situacao_provimento === 'tramite')
-                                    <input value="EM TRÂMITE" name="regime" id="regime" type="text"
-                                        class="form-control form-control-sm" readonly>
+                                    <input value="EM TRÂMITE" name="" id=""
+                                        type="text" class="form-control form-control-sm" readonly>
                                 @endif
                                 @if ($provimento->situacao_provimento === 'provida')
-                                    <input value="PROVIDO" name="regime" id="regime" type="text"
-                                        class="form-control form-control-sm" readonly>
+                                    <input value="PROVIDO" name="" id=""
+                                        type="text" class="form-control form-control-sm" readonly>
                                 @endif
                             </div>
                         </div>
@@ -662,9 +691,9 @@
                                         NO ACOMPANHAMENTO
                                     </option>
 
-                                    <option value="EM SUBISTITUIÇÃO"
-                                        {{ old('situacao_programacao', $provimento->situacao_programacao ?? '') == 'EM SUBISTITUIÇÃO' ? 'selected' : '' }}>
-                                        EM SUBISTITUIÇÃO
+                                    <option value="EM SUBSTITUIÇÃO"
+                                        {{ old('situacao_programacao', $provimento->situacao_programacao ?? '') == 'EM SUBSTITUIÇÃO' ? 'selected' : '' }}>
+                                        EM SUBSTITUIÇÃO
                                     </option>
 
                                     <option value="SEM INICIO DAS ATIVIDADES"
@@ -672,12 +701,17 @@
                                         SEM INICIO DAS ATIVIDADES
                                     </option>
 
+                                    <option value="NAO ASSUMIU"
+                                        {{ old('situacao_programacao', $provimento->situacao_programacao ?? '') == 'NAO ASSUMIU' ? 'selected' : '' }}>
+                                        NÃO ASSUMIU
+                                    </option>
+
                                 </select>
                             </div>
                         </div>
                     @endif
                     @if (Auth::user()->profile === 'cpg_tecnico' || Auth::user()->profile === 'administrador')
-                        @if ($provimento->situacao_provimento === 'provida' || $provimento->situacao_provimento === 'tramite')
+                        @if ($provimento->situacao_provimento != 'tramite')
                             @if ($provimento->pch === 'OK')
                                 <div class="d-flex justify-content-end container-fluid print-none">
                                     <input id="check_provimento_id" value="{{ $provimento->id }}" type="text" hidden>

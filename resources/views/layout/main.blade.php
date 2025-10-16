@@ -26,6 +26,9 @@
 
     <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/gh/habibmhamadi/multi-select-tag/dist/css/multi-select-tag.css">
+
+
+
 </head>
 
 <body class="">
@@ -146,13 +149,42 @@
                                             Auth::user()->profile === 'cpm_coordenador')
                                         <li class="nav-item"><i class="ti-file"></i><a class="nav-link sub-title"
                                                 href="{{ route('reserva.index') }}">RESERVA</a></li>
+                                        <li class="nav-item"><i class="ti-id-badge"></i><a class="nav-link sub-title"
+                                                href="{{ route('provimentos.validarDocs') }}">PROVIMENTO</a></li>
+                                        {{-- <li class="nav-item"><i class="ti-download"></i><a class="nav-link sub-title"
+                                                href="{{ route('provimentos.servidores_encaminhamento') }}">TERMOS</a>
+                                        </li> --}}
+                                    @endif
+                                </ul>
+                            </div>
+                        </li>
+                        {{-- <li class="nav-item">
+                            <a class="nav-link" data-toggle="collapse" href="#ingresso" aria-expanded="false"
+                                aria-controls="ingresso">
+                                <i class="ti-user menu-icon"></i>
+                                <span class="menu-title">Ingresso</span>
+                                <i class="menu-arrow"></i>
+                            </a>
+                            <div class="collapse subheader" id="ingresso">
+                                <ul class="nav flex-column sub-menu">
+                                    @if (Auth::user()->profile === 'cpm_tecnico' || Auth::user()->profile === 'administrador' || Auth::user()->profile === 'cpm_coordenador' || Auth::user()->profile === 'cpg_tecnico')
+                                        @if (session('ano_ref') == $ano_atual || Auth::user()->profile === 'administrador')
+                                            <li class="nav-item"><i class="ti-plus"></i><a class="nav-link sub-title"
+                                                    href="{{ route('provimentos.add') }}">Incluir</a></li>
+                                        @endif
+                                    @endif
+                                    <li class="nav-item"><i class="ti-search"></i><a class="nav-link sub-title"
+                                            href="/buscar/provimento/all_provimentos">Buscar</a></li>
+                                    @if (Auth::user()->profile === 'cpm_tecnico' || Auth::user()->profile === 'administrador' || Auth::user()->profile === 'cpm_coordenador')
+                                        <li class="nav-item"><i class="ti-file"></i><a class="nav-link sub-title"
+                                                href="{{ route('reserva.index') }}">RESERVA</a></li>
                                         <li class="nav-item"><i class="ti-download"></i><a class="nav-link sub-title"
                                                 href="{{ route('provimentos.servidores_encaminhamento') }}">TERMOS</a>
                                         </li>
                                     @endif
                                 </ul>
                             </div>
-                        </li>
+                        </li> --}}
                         <li class="nav-item">
                             <a class="nav-link" data-toggle="collapse" href="#encaminhamentos" aria-expanded="false"
                                 aria-controls="encaminhamentos">
@@ -433,6 +465,14 @@
 
     <script src="https://cdn.jsdelivr.net/gh/habibmhamadi/multi-select-tag/dist/js/multi-select-tag.js"></script>
 
+
+
+
+    <!-- Extensão Buttons -->
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+    <!-- Biblioteca SheetJS para gerar o arquivo .xlsx real -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
     <script>
         new MultiSelectTag('search_disciplina', {
             placeholder: 'Buscar',
@@ -460,6 +500,8 @@
             });
         });
     </script>
+
+    @stack('scripts')
 
 </body>
 
@@ -546,7 +588,6 @@
         </div>
     </div>
 </div>
-
 <!-- Modal Delete Provimentos Efetivos-->
 <div class="modal fade" id="ModalDeleteProvimentosEfetivos" tabindex="-1" role="dialog"
     aria-labelledby="TituloModalDeleteProvimentosEfetivos" aria-hidden=" true">
@@ -554,7 +595,8 @@
         <div class="modal-content">
             <div class="modal-header d-flex justify-content-center">
                 <h4 class="modal-title text-center text-dark" id="TituloModalDeleteProvimentosEfetivos">
-                    <strong>Excluir Dados</strong></h4>
+                    <strong>Excluir Dados</strong>
+                </h4>
             </div>
             <div class="modal-body modal-destroy">
                 <h4 class="subheader"><strong>Tem certeza?</strong></h4>

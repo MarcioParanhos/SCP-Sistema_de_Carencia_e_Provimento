@@ -213,6 +213,7 @@
                                 <option value="RESCISÃO CONTRATO REDA">RESCISÃO CONTRATO REDA</option>
                                 <option value="RETIFICAÇÃO">RETIFICAÇÃO</option>
                                 <option value="TORNAR SEM EFEITO ATO">TORNAR SEM EFEITO ATO</option>
+                                <option value="CESSAR CONVÊNIO/DISPOSIÇÃO">CESSAR CONVÊNIO/DISPOSIÇÃO</option>
                             </select>
                         </div>
                     </div>

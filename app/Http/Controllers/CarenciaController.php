@@ -124,7 +124,7 @@ class CarenciaController extends Controller
         $anoRef = session()->get('ano_ref');
 
         if ($tipo === "all_carencias") {
-            $filteredCarencias = Carencia::with('vagaReserva')->where('total', '>', 0)
+            $filteredCarencias = Carencia::with('vagaReserva', 'uee')->where('total', '>', 0)
                 ->where(function ($query) use ($formattedDate) {
                     $query->where('fim_vaga', '>=', $formattedDate)
                         ->orWhereNull('fim_vaga');
@@ -239,7 +239,11 @@ class CarenciaController extends Controller
         $carenciasVesp = 0;
         $carenciasNot = 0;
         $carenciasTotal = 0;
-        // Verifica se os campos foram preenchidos
+
+
+        if ($request->filled('search_created')) {
+            $carencias->whereDate('created_at', '>=', $request->search_created);
+        }
 
         if ($request->filled('nte_seacrh')) {
             $carencias = $carencias->where('nte', $request->nte_seacrh);

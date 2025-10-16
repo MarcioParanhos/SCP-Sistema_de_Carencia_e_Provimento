@@ -152,6 +152,7 @@
                                 <option value="Mediacao Tecnologica">MEDIAÇÃO TECNOLÓGICA</option>
                                 <option value="Educacao Especial">EDUCAÇÃO ESPECIAL</option>
                                 <option value="No Campo">NO CAMPO</option>
+                                <option value="Segundo Semestre">SEGUNDO SEMESTRE</option>
                             </select>
                         </div>
                     </div>

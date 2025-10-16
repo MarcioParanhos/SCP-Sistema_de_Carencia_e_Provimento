@@ -14,19 +14,32 @@ $colunasDisponiveis = [
     'eixo' => 'Eixo',
     'curso' => 'Curso',
     'area' => 'Área',
+    'motivo_vaga' => 'Motivo da Vaga',
     'disciplina' => 'Disciplina',
     'matutino' => 'MAT',
     'servidor' => 'Servidor',
     'cadastro' => 'Cadastro',
     'vespertino' => 'VESP',
     'noturno' => 'NOT',
-    'total' => 'Total'
+    'total' => 'Total',
+    'inicio_vaga' => 'Inicio da Vaga',
+    'usuario' => 'Usuário',
+    'created_at' => 'Data de Lançamento',
 ];
 
 // Se o usuário não selecionar nada, incluir todas as colunas por padrão
 if (empty($colunasSelecionadas)) {
     $colunasSelecionadas = array_keys($colunasDisponiveis);
 }
+
+// $colunaObrigatoria = 'usuario';
+
+// // Verifica se a coluna obrigatória NÃO está na lista de colunas que o usuário selecionou.
+// if (!in_array($colunaObrigatoria, $colunasSelecionadas)) {
+//     // Adiciona a coluna obrigatória no início da lista.
+//     // Usar array_unshift() é uma boa prática para colocar campos-chave no começo do relatório.
+//     array_unshift($colunasSelecionadas, $colunaObrigatoria);
+// }
 
 $html = '';
 $html .= '<table border="1">';

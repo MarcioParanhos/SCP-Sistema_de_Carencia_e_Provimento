@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Servidore;
 use App\Models\Provimento;
 use App\Models\ServidoresEncaminhado;
+use App\Models\NumCop;
 use Illuminate\Support\Facades\Auth;
 
 class ServidoreController extends Controller
@@ -29,25 +30,25 @@ class ServidoreController extends Controller
 
         if (Auth::user()->profile === "cpg_tecnico") {
             $servidores = Servidore::where('tipo', '=', 'cadastrado')
-                                    ->where('profile', 'cpg_tecnico')
-                                    ->whereYear('created_at', $currentYear)
-                                    ->get();
+                ->where('profile', 'cpg_tecnico')
+                ->whereYear('created_at', $currentYear)
+                ->get();
         }
-        
+
         if ((Auth::user()->profile === "cpm_tecnico") || (Auth::user()->profile === "cpm_coordenador")) {
             $servidores = Servidore::where('tipo', '=', 'cadastrado')
-                                    ->whereYear('created_at', $currentYear)
-                                    ->get();
+                ->whereYear('created_at', $currentYear)
+                ->get();
         }
-        
-        if (Auth::user()->profile === "administrador") {
+
+        if ((Auth::user()->profile === "administrador") || (Auth::user()->profile === "cpg_tecnico")) {
             $servidores = Servidore::where('tipo', '=', 'cadastrado')
-                                    ->whereYear('created_at', $currentYear)
-                                    ->get();
+                ->whereYear('created_at', $currentYear)
+                ->get();
         }
-        
-       
-        
+
+
+
         return view('servidores.add_show_servidores', compact('servidores'));
     }
 
@@ -62,7 +63,7 @@ class ServidoreController extends Controller
         $servidores->regime = $request->regime;
         if ($request->filled('cadastro')) {
             $servidores->cadastro = $request->cadastro;
-        }else {
+        } else {
             $servidores->cadastro = $request->cpf;
         }
         $servidores->profile = $request->profile;
@@ -80,19 +81,19 @@ class ServidoreController extends Controller
     {
 
         if (($request->filled('nome')) && (!$request->cadastro)) {
-           
+
             Provimento::where('cadastro', $request->cpf)->update([
                 'servidor' => $request->nome,
-            ]);   
+            ]);
         } else if (($request->filled('nome')) && ($request->cadastro)) {
-            
+
             Provimento::where('cadastro', $request->cadastro)->update([
                 'servidor' => $request->nome,
-            ]);   
+            ]);
         }
 
         if (!$request->cadastro) {
-            
+
             Servidore::findOrFail($request->id)->update([
                 'nome' => $request->nome,
                 'cpf' => $request->cpf,
@@ -110,7 +111,6 @@ class ServidoreController extends Controller
                 ]);
 
             return  redirect()->to(url()->previous())->with('msg', 'Registros Alterados com Sucesso!');
-
         } else {
 
             Servidore::findOrFail($request->id)->update($request->all());
@@ -125,7 +125,7 @@ class ServidoreController extends Controller
                         'vinculo' => $request->vinculo,
                     ]);
             } else if ($request->cadastro != $request->cpf) {
-               
+
                 Provimento::where('servidor', $request->nome_old)
                     ->update([
                         'cadastro' => $request->cadastro,
@@ -145,17 +145,17 @@ class ServidoreController extends Controller
         return redirect('/servidores')->with('msg', 'Registro excluído com sucesso!');
     }
 
-    public function detalhesServidorAnuencia($cadastro) 
+    public function detalhesServidorAnuencia($cadastro)
     {
 
         $servidor = Servidore::where('cadastro', $cadastro)->first();
         $provimentosByServidor = Provimento::where('cadastro', $cadastro)->get();
-
-        return view('servidores.detalhes_servidor_anuencia',compact('provimentosByServidor','servidor'));
-
+        $num_cop = NumCop::all();
+        $provimento = Provimento::where('cadastro', $cadastro)->first();
+        return view('servidores.detalhes_servidor_anuencia', compact('provimentosByServidor', 'servidor','num_cop','provimento'));
     }
 
-    public function consultarEfetivo($cpf) 
+    public function consultarEfetivo($cpf)
     {
 
         $data = ServidoresEncaminhado::where('cpf', 'LIKE', '%' . $cpf . '%')->get();
@@ -166,10 +166,10 @@ class ServidoreController extends Controller
         } else {
             return Response("Testando");
         }
-
     }
 
-    public function addShowServidoresEncaminhamentoByForm (Request $request) {
+    public function addShowServidoresEncaminhamentoByForm(Request $request)
+    {
 
         $servidores = new ServidoresEncaminhado;
         $servidores->nome = $request->nome;
@@ -179,7 +179,5 @@ class ServidoreController extends Controller
         $servidores->situacao = "CADASTRADO";
         $servidores->save();
         return  redirect()->back()->with('msg', 'Servidor cadastrado com Sucesso!');
-
     }
-
 }
