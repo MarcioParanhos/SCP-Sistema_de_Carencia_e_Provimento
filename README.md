@@ -294,7 +294,7 @@ O sistema utiliza **Laravel Sanctum** para autenticação e implementa um sistem
 
 Para suporte e dúvidas sobre o sistema:
 - Abra uma **Issue** no repositório
-- Entre em contato com a equipe de desenvolvimento
+
 
 ---
 
