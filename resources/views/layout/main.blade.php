@@ -309,14 +309,35 @@
                         <div class="collapse subheader" id="regfuncional">
                             <ul class="nav flex-column sub-menu">
                                 @if (Auth::user()->profile === 'cpg_tecnico' || Auth::user()->profile === 'administrador')
-                                    <li class="nav-item">
-                                        <i class="ti-plus"></i>
+                                    <li class="nav-item text-white">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                            class="icon icon-tabler icons-tabler-outline icon-tabler-library-plus">
+                                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                            <path
+                                                d="M7 3m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" />
+                                            <path
+                                                d="M4.012 7.26a2.005 2.005 0 0 0 -1.012 1.737v10c0 1.1 .9 2 2 2h10c.75 0 1.158 -.385 1.5 -1" />
+                                            <path d="M11 10h6" />
+                                            <path d="M14 7v6" />
+                                        </svg>
                                         <a class="nav-link sub-title"
                                             href="{{ route('regularizacao_funcional.create') }}">Incluir</a>
                                     </li>
                                 @endif
-                                <li class="nav-item">
-                                    <i class="ti-search"></i>
+                                <li class="nav-item text-white">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round"
+                                        class="icon icon-tabler icons-tabler-outline icon-tabler-devices-search">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                        <path d="M13 13v-4a1 1 0 0 1 1 -1h6a1 1 0 0 1 1 1v2.5" />
+                                        <path d="M18 8v-3a1 1 0 0 0 -1 -1h-13a1 1 0 0 0 -1 1v12a1 1 0 0 0 1 1h7" />
+                                        <path d="M18 18m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
+                                        <path d="M20.2 20.2l1.8 1.8" />
+                                        <path d="M16 9h2" />
+                                    </svg>
                                     <a class="nav-link sub-title"
                                         href="{{ route('regularizacao_funcional.show') }}">Buscar</a>
                                 </li>
@@ -354,7 +375,7 @@
                                             </svg>
                                             <a class="nav-link sub-title" href="/status/digitacao">DIGITAÇÃO</a>
                                         </li>
-                                        <li class="nav-item">
+                                        {{-- <li class="nav-item">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                                 viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2"
                                                 stroke-linecap="round" stroke-linejoin="round"
@@ -372,7 +393,7 @@
                                                 <path d="M10 21l2 -2l2 2" />
                                             </svg>
                                             <a class="nav-link sub-title" href="#">MANUTENÇÕES</a>
-                                        </li>
+                                        </li> --}}
                                     @endif
                                     @if (Auth::user()->profile === 'cpg_tecnico' ||
                                             Auth::user()->profile === 'administrador' ||

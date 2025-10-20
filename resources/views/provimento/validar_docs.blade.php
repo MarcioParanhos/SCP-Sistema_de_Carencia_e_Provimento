@@ -4,6 +4,12 @@
 
 @section('content')
 
+    <style>
+        .btn {
+            padding: 5px !important;
+        }
+    </style>
+
     @if (session('msg'))
         <div class="col-12">
             <div class="alert text-center text-white bg-success container alert-success alert-dismissible fade show"
@@ -22,10 +28,10 @@
 
     </div>
     <!-- <div class="print-btn">
-                    <a class="mb-2 btn bg-primary text-white" target="_blank" href="{{ route('provimentos.relatorio') }}"><i class="ti-printer"></i> IMPRIMIR</a>
-                    <a class="mb-2 btn bg-primary text-white" target="_blank" href="{{ route('provimentos.excel') }}"><i class="ti-export"></i> EXCEL</a>
-                    <a class="mb-2 btn bg-primary text-white" target="_blank" href="/provimentos/anuencia"><i class="ti-export"></i> ANUENCIA</a>
-                </div> -->
+                        <a class="mb-2 btn bg-primary text-white" target="_blank" href="{{ route('provimentos.relatorio') }}"><i class="ti-printer"></i> IMPRIMIR</a>
+                        <a class="mb-2 btn bg-primary text-white" target="_blank" href="{{ route('provimentos.excel') }}"><i class="ti-export"></i> EXCEL</a>
+                        <a class="mb-2 btn bg-primary text-white" target="_blank" href="/provimentos/anuencia"><i class="ti-export"></i> ANUENCIA</a>
+                    </div> -->
     <div class="table-responsive">
         <table id="consultarCarencias" class="table table-sm table-hover table-bordered">
             <thead class="bg-primary text-white">
@@ -60,9 +66,9 @@
                         <td class="text-center">{{ $servidor->num_cop }}</td>
                         <td class="text-center">
                             <a title="Detalhar" href="/detalhes_servidor/{{ $servidor->cadastro }}"
-                                class=" btn btn-primary"><svg xmlns="http://www.w3.org/2000/svg"
-                                    width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                class=" btn btn-primary"><svg xmlns="http://www.w3.org/2000/svg" width="24"
+                                    height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round"
                                     class="icon icon-tabler icons-tabler-outline icon-tabler-search">
                                     <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                                     <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
