@@ -98,7 +98,7 @@
                         <li class="nav-item">
                             <a class="nav-link" href="/">
                                 <i class="icon-grid menu-icon"></i>
-                                <span id="new-venda" class="menu-title">Home</span>
+                                <span id="new-venda" class="menu-title">DASHBOARD</span>
                             </a>
                         </li>
 
@@ -113,13 +113,36 @@
                                 <ul class="nav flex-column sub-menu">
                                     @if (Auth::user()->profile === 'cpg_tecnico' || Auth::user()->profile === 'administrador')
                                         @if (session('ano_ref') == $ano_atual || Auth::user()->profile === 'administrador')
-                                            <li class="nav-item"><i class="ti-plus"></i><a class="nav-link sub-title"
-                                                    href="" data-toggle="modal"
-                                                    data-target="#ExemploModalCentralizado">Incluir</a></li>
+                                            <li class="nav-item text-white">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="icon icon-tabler icons-tabler-outline icon-tabler-user-down">
+                                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                    <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
+                                                    <path d="M6 21v-2a4 4 0 0 1 4 -4h4c.342 0 .674 .043 .99 .124" />
+                                                    <path d="M19 16v6" />
+                                                    <path d="M22 19l-3 3l-3 -3" />
+                                                </svg>
+                                                <a class="nav-link sub-title" href="" data-toggle="modal"
+                                                    data-target="#ExemploModalCentralizado">Incluir</a>
+                                            </li>
                                         @endif
                                     @endif
-                                    <li class="nav-item"><i class="ti-search"></i><a class="nav-link sub-title"
-                                            href="/carencias/all_carencias">Buscar</a></li>
+                                    <li class="nav-item text-white">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                            class="icon icon-tabler icons-tabler-outline icon-tabler-list-search">
+                                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                            <path d="M15 15m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                                            <path d="M18.5 18.5l2.5 2.5" />
+                                            <path d="M4 6h16" />
+                                            <path d="M4 12h4" />
+                                            <path d="M4 18h4" />
+                                        </svg>
+                                        <a class="nav-link sub-title" href="/carencias/all_carencias">Buscar</a>
+                                    </li>
                                     <!-- <li class="nav-item"><i class="ti-plus"></i><a class="nav-link sub-title" href="{{ route('carencia.real.apoioPedagogico') }}">A. PEDAGÓGICO</a></li> -->
                                 </ul>
                             </div>
@@ -138,19 +161,72 @@
                                             Auth::user()->profile === 'cpm_coordenador' ||
                                             Auth::user()->profile === 'cpg_tecnico')
                                         @if (session('ano_ref') == $ano_atual || Auth::user()->profile === 'administrador')
-                                            <li class="nav-item"><i class="ti-plus"></i><a class="nav-link sub-title"
-                                                    href="{{ route('provimentos.add') }}">Incluir</a></li>
+                                            <li class="nav-item text-white">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="icon icon-tabler icons-tabler-outline icon-tabler-user-plus">
+                                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                    <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
+                                                    <path d="M16 19h6" />
+                                                    <path d="M19 16v6" />
+                                                    <path d="M6 21v-2a4 4 0 0 1 4 -4h4" />
+                                                </svg>
+                                                <a class="nav-link sub-title"
+                                                    href="{{ route('provimentos.add') }}">Incluir</a>
+                                            </li>
                                         @endif
                                     @endif
-                                    <li class="nav-item"><i class="ti-search"></i><a class="nav-link sub-title"
-                                            href="/buscar/provimento/all_provimentos">Buscar</a></li>
+                                    <li class="nav-item text-white">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                            class="icon icon-tabler icons-tabler-outline icon-tabler-user-search">
+                                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                            <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
+                                            <path d="M6 21v-2a4 4 0 0 1 4 -4h1.5" />
+                                            <path d="M18 18m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
+                                            <path d="M20.2 20.2l1.8 1.8" />
+                                        </svg>
+                                        <a class="nav-link sub-title"
+                                            href="/buscar/provimento/all_provimentos">Buscar</a>
+                                    </li>
                                     @if (Auth::user()->profile === 'cpm_tecnico' ||
                                             Auth::user()->profile === 'administrador' ||
                                             Auth::user()->profile === 'cpm_coordenador')
-                                        <li class="nav-item"><i class="ti-file"></i><a class="nav-link sub-title"
-                                                href="{{ route('reserva.index') }}">RESERVA</a></li>
-                                        <li class="nav-item"><i class="ti-id-badge"></i><a class="nav-link sub-title"
-                                                href="{{ route('provimentos.validarDocs') }}">PROVIMENTO</a></li>
+                                        <li class="nav-item text-white">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                class="icon icon-tabler icons-tabler-outline icon-tabler-user-check">
+                                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
+                                                <path d="M6 21v-2a4 4 0 0 1 4 -4h4" />
+                                                <path d="M15 19l2 2l4 -4" />
+                                            </svg>
+                                            <a class="nav-link sub-title"
+                                                href="{{ route('reserva.index') }}">RESERVA</a>
+                                        </li>
+                                        <li class="nav-item ml-0 text-white">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                class="icon icon-tabler icons-tabler-outline icon-tabler-user-cog">
+                                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
+                                                <path d="M6 21v-2a4 4 0 0 1 4 -4h2.5" />
+                                                <path d="M19.001 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                                                <path d="M19.001 15.5v1.5" />
+                                                <path d="M19.001 21v1.5" />
+                                                <path d="M22.032 17.25l-1.299 .75" />
+                                                <path d="M17.27 20l-1.3 .75" />
+                                                <path d="M15.97 17.25l1.3 .75" />
+                                                <path d="M20.733 20l1.3 .75" />
+                                            </svg>
+                                            <a class="nav-link sub-title" title="Validar Dados"
+                                                data-bs-toggle="tooltip" data-bs-placement="right"
+                                                href="{{ route('provimentos.validarDocs') }}">VALIDAR</a>
+                                        </li>
                                         {{-- <li class="nav-item"><i class="ti-download"></i><a class="nav-link sub-title"
                                                 href="{{ route('provimentos.servidores_encaminhamento') }}">TERMOS</a>
                                         </li> --}}
