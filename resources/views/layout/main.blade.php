@@ -56,12 +56,12 @@
                 @endif
             </div>
             <div class="print-none  navbar-menu-wrapper d-flex align-items-center justify-content-end">
-                <!-- <div class="d-flex justify-content-center">
+                {{-- <div class="d-flex justify-content-center">
                     <button class="d-flex justify-content-center align-items-center navbar-toggler navbar-toggler " type="button" data-toggle="minimize">
                         <i class="ti-angle-double-left"></i>&nbsp;
                         <span id="recolhermenu"></span>
                     </button>
-                </div> -->
+                </div> --}}
                 <span class="mobile-hidden subheader"><strong><span class="">ANO DE REFERÊNCIA -
                         </span>{{ session('ano_ref') }}</strong></span>
 

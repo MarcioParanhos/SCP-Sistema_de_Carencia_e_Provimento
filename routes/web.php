@@ -73,7 +73,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/update/situation_server2/{situation}/{id}', [ProvimentoController::class, 'update_situation_server2']);
     Route::get('/provimento/efetivo/filter', [ProvimentoController::class, 'showProvimentoEfetivoFilter']);
     Route::post('/update/inconsistencia/{id}', [ProvimentoController::class, 'update_inconsistencia']);
-    Route::get('/provimentos/provimento', [ProvimentoController::class, 'validarDocs'])->name("provimentos.validarDocs");
+    Route::get('/provimentos/validar', [ProvimentoController::class, 'validarDocs'])->name("provimentos.validarDocs");
     Route::post('/update/atualizarCOP', [ProvimentoController::class, 'update_cop']);
     //Unidades Escolares
     Route::get('/uees/{tipo}', [UeeController::class, 'showUees'])->name('uees.show');
