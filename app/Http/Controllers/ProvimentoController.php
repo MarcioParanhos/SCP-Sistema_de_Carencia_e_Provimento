@@ -1338,9 +1338,8 @@ class ProvimentoController extends Controller
         ]);
     }
 
-    public function validarDocs()
+    public function validarDocs(Request $request)
     {
-
         $anoRef = session()->get('ano_ref');
 
         $query = Provimento::query();
@@ -1353,6 +1352,34 @@ class ProvimentoController extends Controller
         $query->select('servidor', 'cadastro', 'vinculo', 'situacao_provimento', 'num_cop', 'nte', 'municipio', 'unidade_escolar');
 
         $query->where('ano_ref', $anoRef);
+
+        // filtros simples via query string (GET)
+        if ($request->filled('nte_seacrh')) {
+            $query->where('nte', $request->get('nte_seacrh'));
+        }
+
+        if ($request->filled('municipio_search')) {
+            $query->where('municipio', 'like', '%' . $request->get('municipio_search') . '%');
+        }
+
+        if ($request->filled('search_uee')) {
+            $query->where('unidade_escolar', 'like', '%' . $request->get('search_uee') . '%');
+        }
+
+        if ($request->filled('search_servidor_matricula')) {
+            $term = $request->get('search_servidor_matricula');
+            $query->where(function ($q) use ($term) {
+                $q->where('servidor', 'like', '%' . $term . '%')
+                    ->orWhere('cadastro', 'like', '%' . $term . '%');
+            });
+        }
+
+        if ($request->filled('search_situacao_provimento')) {
+            $query->where('situacao_provimento', $request->get('search_situacao_provimento'));
+        }
+
+        // Ordenação por NTE
+        $query->orderBy('nte', 'asc');
 
         $servidores = $query->distinct()->get();
 
