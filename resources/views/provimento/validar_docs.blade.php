@@ -28,7 +28,7 @@
 
     </div>
     <div class="mb-2 d-flex justify-content-end " style="gap: 3px;">
-        <a class="mb-2 btn bg-primary text-white" title="Filtros Personalizaveis" data-toggle="collapse"
+        <a id="btn_toggle_filters" class="mb-2 btn bg-primary text-white" title="Filtros Personalizaveis" data-toggle="collapse"
             href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -38,18 +38,6 @@
                     d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z" />
             </svg>
         </a>
-        {{-- <a class="mb-2 btn bg-primary text-white" target="_blank" href="{{ route('reservas.excel') }}" data-toggle="tooltip"
-            data-placement="top" title="Download em Excel">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                class="icon icon-tabler icons-tabler-outline icon-tabler-file-download">
-                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                <path d="M14 3v4a1 1 0 0 0 1 1h4" />
-                <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
-                <path d="M12 17v-6" />
-                <path d="M9.5 14.5l2.5 2.5l2.5 -2.5" />
-            </svg>
-        </a> --}}
     </div>
 
     <div class="collapse mb-4" id="collapseExample">
@@ -179,22 +167,65 @@
 
 @push('scripts')
     <script>
-        function toggleFilters() {
-            const f = document.getElementById('filters_form');
-            if (!f) return;
-            f.hidden = !f.hidden;
-        }
+        // Toggle button color when the collapse opens/closes
+        (function () {
+            const toggleBtn = document.getElementById('btn_toggle_filters');
+            const collapseEl = document.getElementById('collapseExample');
 
-        function clearFilters() {
-            const ids = ['nte_seacrh', 'municipio_search', 'search_uee', 'search_servidor_matricula',
-                'search_situacao_provimento'
-            ];
-            ids.forEach(id => {
-                const el = document.getElementById(id);
-                if (!el) return;
-                if (el.tagName === 'SELECT') el.selectedIndex = 0;
-                else el.value = '';
-            });
-        }
+            function setOpenState(isOpen) {
+                if (!toggleBtn) return;
+                if (isOpen) {
+                    // make button red
+                    toggleBtn.classList.remove('bg-primary');
+                    toggleBtn.classList.add('bg-danger');
+                } else {
+                    toggleBtn.classList.remove('bg-danger');
+                    toggleBtn.classList.add('bg-primary');
+                }
+            }
+
+            // If jQuery + Bootstrap are present, use their collapse events for accurate state
+            if (window.jQuery && window.jQuery.fn && window.jQuery.fn.collapse) {
+                try {
+                    const $ = window.jQuery;
+                    $(collapseEl).on('shown.bs.collapse', function () {
+                        setOpenState(true);
+                    });
+                    $(collapseEl).on('hidden.bs.collapse', function () {
+                        setOpenState(false);
+                    });
+                    // initialize based on current state
+                    setOpenState($(collapseEl).hasClass('show'));
+                } catch (e) {
+                    // fallback below
+                }
+            } else {
+                // Fallback: listen to clicks and toggle after a small delay to allow class change
+                if (toggleBtn && collapseEl) {
+                    toggleBtn.addEventListener('click', function () {
+                        setTimeout(function () {
+                            const isOpen = collapseEl.classList.contains('show');
+                            setOpenState(isOpen);
+                        }, 200);
+                    });
+                    // initialize
+                    setOpenState(collapseEl.classList.contains('show'));
+                }
+            }
+
+            // clear form helper
+            window.clearFilters = function () {
+                const ids = ['nte_seacrh', 'municipio_search', 'search_uee', 'search_servidor_matricula', 'search_situacao_provimento'];
+                ids.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (!el) return;
+                    if (el.tagName === 'SELECT') el.selectedIndex = 0;
+                    else el.value = '';
+                });
+            }
+
+            // keep compatibility with existing onclick="clearForm()"
+            window.clearForm = function () { window.clearFilters(); };
+        })();
     </script>
 @endpush
