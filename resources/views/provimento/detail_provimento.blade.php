@@ -368,7 +368,7 @@
                                 </div>
                             </div>
                         @endif
-                        @if (Auth::user()->profile === 'cpm_coordenador' || Auth::user()->profile === 'administrador' || Auth::user()->profile === 'cpg_tecnico')
+                        @if (Auth::user()->profile === 'cpm_tecnico' || Auth::user()->profile === 'administrador' || Auth::user()->profile === 'cpg_tecnico')
                             <div class=" col-md-2">
                                 <div class="display_btn position-relative form-group">
                                     <div>

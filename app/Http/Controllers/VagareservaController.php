@@ -48,47 +48,53 @@ class VagareservaController extends Controller
     public function index(Request $request)
     {
         // ETAPA 1: INICIA A CONSTRUÇÃO DA QUERY
-        // Em vez de buscar todos os dados com ->get(), iniciamos um construtor de query.
-        // Isso nos permite adicionar filtros de forma condicional.
         $query = VagaReserva::query()->with(['servidor', 'carencia']);
 
-        // ETAPA 2: APLICAÇÃO CONDICIONAL DOS FILTROS
+        // Detecta se o request trouxe filtros
+        $hasFilters = $request->filled('nte_seacrh')
+            || $request->filled('municipio_search')
+            || $request->filled('search_uee')
+            || $request->filled('search_num_cop');
 
-        // Filtro por NTE (na tabela relacionada 'carencias')
-        if ($request->filled('nte_seacrh')) {
-            $query->whereHas('carencia', function ($subQuery) use ($request) {
-                $subQuery->where('nte', $request->nte_seacrh);
-            });
+        // ETAPA 2: APLICAÇÃO CONDICIONAL DOS FILTROS (aplica apenas se vierem no request)
+        if ($hasFilters) {
+            if ($request->filled('nte_seacrh')) {
+                $query->whereHas('carencia', function ($subQuery) use ($request) {
+                    $subQuery->where('nte', $request->nte_seacrh);
+                });
+            }
+
+            if ($request->filled('municipio_search')) {
+                $query->whereHas('carencia', function ($subQuery) use ($request) {
+                    $subQuery->where('municipio', $request->municipio_search);
+                });
+            }
+
+            if ($request->filled('search_uee')) {
+                $query->whereHas('carencia', function ($subQuery) use ($request) {
+                    $subQuery->where('unidade_escolar', $request->search_uee);
+                });
+            }
+
+            if ($request->filled('search_num_cop')) {
+                $query->where('num_cop', $request->search_num_cop);
+            }
+
+            // Executa a query com os filtros e grava no session (sobrescreve)
+            $vagas_reservadas = $query->get();
+            session()->put('vagas_reservadas', $vagas_reservadas);
+        } else {
+            // Se não vieram filtros no request, tenta reutilizar o que já está em session
+            $vagas_reservadas = session('vagas_reservadas');
+
+            // Se não houver nada na session, busca tudo e grava
+            if (!$vagas_reservadas) {
+                $vagas_reservadas = $query->get();
+                session()->put('vagas_reservadas', $vagas_reservadas);
+            }
         }
 
-        // Filtro por Município (na tabela relacionada 'carencias')
-        if ($request->filled('municipio_search')) {
-            $query->whereHas('carencia', function ($subQuery) use ($request) {
-                $subQuery->where('municipio', $request->municipio_search);
-            });
-        }
-
-        // Filtro por Unidade Escolar (na tabela relacionada 'carencias')
-        if ($request->filled('search_uee')) {
-            $query->whereHas('carencia', function ($subQuery) use ($request) {
-                $subQuery->where('unidade_escolar', $request->search_uee);
-            });
-        }
-
-        // Filtro por Nº do COP (na tabela principal 'vagas_reservas')
-        // OBS: No seu form, o name do input é 'num_sei'. Ajustei para 'search_num_cop' para consistência.
-        if ($request->filled('search_num_cop')) {
-            $query->where('num_cop', $request->search_num_cop);
-        }
-
-        // ETAPA 3: EXECUÇÃO DA QUERY E PREPARAÇÃO DOS DADOS
-        // Agora que todos os filtros foram aplicados, executamos a consulta com ->get().
-        $vagas_reservadas = $query->get();
-
-        // O restante da sua lógica para agrupar e preparar o array de resumo permanece o mesmo,
-        // mas agora opera sobre o conjunto de dados já filtrado.
-        session()->put('vagas_reservadas', $vagas_reservadas);
-
+        // Preparação do resumo a partir do conjunto (sem alterar a lógica existente)
         $resumo = [];
         foreach ($vagas_reservadas as $reserva) {
             if (!$reserva->carencia || empty($reserva->bloco)) {
@@ -109,18 +115,16 @@ class VagareservaController extends Controller
                     'not' => 0,
                     'total' => 0,
                     'disciplinas' => [],
-                    'unidades_escolares' => [], // Adicionado: Prepara o array para as unidades escolares.
+                    'unidades_escolares' => [],
                     'carencia_ids' => [],
                 ];
             }
 
-            // Agregação dos dados.
             $resumo[$grouping_key]['mat'] += $reserva->carencia->matutino ?? 0;
             $resumo[$grouping_key]['vesp'] += $reserva->carencia->vespertino ?? 0;
             $resumo[$grouping_key]['not'] += $reserva->carencia->noturno ?? 0;
             $resumo[$grouping_key]['total'] += $reserva->carencia->total ?? 0;
 
-            // Adicionado: Coleta o nome da unidade escolar de cada reserva do bloco.
             if (!empty($reserva->carencia->unidade_escolar)) {
                 $resumo[$grouping_key]['unidades_escolares'][] = $reserva->carencia->unidade_escolar;
             }
@@ -477,7 +481,6 @@ class VagareservaController extends Controller
             'reservas_agrupadas' => $reservas_agrupadas
         ]);
     }
-
 
     public function destroyBloco($blocoId)
     {
