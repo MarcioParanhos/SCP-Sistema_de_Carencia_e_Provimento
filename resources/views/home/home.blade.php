@@ -14,7 +14,7 @@
                 <div class="col-12 col-xl-8 mb-4 mb-xl-0">
                     <h3 class="title-app font-weight-bold">VISÃO GERAL</h3>
                     <h6 class="user_auth font-weight-normal mb-0"><span
-                            class="text-primary subheader">{{ Auth::user()->name }} | {{ Auth::user()->setor }} </span></h6>
+                            class="text-primary subheader">{{ Auth::user()->name }} | {{ Auth::user()->sector->name }} - {{ Auth::user()->sector->tag }}</span></h6>
                 </div>
                 <div class="justify-content-end align-items-center d-flex col-12 col-xl-4">
                     <label class="mr-3 pt-2 ano-title" for="">Ano de Referência</label>

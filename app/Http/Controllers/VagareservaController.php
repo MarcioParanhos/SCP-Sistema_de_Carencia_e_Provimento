@@ -56,6 +56,9 @@ class VagareservaController extends Controller
             || $request->filled('search_uee')
             || $request->filled('search_num_cop');
 
+        // Considera inputs do form que não são apenas _token/_method/page (para detectar submit vazio)
+        $nonEssentialInputs = $request->except(['page', '_token', '_method']);
+
         // ETAPA 2: APLICAÇÃO CONDICIONAL DOS FILTROS (aplica apenas se vierem no request)
         if ($hasFilters) {
             if ($request->filled('nte_seacrh')) {

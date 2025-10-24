@@ -443,7 +443,8 @@
                             </a>
                         </li>
                     @endif
-                    @if (Auth::user()->profile === 'administrador')
+
+                    @if (Auth::user()->profile_id === 4)
                         <li class="nav-item" id="administracao_collapse">
                             <a class="nav-link" data-toggle="collapse" href="#administracao" aria-expanded="false"
                                 aria-controls="administracao">
