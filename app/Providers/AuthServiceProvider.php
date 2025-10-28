@@ -70,7 +70,7 @@ class AuthServiceProvider extends ServiceProvider
             return ($profileId === 4 && $sectorId === 3) || // Administrador (4) + Administração (3)
                 ($profileId === 1 && $sectorId === 1);   // Técnico (1) + Programação (1)
         });
-         Gate::define('view-sensitive-validations-fields', function (User $user) {
+        Gate::define('view-sensitive-validations-fields', function (User $user) {
 
             // Garante que ambos os relacionamentos existam.
             if (!$user->profile || !$user->sector) {

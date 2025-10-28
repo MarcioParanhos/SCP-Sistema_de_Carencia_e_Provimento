@@ -458,7 +458,7 @@
 
                     @endcan
                     @can('view-cpg-technician-or-administrator')
-                        <div class="col-md-3" id="">
+                        <div class="col-md-2" id="">
                             <div class="form-group_disciplina">
                                 <label class="control-label" for="situacao_programacao">situação da
                                     Programação</label>
@@ -493,6 +493,38 @@
                                 </select>
                             </div>
                         </div>
+                        @can('view-blocked-provimento')
+                            <div class="col-md-2 print-none" id="">
+                                <div class="form-group_disciplina">
+                                    <label class="control-label" for="situacao_provimento">situação</label>
+                                    <select name="situacao" id="situacao" class="form-control select2" required>
+                                        @if ($provimento->situacao === 'DESBLOQUEADO')
+                                            <option value="{{ $provimento->situacao }}">{{ $provimento->situacao }}</option>
+                                            <option value="BLOQUEADO">BLOQUEADO</option>
+                                        @endif
+                                        @if ($provimento->situacao === 'BLOQUEADO')
+                                            <option value="{{ $provimento->situacao }}">{{ $provimento->situacao }}</option>
+                                            <option value="DESBLOQUEADO">DESBLOQUEADO</option>
+                                        @endif
+                                    </select>
+                                </div>
+                            </div>
+                        @endcan
+                        @if ($provimento->situacao_programacao === 'NAO ASSUMIU' || $provimento->situacao_programacao === 'SEM INICIO DAS ATIVIDADES')
+                            <div class="col-md-2 print-none">
+                                <div class="form-group_disciplina">
+                                    <label class="control-label" for="situacao_carencia">CARÊNCIA EXISTE ?</label>
+                                    <select name="situacao_carencia_existente" id="situacao_carencia" class="form-control select2" required>
+                                        <option value=""></option>
+                                        @php
+                                            $selectedCarencia = old('situacao_carencia_existente', $provimento->situacao_carencia_existente ?? '');
+                                        @endphp
+                                        <option value="SIM" {{ $selectedCarencia === 'SIM' ? 'selected' : '' }}>SIM</option>
+                                        <option value="NÃO" {{ $selectedCarencia === 'NÃO' ? 'selected' : '' }}>NÃO</option>
+                                    </select>
+                                </div>
+                            </div>
+                        @endif
                         @if ($provimento->situacao_provimento != 'tramite')
                             @if ($provimento->pch === 'OK')
                                 <div class="d-flex justify-content-end container-fluid print-none">
@@ -504,7 +536,7 @@
                                     </label>
                                 </div>
                             @endif
-                            @if ($provimento->pcoordih === 'PENDENTE')
+                            @if ($provimento->pch === 'PENDENTE')
                                 <div class="d-flex justify-content-end container-fluid print-none">
                                     <input id="check_provimento_id" value="{{ $provimento->id }}" type="text" hidden>
                                     <label class="toggle">
@@ -516,23 +548,7 @@
                             @endif
                         @endif
                     @endcan
-                    @can('view-blocked-provimento')
-                        <div class="col-md-2 print-none" id="">
-                            <div class="form-group_disciplina">
-                                <label class="control-label" for="situacao_provimento">situação</label>
-                                <select name="situacao" id="situacao" class="form-control select2" required>
-                                    @if ($provimento->situacao === 'DESBLOQUEADO')
-                                        <option value="{{ $provimento->situacao }}">{{ $provimento->situacao }}</option>
-                                        <option value="BLOQUEADO">BLOQUEADO</option>
-                                    @endif
-                                    @if ($provimento->situacao === 'BLOQUEADO')
-                                        <option value="{{ $provimento->situacao }}">{{ $provimento->situacao }}</option>
-                                        <option value="DESBLOQUEADO">DESBLOQUEADO</option>
-                                    @endif
-                                </select>
-                            </div>
-                        </div>
-                    @endcan
+
                 </div>
                 @can('view-cpm-technician-or-administrator')
                     <div class="form-row">
@@ -564,7 +580,7 @@
                         </div>
                     </div>
                 @endcan
-                @can ('view-cpm-technician')
+                @can('view-cpm-technician')
                     <div class="form-row">
                         <div id="data_assuncao_row" class="col-md-12">
                             <div class="form-group_disciplina">

@@ -491,6 +491,8 @@ class ProvimentoController extends Controller
             $provimento = Provimento::findOrFail($request->id);
             $requestData = $request->all();
 
+
+
             $observacao = $request->obs_cpg;
             $usuario = $request->user_cpg_update;
 
@@ -513,6 +515,12 @@ class ProvimentoController extends Controller
                 // Se a observação estiver vazia, apenas atribui o valor vazio
                 $requestData['obs_cpg'] = $observacao; // ou simplesmente $requestData['obs_cpg'] = '';
             }
+
+            if ($request->situacao_programacao != "NAO ASSUMIU" && $request->situacao_programacao != "SEM INICIO DAS ATIVIDADES") {
+                // Este código agora só será executado se a situação for DIFERENTE de ambas as opções.
+                $requestData['situacao_carencia_existente'] = '';
+            }
+
 
             if ($provimento->update($requestData)) {
 
@@ -546,14 +554,17 @@ class ProvimentoController extends Controller
         // Recupera a carência para atualizar seus valores
         $carencias = Carencia::where('id', $id_carencia)->first();
 
-        // Atualiza os valores da carência
-        Carencia::where('id', $id_carencia)
-            ->update([
-                'matutino' => $carencias->matutino + $provimento->provimento_matutino,
-                'vespertino' => $carencias->vespertino + $provimento->provimento_vespertino,
-                'noturno' => $carencias->noturno + $provimento->provimento_noturno,
-                'total' => $carencias->total + $provimento->total,
-            ]);
+
+        if ($provimento->situacao_carencia_existente === "SIM") {
+            // Atualiza os valores da carência
+            Carencia::where('id', $id_carencia)
+                ->update([
+                    'matutino' => $carencias->matutino + $provimento->provimento_matutino,
+                    'vespertino' => $carencias->vespertino + $provimento->provimento_vespertino,
+                    'noturno' => $carencias->noturno + $provimento->provimento_noturno,
+                    'total' => $carencias->total + $provimento->total,
+                ]);
+        }
 
         // Apaga os registros da tabela logs associados ao provimento antes de excluir o provimento
         Log::where('provimento_id', $provimento->id)->delete();
