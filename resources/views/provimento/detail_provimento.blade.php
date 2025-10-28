@@ -12,202 +12,6 @@
     $ano_atual = $data_atual->year;
     ?>
 
-    <style type="text/css" media="print">
-        .print-visible {
-            display: none;
-        }
-
-        .button {
-            --main-focus: #2d8cf0;
-            --font-color: #323232;
-            --bg-color-sub: #fff;
-            --bg-color: #fff;
-            --main-color: #2F3F64;
-            position: relative;
-            width: 150px;
-            height: 40px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            border: 2px solid var(--main-color);
-            box-shadow: 3px 3px var(--main-color);
-            background-color: var(--bg-color);
-            border-radius: 10px;
-            overflow: hidden;
-            padding: 0;
-        }
-
-        .button,
-        .button__icon,
-        .button__text {
-            transition: all 0.3s;
-        }
-
-        .button .button__text {
-            transform: translateX(20px);
-            color: var(--font-color);
-            font-weight: 600;
-        }
-
-        .button .button__icon {
-            position: absolute;
-            transform: translateX(100px);
-            height: 100%;
-            width: 46px;
-            background-color: var(--bg-color-sub);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .button .svg {
-            width: 20px;
-            fill: var(--main-color);
-        }
-
-        .button:hover {
-            background: var(--bg-color);
-        }
-
-        .button:hover .button__text {
-            color: transparent;
-        }
-
-        .button:hover .button__icon {
-            width: 148px;
-            transform: translateX(0);
-        }
-
-        .button:active {
-            transform: translate(3px, 3px);
-            box-shadow: 0px 0px var(--main-color);
-        }
-
-        .btn {
-            padding: 6px !important;
-        }
-
-        .icon-tabler-search,
-        .icon-tabler-trash,
-        .icon-tabler-replace {
-            width: 16px;
-            height: 16px;
-        }
-
-        td span {
-            font-size: 10px !important;
-            font-weight: 900 !important;
-            border-radius: 50% !important;
-        }
-
-        .card_title {
-            font-size: 25px !important;
-            display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-            box-shadow: none !important;
-        }
-
-        .card_title .title_show_carencias {
-            font-size: 25px !important;
-            color: #323232 !important;
-            font-weight: bold !important;
-        }
-
-        .col-md-1 {
-            width: 14% !important;
-        }
-
-        .col-md-6 {
-            width: 45% !important;
-        }
-
-        .col-md-7 {
-            width: 40% !important;
-        }
-
-        .col-md-2 {
-            width: 23% !important;
-        }
-
-        .col-md-4 {
-            width: 25% !important;
-            /* Ajuste para colunas de 4 */
-        }
-
-        .col-md-3 {
-            width: 25% !important;
-            /* Ajuste para colunas de 3 */
-        }
-
-        /* Estilos adicionais, caso necessário */
-        .form-group {
-            margin-bottom: 1rem;
-            /* Manter espaçamento entre campos */
-        }
-
-        /* Se estiver usando flexbox, pode ser necessário forçar o display em blocos */
-        .row {
-            display: flex;
-            flex-wrap: wrap;
-        }
-
-        body {
-            zoom: 0.77;
-            /* Reduz a escala para 90% */
-            margin: 0;
-        }
-
-        .print-hidden {
-            display: none !important;
-        }
-
-        .print-visible {
-            display: block;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .header img {
-            width: 200px !important;
-            height: 120px;
-        }
-
-        .logo-educacao {
-            height: 80px !important;
-        }
-
-        .title_show_carencia {
-            font-weight: 800;
-            color: black !important;
-        }
-
-        @page {
-            size: auto;
-            margin: 5mm;
-        }
-
-        tr {
-            padding: 0 !important;
-        }
-
-        h1 {
-            display: none;
-        }
-
-        .print-none {
-            display: none !important;
-        }
-
-        @page {
-            size: landscape;
-        }
-    </style>
-
     @if (session('msg'))
         <div class="col-12">
             <div class="alert text-center text-white bg-success container alert-success alert-dismissible fade show"
@@ -246,17 +50,6 @@
                         <path d="M5 10h11a4 4 0 1 1 0 8h-1" />
                     </svg>
                 </a>
-                <a class="m-1 btn bg-white text-primary " data-toggle="tooltip" data-placement="top"
-                    onclick="javascript:window.print();">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                        class="icon icon-tabler icons-tabler-outline icon-tabler-printer">
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                        <path d="M17 17h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-14a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h2" />
-                        <path d="M17 9v-4a2 2 0 0 0 -2 -2h-6a2 2 0 0 0 -2 2v4" />
-                        <path d="M7 13m0 2a2 2 0 0 1 2 -2h6a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-6a2 2 0 0 1 -2 -2z" />
-                    </svg>
-                </a>
             </div>
         </div>
 
@@ -291,7 +84,7 @@
             </div>
         </div>
         <div class="shadow card_info">
-            <form action="/provimento/update/{{ $provimento->id }}" method="post">
+            <form action="{{ route('provimento.update', $provimento->id) }}" method="post">
                 @csrf
                 @method ('PUT')
                 <input value="{{ Auth::user()->name }}" id="" name="user_cpg_update" type="text"
@@ -301,15 +94,9 @@
                 <div class="form-row">
                     <div class="col-md-1">
                         <div class="form-group_disciplina">
-                            <label class="control-label" for="nte_seacrh">NTE</label>
-                            @if ($provimento->nte < 10)
-                                <input value="{{ $provimento->nte }}" name="nte" id="nte" type="text"
-                                    class="text-center form-control form-control-sm" readonly>
-                            @endif
-                            @if ($provimento->nte >= 10)
-                                <input value="{{ $provimento->nte }}" name="nte" id="nte" type="text"
-                                    class="text-center form-control form-control-sm" readonly>
-                            @endif
+                            <label class="control-label" for="nte">NTE</label>
+                            <input value="{{ $provimento->nte }}" name="nte" id="nte" type="text"
+                                class="text-center form-control form-control-sm" readonly>
                         </div>
                     </div>
                     <div class="col-md-2">
@@ -352,7 +139,7 @@
                         </div>
                     @endif
                     @if ($provimento->pch === 'PENDENTE')
-                        @if ($provimento->situacao === 'BLOQUEADO' || Auth::user()->profile === 'cpm_tecnico')
+                        @can('view-blocked-provimento-details', $provimento)
                             <div class="col-md-2">
                                 <div class="form-group_disciplina">
                                     <label class="control-label" for="nte_seacrh">MATRÍCULA / CPF</label>
@@ -367,33 +154,35 @@
                                         type="text" class="form-control form-control-sm" readonly>
                                 </div>
                             </div>
-                        @endif
-                        @if (Auth::user()->profile === 'cpm_tecnico' || Auth::user()->profile === 'administrador' || Auth::user()->profile === 'cpg_tecnico')
-                            <div class=" col-md-2">
-                                <div class="display_btn position-relative form-group">
-                                    <div>
-                                        <label for="cadastro" class="">Matrícula / CPF</label>
-                                        <input value="{{ $provimento->cadastro }}" minlength="8" maxlength="11"
-                                            name="cadastro" id="cadastro" type="cadastro"
-                                            class="form-control form-control-sm">
-                                    </div>
-                                    <div class="btn_carencia_seacrh print-none">
-                                        <button id="cadastro_btn"
-                                            class="position-relative btn_search_carencia btn btn-sm btn-primary"
-                                            type="button" onclick="searchServidor()">
-                                            <i class="ti-search"></i>
-                                        </button>
+                        @endcan
+                        @auth
+                            @can('view-sensitive-validations-fields')
+                                <div class=" col-md-2">
+                                    <div class="display_btn position-relative form-group">
+                                        <div>
+                                            <label for="cadastro" class="">Matrícula / CPF</label>
+                                            <input value="{{ $provimento->cadastro }}" minlength="8" maxlength="11"
+                                                name="cadastro" id="cadastro" type="text"
+                                                class="form-control form-control-sm">
+                                        </div>
+                                        <div class="btn_carencia_seacrh print-none">
+                                            <button id="cadastro_btn"
+                                                class="position-relative btn_search_carencia btn btn-sm btn-primary"
+                                                type="button" onclick="searchServidor()">
+                                                <i class="ti-search"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label class="control-label" for="municipio_search">Servidor</label>
-                                    <input value="{{ $provimento->servidor }}" name="servidor" id="servidor"
-                                        type="text" class="form-control form-control-sm">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label class="control-label" for="servidor">Servidor</label>
+                                        <input value="{{ $provimento->servidor }}" name="servidor" id="servidor"
+                                            type="text" class="form-control form-control-sm">
+                                    </div>
                                 </div>
-                            </div>
-                        @endif
+                            @endcan
+                        @endauth
                     @endif
                     <div class="col-md-1">
                         <div class="form-group_disciplina">
@@ -508,9 +297,7 @@
                     @endif
                 </div>
                 <div class="form-row mb-2">
-                    @if (Auth::user()->profile === 'cpm_tecnico' ||
-                            Auth::user()->profile === 'cpm_coordenador' ||
-                            Auth::user()->profile === 'administrador')
+                    @can('view-sensitive-validation-fields-cpm-coordinator')
                         @if ($provimento->situacao === 'DESBLOQUEADO' && $provimento->pch === 'PENDENTE')
                             <div class="col-md-2" id="">
                                 <div class="form-group_disciplina">
@@ -546,9 +333,11 @@
                                 <div class="form-group_disciplina">
                                     <label for="codigo_unidade_escolar" class="">situação do provimento</label>
                                     @if ($provimento->situacao_provimento === 'tramite')
-                                        <input value="EM TRÂMITE" name="" id="" type="text"class="text-center form-control form-control-sm" readonly>
+                                        <input value="EM TRÂMITE" name="" id=""
+                                            type="text"class="text-center form-control form-control-sm" readonly>
                                     @else
-                                        <input value="PROVIDO" name="" id="" type="text"class="text-center form-control form-control-sm" readonly>
+                                        <input value="PROVIDO" name="" id=""
+                                            type="text"class="text-center form-control form-control-sm" readonly>
                                     @endif
                                 </div>
                             </div>
@@ -601,8 +390,8 @@
                             <div id="data_assuncao_row_detail" class="col-md-2" hidden>
                                 <div class="form-group_disciplina">
                                     <label for="codigo_unidade_escolar" class="">ASSUNÇÃO</label>
-                                    <input value="{{ $provimento->data_assuncao }}" name="data_assuncao"
-                                        id="data_assuncao" type="date" class="form-control form-control-sm">
+                                    <input value="{{ $provimento->data_assuncao }}" name="data_assuncao" id="data_assuncao"
+                                        type="date" class="form-control form-control-sm">
                                 </div>
                             </div>
                         @endif
@@ -610,8 +399,8 @@
                             <div id="data_assuncao_row_detail" class="col-md-2" hidden>
                                 <div class="form-group_disciplina">
                                     <label for="codigo_unidade_escolar" class="">ASSUNÇÃO</label>
-                                    <input value="{{ $provimento->data_assuncao }}" name="data_assuncao"
-                                        id="data_assuncao" type="date" class="form-control form-control-sm">
+                                    <input value="{{ $provimento->data_assuncao }}" name="data_assuncao" id="data_assuncao"
+                                        type="date" class="form-control form-control-sm">
                                 </div>
                             </div>
                         @endif
@@ -621,9 +410,8 @@
                             <div id="data_assuncao_row_detail" class="col-md-2">
                                 <div class="form-group_disciplina">
                                     <label for="codigo_unidade_escolar" class="">ASSUNÇÃO</label>
-                                    <input value="{{ $provimento->data_assuncao }}" name="data_assuncao"
-                                        id="data_assuncao" type="date"
-                                        class="text-center form-control form-control-sm" readonly>
+                                    <input value="{{ $provimento->data_assuncao }}" name="data_assuncao" id="data_assuncao"
+                                        type="date" class="text-center form-control form-control-sm" readonly>
                                 </div>
                             </div>
                         @endif
@@ -633,24 +421,23 @@
                             <div id="data_assuncao_row_detail" class="col-md-2">
                                 <div class="form-group_disciplina">
                                     <label for="codigo_unidade_escolar" class="">ASSUNÇÃO</label>
-                                    <input value="{{ $provimento->data_assuncao }}" name="data_assuncao"
-                                        id="data_assuncao" type="date"
-                                        class="text-center form-control form-control-sm">
+                                    <input value="{{ $provimento->data_assuncao }}" name="data_assuncao" id="data_assuncao"
+                                        type="date" class="text-center form-control form-control-sm">
                                 </div>
                             </div>
                         @endif
-                    @endif
-                    @if (Auth::user()->profile === 'cpg_tecnico')
+                    @endcan
+                    @can('view-cpg-technician')
                         <div class="col-md-2" id="">
                             <div class="form-group_disciplina">
                                 <label class="control-label" for="situacao_provimento">situação do provimento</label>
                                 @if ($provimento->situacao_provimento === 'tramite')
-                                    <input value="EM TRÂMITE" name="" id=""
-                                        type="text" class="form-control form-control-sm" readonly>
+                                    <input value="EM TRÂMITE" name="" id="" type="text"
+                                        class="form-control form-control-sm" readonly>
                                 @endif
                                 @if ($provimento->situacao_provimento === 'provida')
-                                    <input value="PROVIDO" name="" id=""
-                                        type="text" class="form-control form-control-sm" readonly>
+                                    <input value="PROVIDO" name="" id="" type="text"
+                                        class="form-control form-control-sm" readonly>
                                 @endif
                             </div>
                         </div>
@@ -658,8 +445,7 @@
                             <div class="form-group_disciplina">
                                 <label for="data_encaminhamento" class="">DATA DE ENCAMINHAMENTO</label>
                                 <input value="{{ $provimento->data_encaminhamento }}" name="data_encaminhamento"
-                                    id="data_encaminhamento" type="date" class="form-control form-control-sm"
-                                    readonly>
+                                    id="data_encaminhamento" type="date" class="form-control form-control-sm" readonly>
                             </div>
                         </div>
                         <div class="col-md-2">
@@ -670,14 +456,13 @@
                             </div>
                         </div>
 
-                    @endif
-                    @if (Auth::user()->profile === 'cpg_tecnico' || Auth::user()->profile === 'administrador')
+                    @endcan
+                    @can('view-cpg-technician-or-administrator')
                         <div class="col-md-3" id="">
                             <div class="form-group_disciplina">
                                 <label class="control-label" for="situacao_programacao">situação da
                                     Programação</label>
-                                <select name="situacao_programacao" id="situacao_programacao"
-                                    class="form-control select2">
+                                <select name="situacao_programacao" id="situacao_programacao" class="form-control select2">
 
                                     {{-- Opção para limpar/deixar em branco --}}
                                     <option value=""
@@ -705,12 +490,9 @@
                                         {{ old('situacao_programacao', $provimento->situacao_programacao ?? '') == 'NAO ASSUMIU' ? 'selected' : '' }}>
                                         NÃO ASSUMIU
                                     </option>
-
                                 </select>
                             </div>
                         </div>
-                    @endif
-                    @if (Auth::user()->profile === 'cpg_tecnico' || Auth::user()->profile === 'administrador')
                         @if ($provimento->situacao_provimento != 'tramite')
                             @if ($provimento->pch === 'OK')
                                 <div class="d-flex justify-content-end container-fluid print-none">
@@ -722,7 +504,7 @@
                                     </label>
                                 </div>
                             @endif
-                            @if ($provimento->pch === 'PENDENTE')
+                            @if ($provimento->pcoordih === 'PENDENTE')
                                 <div class="d-flex justify-content-end container-fluid print-none">
                                     <input id="check_provimento_id" value="{{ $provimento->id }}" type="text" hidden>
                                     <label class="toggle">
@@ -733,8 +515,8 @@
                                 </div>
                             @endif
                         @endif
-                    @endif
-                    @if (Auth::user()->profile === 'cpm_coordenador' || Auth::user()->profile === 'administrador')
+                    @endcan
+                    @can('view-blocked-provimento')
                         <div class="col-md-2 print-none" id="">
                             <div class="form-group_disciplina">
                                 <label class="control-label" for="situacao_provimento">situação</label>
@@ -750,9 +532,9 @@
                                 </select>
                             </div>
                         </div>
-                    @endif
+                    @endcan
                 </div>
-                @if (Auth::user()->profile === 'cpm_tecnico' || Auth::user()->profile === 'administrador')
+                @can('view-cpm-technician-or-administrator')
                     <div class="form-row">
                         <div id="data_assuncao_row" class="col-md-12">
                             <div class="form-group_disciplina">
@@ -761,8 +543,8 @@
                             </div>
                         </div>
                     </div>
-                @endif
-                @if (Auth::user()->profile === 'cpg_tecnico')
+                @endcan
+                @can('view-cpg-technician')
                     <div class="form-row">
                         <div id="data_assuncao_row" class="col-md-12">
                             <div class="form-group_disciplina">
@@ -771,8 +553,8 @@
                             </div>
                         </div>
                     </div>
-                @endif
-                @if (Auth::user()->profile === 'cpg_tecnico' || Auth::user()->profile === 'administrador')
+                @endcan
+                @can('view-cpg-technician-or-administrator')
                     <div class="form-row">
                         <div id="data_assuncao_row" class="col-md-12">
                             <div class="form-group_disciplina">
@@ -781,8 +563,8 @@
                             </div>
                         </div>
                     </div>
-                @endif
-                @if (Auth::user()->profile === 'cpm_tecnico')
+                @endcan
+                @can ('view-cpm-technician')
                     <div class="form-row">
                         <div id="data_assuncao_row" class="col-md-12">
                             <div class="form-group_disciplina">
@@ -791,7 +573,7 @@
                             </div>
                         </div>
                     </div>
-                @endif
+                @endcan
                 <div class="buttons d-flex justify-content-between align-middle print-none">
                     @if (Auth::user()->profile != 'consulta')
                         <div id="buttons" class="buttons">

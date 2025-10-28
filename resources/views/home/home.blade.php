@@ -4,9 +4,6 @@
 
 @section('content')
 
-    <style>
-
-    </style>
 
     <div class="row">
         <div class="col-md-12 grid-margin">
