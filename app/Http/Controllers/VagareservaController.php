@@ -399,16 +399,25 @@ class VagareservaController extends Controller
                 }
 
                 // Se um novo COP foi atribuído, tentamos subtrair do estoque.
-                if ($numCopNovo) {
-                    $copParaDebitar = NumCop::where('num', $numCopNovo)->firstOrFail();
+                if (!empty($numCopNovo)) {
+                    $cop = NumCop::where('num', $numCopNovo)->firstOrFail();
 
+                    // Valores de bloqueio específicos por número de COP
+                    $blockingLimits = [
+                        '365/2025' => 100,
+                        '247/2025' => 1280,
+                    ];
 
-                    if ($copParaDebitar->quantidade == 100) {
-
+                    if (isset($blockingLimits[$cop->num]) && intval($cop->quantidade) === $blockingLimits[$cop->num]) {
                         return redirect()->back()->with('msg', 'error_update_reserva');
                     }
 
-                    $copParaDebitar->decrement('quantidade');
+                    // Protege contra decremento abaixo de zero
+                    if (intval($cop->quantidade) <= 0) {
+                        return redirect()->back()->with('msg', 'error_update_reserva');
+                    }
+
+                    $cop->decrement('quantidade');
                 }
             }
 

@@ -174,7 +174,7 @@
                             <select name="nte_seacrh" id="nte_seacrh" class="form-control form-control-sm select2">
                                 <option value=""></option>
                                 @for ($i = 1; $i <= 27; $i++)
-                                    <option value="{{ $i }}" @if (isset($input['nte_seacrh']) && $input['nte_seacrh'] == $i) @endif>
+                                    <option value="{{ $i }}" @if (isset($input['nte_seacrh']) && $input['nte_seacrh'] == $i)  @endif>
                                         {{ $i }}</option>
                                 @endfor
                             </select>
@@ -200,7 +200,8 @@
                     <div class="col-md-2">
                         <div class="form-group_disciplina">
                             <label for="search_num_cop" class="">Nº do COP</label>
-                            <input name="search_num_cop" id="search_num_cop" type="text" class="form-control form-control-sm">
+                            <input name="search_num_cop" id="search_num_cop" type="text"
+                                class="form-control form-control-sm">
                         </div>
                     </div>
                 </div>
@@ -271,9 +272,11 @@
                         </td>
                         <td class="text-center">{{ $reserva['num_cop'] ?? 'N/D' }}</td>
                         <td class="text-center">{{ $reserva['num_sei'] ?? 'N/D' }}</td>
-                        <td class="text-center">
+                        <td class="d-flex justify-content-center align-items-center">
+
+                            {{-- Botão 1: Detalhar (Adicionado btn-sm para consistência) --}}
                             <a href="{{ route('reservas.detalharBloco', ['blocoId' => $reserva['bloco_id']]) }}"
-                                class="btn btn-info">
+                                class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Detalhar">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                     stroke-linecap="round" stroke-linejoin="round"
@@ -282,9 +285,11 @@
                                     <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
                                     <path d="M21 21l-6 -6" />
                                 </svg>
-
                             </a>
-                            <a data-toggle="tooltip" data-placement="top" title="Excluir" class="ml-1 btn btn-danger"
+
+                            {{-- Botão 2: Excluir (O ml-1 cria o espaçamento e o btn-sm alinha o tamanho) --}}
+                            <a data-toggle="tooltip" data-placement="top" title="Excluir"
+                                class="ml-1 btn btn-danger"
                                 onclick="destroyReserva('{{ $reserva['bloco_id'] }}')">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                     viewBox="0 0 24 24" fill="currentColor"
@@ -295,7 +300,6 @@
                                     <path
                                         d="M14 2a2 2 0 0 1 2 2a1 1 0 0 1 -1.993 .117l-.007 -.117h-4l-.007 .117a1 1 0 0 1 -1.993 -.117a2 2 0 0 1 1.85 -1.995l.15 -.005h4z" />
                                 </svg>
-
                             </a>
                         </td>
                     </tr>

@@ -72,14 +72,14 @@
                 @endforeach
 
           
-                <tr style="background-color:#f2f2f2; font-weight:bold;">
+                {{-- <tr style="background-color:#f2f2f2; font-weight:bold;">
                     <td colspan="6" align="right">TOTAL DO BLOCO {{ $blocoId }}</td>
                     <td align="center">{{ $totalMat }}</td>
                     <td align="center">{{ $totalVesp }}</td>
                     <td align="center">{{ $totalNot }}</td>
                     <td align="center">{{ $totalGeral }}</td>
                     <td colspan="2"></td>
-                </tr>
+                </tr> --}}
             @endforeach
         </tbody>
     </table>

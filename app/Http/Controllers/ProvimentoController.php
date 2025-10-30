@@ -555,7 +555,8 @@ class ProvimentoController extends Controller
         $carencias = Carencia::where('id', $id_carencia)->first();
 
 
-        if ($provimento->situacao_carencia_existente === "SIM") {
+        if ($provimento->situacao_carencia_existente === "SIM" || is_null($provimento->situacao_carencia_existente)) {
+
             // Atualiza os valores da carência
             Carencia::where('id', $id_carencia)
                 ->update([
