@@ -120,6 +120,7 @@
                     <th class="text-center" scope="col">NTE</th>
                     <th class="text-center" scope="col">MUNICIPIO</th>
                     <th class="text-center" scope="col">UNIDADE ESCOLAR</th>
+                    <th class="text-center" scope="col">COD. UEE</th>
                     <th class="text-center" scope="col">SERVIDOR</th>
                     <th class="text-center" scope="col">MATRICULA / CPF</th>
                     <th class="text-center" scope="col">VINCULO</th>
@@ -134,6 +135,7 @@
                         <td class="text-center">{{ $servidor->nte }}</td>
                         <td>{{ $servidor->municipio }}</td>
                         <td>{{ $servidor->unidade_escolar }}</td>
+                        <td class="text-center">{{ $servidor->cod_unidade }}</td>
                         <td>{{ $servidor->servidor }}</td>
                         <td class="text-center">{{ $servidor->cadastro }}</td>
                         <td class="text-center">{{ $servidor->vinculo }}</td>

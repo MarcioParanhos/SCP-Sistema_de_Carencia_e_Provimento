@@ -14,6 +14,7 @@ use Illuminate\Support\Str;
 use App\Models\Forma_suprimento;
 
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class VagareservaController extends Controller
 {
@@ -323,6 +324,14 @@ class VagareservaController extends Controller
         $justificativa = $primeiraReserva->justificativa;
         $checked_diploma = $primeiraReserva->checked_diploma;
 
+        // 1.a: Determina a data de criação do bloco a partir da primeira reserva (fallback defensivo)
+        $createdAtRaw = $primeiraReserva->created_at ?? ($reservasDoBloco->first()->created_at ?? null);
+        $bloco_created_at = null;
+        if ($createdAtRaw) {
+            // O banco guarda com +3 horas; ajustar subtraindo 3 horas e formatar no padrão brasileiro
+            $bloco_created_at = Carbon::parse($createdAtRaw)->subHours(3)->format('d/m/Y H:i');
+        }
+
         // 2. Busca a lista completa de números de COP para preencher o select.
         $listaNumCop = NumCop::orderBy('num')->get();
 
@@ -344,6 +353,7 @@ class VagareservaController extends Controller
             'forma_suprimento' => $forma_suprimento,
             'justificativa' => $justificativa,
             'checked_diploma' => $checked_diploma,
+            'bloco_created_at' => $bloco_created_at,
         ]);
     }
 

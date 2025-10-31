@@ -29,8 +29,8 @@
             </div>
 
             <div class="d-print-none">
-                <a id="btn_back_to_list" title="Voltar" data-toggle="tooltip" data-placement="top" class="btn btn-sm btn-primary me-2"
-                    href="{{ route('reserva.index') }}">
+                <a id="btn_back_to_list" title="Voltar" data-toggle="tooltip" data-placement="top"
+                    class="btn btn-sm btn-primary me-2" href="{{ route('reserva.index') }}">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                         class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-back-up">
@@ -52,9 +52,24 @@
                 </a>
             </div>
         </div>
+        <div class="d-flex justify-content-end align-items-center mb-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="icon icon-tabler icons-tabler-outline icon-tabler-calendar-plus">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M12.5 21h-6.5a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v5" />
+                <path d="M16 3v4" />
+                <path d="M8 3v4" />
+                <path d="M4 11h16" />
+                <path d="M16 19h6" />
+                <path d="M19 16v6" />
+            </svg>
+            <span class="ml-1 small">{{ $bloco_created_at }}</span>
+        </div>
 
         <!-- Tabela com as Carências do Bloco -->
         <div class="card border-0 shadow-sm rounded-4 mb-4">
+
             <div class="card-body">
                 <h5 class="card-title text-primary mb-3">Carências Incluídas no Bloco ({{ count($reservas) }} vagas)</h5>
                 <div class="table-responsive">
@@ -66,6 +81,7 @@
                                 <th>Município</th>
                                 <th>Unidade Escolar</th>
                                 <th>Disciplina</th>
+                                <th>Servidor</th>
                                 <th>MAT</th>
                                 <th>VESP</th>
                                 <th>NOT</th>
@@ -80,6 +96,8 @@
                                     <td class="text-start">{{ optional($reserva->carencia)->municipio }}</td>
                                     <td class="text-start">{{ optional($reserva->carencia)->unidade_escolar }}</td>
                                     <td class="text-start">{{ optional($reserva->carencia)->disciplina }}</td>
+                                    <td class="text-start">{{ optional($reserva->carencia)->servidor ?: 'N/A' }}</td>
+                                    <td class="text-start">{{ optional($reserva->carencia)->cadastro ?: 'N/A' }}</td>
                                     <td>{{ optional($reserva->carencia)->matutino }}</td>
                                     <td>{{ optional($reserva->carencia)->vespertino }}</td>
                                     <td>{{ optional($reserva->carencia)->noturno }}</td>
@@ -240,8 +258,8 @@
                                                         class="form-control select2">
                                                         <option value="{{ $forma_suprimento }}" selected>
                                                             {{ $forma_suprimento }}</option>
-                                                            <option value="REDA EMERGENCIAL">REDA EMERGENCIAL</option>
-                                                            <option value="REDA SELECAO INDIGENA">REDA SEL. INDIGENA</option>
+                                                        <option value="REDA EMERGENCIAL">REDA EMERGENCIAL</option>
+                                                        <option value="REDA SELECAO INDIGENA">REDA SEL. INDIGENA</option>
                                                     </select>
                                                 </div>
                                             </div>
@@ -296,7 +314,7 @@
                                                     </span>
                                                 </button>
                                             </div>
-                                            @if (($checked_diploma === 'SIM') && ($num_cop_atual))
+                                            @if ($checked_diploma === 'SIM' && $num_cop_atual)
                                                 <div id="buttons" class="buttons">
                                                     <button id="btnAbrirModalEncaminhamento" class="ml-2 button"
                                                         type="button">
