@@ -74,6 +74,7 @@ class VagareservaController extends Controller
                 });
             }
 
+
             if ($request->filled('search_uee')) {
                 $query->whereHas('carencia', function ($subQuery) use ($request) {
                     $subQuery->where('unidade_escolar', $request->search_uee);
@@ -81,7 +82,14 @@ class VagareservaController extends Controller
             }
 
             if ($request->filled('search_num_cop')) {
-                $query->where('num_cop', $request->search_num_cop);
+                $value = trim($request->search_num_cop);
+
+                // Trata valores que representam "não disponível"
+                if ($value === 'N/D' || strtoupper($value) === 'ND') {
+                    $query->whereNull('num_cop');
+                } else {
+                    $query->where('num_cop', $value);
+                }
             }
 
             // Executa a query com os filtros e grava no session (sobrescreve)

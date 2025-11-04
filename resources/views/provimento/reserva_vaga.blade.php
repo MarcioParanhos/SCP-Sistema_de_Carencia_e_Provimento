@@ -198,12 +198,18 @@
                         </div>
                     </div>
                     <div class="col-md-2">
-                        <div class="form-group_disciplina">
-                            <label for="search_num_cop" class="">Nº do COP</label>
-                            <input name="search_num_cop" id="search_num_cop" type="text"
-                                class="form-control form-control-sm">
-                        </div>
+                    <div class="form-group_disciplina">
+                        <label for="search_num_cop" class="">Nº COP</label>
+                        <select name="search_num_cop" id="search_num_cop"
+                            class="form-control form-control-sm select2">
+                            <option></option>
+                            @foreach ($numero_do_cop as $num)
+                            <option value="{{ $num->num }}">{{ $num->num }}</option>
+                            @endforeach
+                            <option value="N/D">SEM REGISTRO</option>
+                        </select>
                     </div>
+                </div>
                 </div>
                 <div id="buttons" class="mt-3 buttons d-flex align-items-center">
                     <button id="" class="button" type="submit">
