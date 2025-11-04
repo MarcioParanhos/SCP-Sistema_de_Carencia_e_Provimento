@@ -514,7 +514,7 @@
                             <div class="col-md-2 print-none">
                                 <div class="form-group_disciplina">
                                     <label class="control-label" for="situacao_carencia">CARÊNCIA EXISTE ?</label>
-                                    <select name="situacao_carencia_existente" id="situacao_carencia" class="form-control select2" required>
+                                    <select name="situacao_carencia_existente" id="situacao_carencia" class="form-control select2">
                                         <option value=""></option>
                                         @php
                                             $selectedCarencia = old('situacao_carencia_existente', $provimento->situacao_carencia_existente ?? '');

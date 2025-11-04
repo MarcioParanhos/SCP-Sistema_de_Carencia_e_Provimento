@@ -22,6 +22,7 @@ use Illuminate\Http\Request;
 
 class ProvimentoController extends Controller
 {
+
     public function newProvimento()
     {
 
@@ -190,6 +191,7 @@ class ProvimentoController extends Controller
             $eixo_cursos = Eixo_curso::distinct()->get(['eixo']);
             $cursos = Eixo_curso::select("curso")->get();
             $disciplinas = Disciplina::orderBy('nome', 'asc')->get();
+            $numero_do_cop = NumCop::all();
             // if (Auth::user()->profile === "cpg_tecnico") {
             //     $provimentos = Provimento::where('situacao_provimento', 'provida')->orderBy('nte', 'asc')->orderBy('municipio', 'asc')->get();
             // } else {
@@ -214,11 +216,13 @@ class ProvimentoController extends Controller
                 'disciplinas' => $disciplinas,
                 'eixo_cursos' => $eixo_cursos,
                 'cursos' => $cursos,
+                'numero_do_cop' => $numero_do_cop,
             ]);
         } else if ($tipo === "filter_provimentos") {
 
             session()->put('ref_rota', '');
             $provimentos = session()->get('provimentos');
+            $numero_do_cop = NumCop::all();
             $novosProvimentos = [];
 
             foreach ($provimentos as $provimento) {
@@ -258,6 +262,7 @@ class ProvimentoController extends Controller
                 'disciplinas' => $disciplinas,
                 'eixo_cursos' => $eixo_cursos,
                 'cursos' => $cursos,
+                'numero_do_cop' => $numero_do_cop,
             ]);
         }
     }
@@ -269,6 +274,7 @@ class ProvimentoController extends Controller
         $provimentos = Provimento::query();
         $disciplinas = Disciplina::query();
         $eixo_cursos = Eixo_curso::query();
+        $numero_do_cop = NumCop::all();
 
         // Verifica se os campos foram preenchidos
         if ($request->filled('nte_seacrh')) {
@@ -371,6 +377,14 @@ class ProvimentoController extends Controller
             $provimentos = $provimentos->where('eixo', $request->search_eixo);
         }
 
+        if ($request->filled('search_reserva')) {
+            $provimentos = $provimentos->where('metodo', $request->search_reserva);
+        }
+
+        if ($request->filled('search_num_cop')) {
+            $provimentos = $provimentos->where('num_cop', $request->search_num_cop);
+        }
+
         if ($request->filled('search_forma')) {
             $provimentos = $provimentos->where('forma_suprimento', $request->search_forma);
         }
@@ -434,6 +448,7 @@ class ProvimentoController extends Controller
             'disciplinas' => $disciplinas,
             'eixo_cursos' => $eixo_cursos,
             'cursos' => $cursos,
+            'numero_do_cop' => $numero_do_cop,
         ]);
     }
 

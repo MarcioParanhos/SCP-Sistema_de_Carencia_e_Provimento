@@ -286,6 +286,28 @@
                             class="form-control form-control-sm">
                     </div>
                 </div>
+                <div class="col-md-2">
+                    <div class="form-group_disciplina">
+                        <label for="search_reserva" class="">ORIGEM</label>
+                        <select name="search_reserva" id="search_reserva"
+                            class="form-control form-control-sm select2">
+                            <option></option>
+                            <option value="RESERVA">RESERVA</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-group_disciplina">
+                        <label for="search_num_cop" class="">Nº COP</label>
+                        <select name="search_num_cop" id="search_num_cop"
+                            class="form-control form-control-sm select2">
+                            <option></option>
+                            @foreach ($numero_do_cop as $num)
+                            <option value="{{ $num->num }}">{{ $num->num }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
             </div>
             <div id="buttons" class="buttons d-flex align-items-center">
                 <button id="" class="button" type="submit">

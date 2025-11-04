@@ -82,6 +82,7 @@
                                 <th>Unidade Escolar</th>
                                 <th>Disciplina</th>
                                 <th>Servidor</th>
+                                <th>Matrícula</th>
                                 <th>MAT</th>
                                 <th>VESP</th>
                                 <th>NOT</th>
@@ -90,7 +91,7 @@
                         </thead>
                         <tbody>
                             @foreach ($reservas as $reserva)
-                                <tr class="text-center" data-carencia-id="{{ optional($reserva->carencia)->id }}">
+                                <tr class="text-center small" data-carencia-id="{{ optional($reserva->carencia)->id }}">
                                     <td>{{ optional($reserva->carencia)->id }}</td>
                                     <td>{{ str_pad(optional($reserva->carencia)->nte, 2, '0', STR_PAD_LEFT) }}</td>
                                     <td class="text-start">{{ optional($reserva->carencia)->municipio }}</td>
@@ -109,7 +110,6 @@
                 </div>
             </div>
         </div>
-
         <!-- Formulário para Futuro Provimento -->
         <div class="card border-0 shadow-sm rounded-4">
             <div class="card-body">
@@ -165,17 +165,6 @@
 
                     <div class="row g-3">
                         <div class="mt-4 col-12 text-end">
-                            {{-- <button type="submit" class="btn btn-success">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    class="icon icon-tabler icons-tabler-outline icon-tabler-refresh">
-                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                    <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
-                                    <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
-                                </svg>
-                                Atualizar
-                            </button> --}}
                             <div id="buttons" class="buttons">
                                 <button id="" class="button" type="submit">
                                     <span class="button__text">Atualizar</span>
