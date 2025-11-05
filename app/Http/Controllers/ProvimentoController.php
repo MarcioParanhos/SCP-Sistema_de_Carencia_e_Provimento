@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Carbon;
 
 use App\Models\Uee;
@@ -500,13 +501,46 @@ class ProvimentoController extends Controller
     public function update(Request $request)
     {
         $anoRef = session()->get('ano_ref');
+
+        // Validação para arquivo quando situacao_provimento for 'provida'
+        if ($request->situacao_provimento === 'provida') {
+            $request->validate([
+                'arquivo_comprobatorio' => 'required|file|mimes:pdf,jpeg,jpg|max:5120', // 5MB max
+            ], [
+                'arquivo_comprobatorio.required' => 'O arquivo comprobatório é obrigatório quando a situação for PROVIDA.',
+                'arquivo_comprobatorio.mimes' => 'O arquivo deve ser do tipo PDF, JPEG ou JPG.',
+                'arquivo_comprobatorio.max' => 'O arquivo não pode ser maior que 5MB.',
+            ]);
+        }
+
         if (($request->profile_cpg_update === 'cpm_tecnico') || ($request->profile_cpg_update === 'cpm_coordenador')) {
-            Provimento::findOrFail($request->id)->update($request->all());
+            $requestData = $request->all();
+
+            // Handle file upload
+            if ($request->hasFile('arquivo_comprobatorio') && $request->situacao_provimento === 'provida') {
+                $arquivo = $request->file('arquivo_comprobatorio');
+                $filename = time() . '_' . uniqid() . '.' . $arquivo->getClientOriginalExtension();
+                $path = $arquivo->storeAs('provimentos', $filename, 'public');
+                $requestData['arquivo_comprobatorio'] = $filename;
+            }
+
+            Provimento::findOrFail($request->id)->update($requestData);
         } else if (($request->profile_cpg_update === "cpg_tecnico") || ($request->profile_cpg_update === "administrador")) {
             $provimento = Provimento::findOrFail($request->id);
             $requestData = $request->all();
 
+            // Handle file upload
+            if ($request->hasFile('arquivo_comprobatorio') && $request->situacao_provimento === 'provida') {
+                $arquivo = $request->file('arquivo_comprobatorio');
+                $filename = time() . '_' . uniqid() . '.' . $arquivo->getClientOriginalExtension();
+                $path = $arquivo->storeAs('provimentos', $filename, 'public');
+                $requestData['arquivo_comprobatorio'] = $filename;
 
+                // Remove old file if exists
+                if ($provimento->arquivo_comprobatorio && Storage::disk('public')->exists('provimentos/' . $provimento->arquivo_comprobatorio)) {
+                    Storage::disk('public')->delete('provimentos/' . $provimento->arquivo_comprobatorio);
+                }
+            }
 
             $observacao = $request->obs_cpg;
             $usuario = $request->user_cpg_update;
@@ -536,9 +570,7 @@ class ProvimentoController extends Controller
                 $requestData['situacao_carencia_existente'] = '';
             }
 
-
             if ($provimento->update($requestData)) {
-
                 $log = new Log;
                 $log->user_id = $request->user_id;
                 $log->action = "Update";
@@ -548,7 +580,6 @@ class ProvimentoController extends Controller
                 $log->save();
             }
         }
-
 
         return  redirect()->to(url()->previous())->with('msg', 'Registros Alterados com Sucesso!');
     }
@@ -1466,5 +1497,108 @@ class ProvimentoController extends Controller
             Log::error('Falha ao atualizar Nº COP do servidor: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Ocorreu um erro ao tentar atualizar o Nº COP.');
         }
+    }
+
+    public function update_assuncao(Request $request)
+    {
+        $situacao = $request->situacao_provimento;
+        $servidorCadastro = $request->servidor_cadastro;
+        $updatedCount = 0;
+
+        // Trata cenário PROVIDA: exige arquivo e salva data_assuncao.
+        if ($situacao === 'provida') {
+            $request->validate([
+                'arquivo_comprobatorio' => '|file|mimes:pdf,jpeg,jpg|max:5120', // 5MB
+                'data_assuncao' => 'required|date',
+            ], [
+                'arquivo_comprobatorio.mimes' => 'O arquivo deve ser do tipo PDF, JPEG ou JPG.',
+                'arquivo_comprobatorio.max' => 'O arquivo não pode ser maior que 5MB.',
+                'data_assuncao.required' => 'A data de assunção é obrigatória quando a situação for PROVIDA.',
+            ]);
+
+            $arquivo = $request->file('arquivo_comprobatorio');
+            $filename = time() . '_' . uniqid() . '.' . $arquivo->getClientOriginalExtension();
+            // Salva o novo arquivo
+            $arquivo->storeAs('provimentos', $filename, 'public');
+
+            $dataAssuncao = $request->data_assuncao;
+
+            $provimentos = Provimento::where('cadastro', $servidorCadastro)->get();
+
+            foreach ($provimentos as $provimento) {
+                // Remove arquivo antigo se existir
+                if ($provimento->arquivo_comprobatorio && Storage::disk('public')->exists('provimentos/' . $provimento->arquivo_comprobatorio)) {
+                    Storage::disk('public')->delete('provimentos/' . $provimento->arquivo_comprobatorio);
+                }
+
+                $provimento->arquivo_comprobatorio = $filename;
+                $provimento->situacao_provimento = 'provida';
+                $provimento->data_assuncao = $dataAssuncao;
+                // Mantém data_encaminhamento como estava (não sobrescrever), a menos que queira alterar explicitamente
+                if ($provimento->save()) {
+                    $updatedCount++;
+                }
+            }
+
+            return redirect("/detalhes_servidor/{$servidorCadastro}");
+        }
+
+        // Trata cenário TRAMITE: grava situacao_provimento = 'tramite', seta data_encaminhamento e limpa data_assuncao e arquivo.
+        if ($situacao === 'tramite') {
+            $request->validate([
+                'data_encaminhamento' => 'required|date',
+            ], [
+                'data_encaminhamento.required' => 'A data de encaminhamento é obrigatória quando a situação for TRAMITE.',
+            ]);
+
+            $dataEncaminhamento = $request->data_encaminhamento;
+
+            $provimentos = Provimento::where('cadastro', $servidorCadastro)->get();
+
+            foreach ($provimentos as $provimento) {
+                // Remove arquivo antigo se existir
+                if ($provimento->arquivo_comprobatorio && Storage::disk('public')->exists('provimentos/' . $provimento->arquivo_comprobatorio)) {
+                    Storage::disk('public')->delete('provimentos/' . $provimento->arquivo_comprobatorio);
+                }
+
+                $provimento->arquivo_comprobatorio = null;
+                $provimento->situacao_provimento = 'tramite';
+                $provimento->data_encaminhamento = $dataEncaminhamento;
+                $provimento->data_assuncao = null;
+
+                if ($provimento->save()) {
+                    $updatedCount++;
+                }
+            }
+
+            return redirect("/detalhes_servidor/{$servidorCadastro}");
+        }
+
+        // Se não for PROVIDA nem TRAMITE, não faz nada
+        return 0;
+    }
+
+    public function viewArquivo($filename)
+    {
+        $path = storage_path('app/public/provimentos/' . $filename);
+
+        if (!file_exists($path)) {
+            abort(404, 'Arquivo não encontrado');
+        }
+
+        // Verifica se o usuário tem permissão para ver o arquivo
+        if (!auth()->check()) {
+            abort(403, 'Acesso não autorizado');
+        }
+
+        // Get file info
+        $mimeType = mime_content_type($path);
+        $filename = basename($path);
+
+        // Return file response with proper headers
+        return response()->file($path, [
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => 'inline; filename="' . $filename . '"'
+        ]);
     }
 }

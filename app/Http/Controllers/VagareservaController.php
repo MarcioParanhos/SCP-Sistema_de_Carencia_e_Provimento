@@ -82,13 +82,11 @@ class VagareservaController extends Controller
             }
 
             if ($request->filled('search_num_cop')) {
-                $value = trim($request->search_num_cop);
-
-                // Trata valores que representam "não disponível"
-                if ($value === 'N/D' || strtoupper($value) === 'ND') {
+                $numCop = trim($request->input('search_num_cop'));
+                if ($numCop === 'N/D') {
                     $query->whereNull('num_cop');
                 } else {
-                    $query->where('num_cop', $value);
+                    $query->where('num_cop', $numCop);
                 }
             }
 

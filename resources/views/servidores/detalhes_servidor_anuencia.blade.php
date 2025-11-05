@@ -20,18 +20,72 @@
                 </button>
             </a>
         </div>
-        <div class="card mt-1">
+        <div class="card mt-2 shadow-sm">
             <div class="card-body">
-                <div>
-                    <h5 class="card-title">{{ $servidor->nome }}</h5>
-                    <h5 class="card-text">MATRÍCULA / CPF: {{ $servidor->cadastro }}</h5>
-                    <h5 class="card-text">VINCULO: {{ $servidor->vinculo }}</h5>
-                    <h5 class="card-text">REGIME: {{ $servidor->regime }}h</h5>
-                </div>
-                <div class="print-btn">
-                    <a class="mb-2 btn bg-primary text-white" data-toggle="collapse" href="#validarDocs" role="button"
-                        aria-expanded="false" aria-controls="collapseExample"><i class="icon-paper menu-icon"></i> VALIDAR
-                        DADOS</a>
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
+                            style="width:64px;height:64px;font-size:28px;">
+                            @php
+                                $nome = trim($servidor->nome ?? '');
+                                $parts = preg_split('/\s+/', $nome, -1, PREG_SPLIT_NO_EMPTY);
+                                $first = $parts[0] ?? '';
+                                $last = count($parts) > 1 ? $parts[count($parts) - 1] : '';
+                                $initials = strtoupper(substr($first, 0, 1) . ($last ? substr($last, 0, 1) : ''));
+                                if ($initials === '') {
+                                    $initials = 'S';
+                                }
+                            @endphp
+                            {{ $initials }}
+                        </div>
+                    </div>
+
+                    <div class="col">
+                        <h5 class="mb-1">{{ $servidor->nome }}</h5>
+                        <div class="small text-muted mb-1">
+                            MATRÍCULA / CPF:
+                            <span class="font-weight-bold text-dark ml-1">{{ $servidor->cadastro }}</span>
+                        </div>
+                        <div class="d-flex flex-wrap align-items-center">
+                            <span class="badge badge-info mr-2 mb-1 text-uppercase">{{ $servidor->vinculo }}</span>
+                            <span class="badge badge-secondary mb-1">{{ $servidor->regime }}h</span>
+                        </div>
+                    </div>
+
+                    <div class="col-auto text-right">
+                        <a class="btn btn-primary mr-2" data-toggle="collapse" href="#validarDocs" role="button"
+                            aria-expanded="false" aria-controls="validarDocs">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round"
+                                class="icon icon-tabler icons-tabler-outline icon-tabler-file-invoice">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                                <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+                                <path d="M9 7l1 0" />
+                                <path d="M9 13l6 0" />
+                                <path d="M13 17l2 0" />
+                            </svg>
+                            ASSUNÇÃO
+                        </a>
+                        <a class="btn btn-primary mr-2" data-toggle="collapse" href="#validarAssuncao" role="button"
+                            aria-expanded="false" aria-controls="validarDocs">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round"
+                                class="icon icon-tabler icons-tabler-outline icon-tabler-file-text-shield">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M13 3v4a.997 .997 0 0 0 1 1h4" />
+                                <path d="M11 21h-5a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v3.5" />
+                                <path d="M8 9h1" />
+                                <path d="M8 12.994l3 0" />
+                                <path d="M8 16.997l2 0" />
+                                <path
+                                    d="M21 15.994c0 4 -2.5 6 -3.5 6s-3.5 -2 -3.5 -6c1 0 2.5 -.5 3.5 -1.5c1 1 2.5 1.5 3.5 1.5" />
+                            </svg>
+                            ASSOCIAR COPE
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -90,13 +144,217 @@
                         </tr>
                     @endforeach
                 </tbody>
+
+
+
             </table>
-
-            <div class="collapse @if ($provimento->num_cop) show @endif  " id="validarDocs">
-                <hr>
-
+            <div class="collapse @if ($provimento->arquivo_comprobatorio) show @endif  " id="validarDocs">
                 <div class="card card-body">
+                    <hr>
+                    <form action="/update/atualizarAssuncao" method="POST" enctype="multipart/form-data"
+                        class="px-2 py-2">
+                        @csrf
+                        <input type="hidden" name="servidor_cadastro" value="{{ $servidor->cadastro }}">
 
+                        <div class="form-row mb-2 g-2 align-items-end">
+                            <div class="col-12 col-sm-6 col-md-2">
+                                <label for="situacao_provimento_detail" class="control-label small">Situação do
+                                    provimento</label>
+                                <select name="situacao_provimento" id="situacao_provimento_detail"
+                                    class="form-control form-control-sm">
+                                    <option value="tramite"
+                                        {{ old('situacao_provimento', $provimento->situacao_provimento) == 'tramite' ? 'selected' : '' }}>
+                                        TRÂMITE</option>
+                                    <option value="provida"
+                                        {{ old('situacao_provimento', $provimento->situacao_provimento) == 'provida' ? 'selected' : '' }}>
+                                        PROVIDA</option>
+                                </select>
+                            </div>
+
+                            <div class="col-6 col-sm-4 col-md-2" id="data_encaminhamento_col"
+                                style="display: {{ $provimento->situacao_provimento === 'tramite' ? 'block' : 'none' }};">
+                                <label for="data_encaminhamento" class="control-label small">Data de
+                                    Encaminhamento</label>
+                                <input type="date"
+                                    name="{{ $provimento->situacao_provimento === 'tramite' ? 'data_encaminhamento' : '' }}"
+                                    id="data_encaminhamento"
+                                    value="{{ old('data_encaminhamento', optional($provimento->data_encaminhamento ? \Carbon\Carbon::parse($provimento->data_encaminhamento) : null)->format('Y-m-d')) }}"
+                                    class="form-control form-control-sm"
+                                    {{ $provimento->situacao_provimento === 'tramite' ? 'required' : '' }}>
+                            </div>
+
+                            <div class="col-6 col-sm-4 col-md-2" id="data_assuncao_col"
+                                style="display: {{ $provimento->situacao_provimento === 'provida' ? 'block' : 'none' }};">
+                                <label for="data_assuncao" class="control-label small">Data de Assunção</label>
+                                <input type="date"
+                                    name="{{ $provimento->situacao_provimento === 'provida' ? 'data_assuncao' : '' }}"
+                                    id="data_assuncao"
+                                    value="{{ old('data_assuncao', optional($provimento->data_assuncao ? \Carbon\Carbon::parse($provimento->data_assuncao) : null)->format('Y-m-d')) }}"
+                                    class="form-control form-control-sm"
+                                    {{ $provimento->situacao_provimento === 'provida' ? 'required' : '' }}>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12 col-md-6 col-lg-4 mb-2" id="arquivo_comprobatorio_row"
+                                style="display: {{ $provimento->situacao_provimento === 'provida' ? 'block' : 'none' }};">
+                                <div class="card mb-0">
+                                    <div class="card-body p-2">
+                                        <div class="d-flex justify-content-between align-items-start mb-1">
+                                            <div>
+                                                <label class="control-label font-weight-bold small mb-0"
+                                                    for="arquivo_comprobatorio">
+                                                    <i class="fas fa-paperclip text-primary"></i> Termo de Assunção
+                                                    <span class="text-danger">*</span>
+                                                </label>
+                                                <small class="form-text text-muted">
+                                                    Formatos: PDF, JPEG, JPG — máximo 5MB.
+                                                </small>
+                                            </div>
+                                        </div>
+
+                                        <div class="custom-file mb-2">
+                                            <input type="file" id="arquivo_comprobatorio" class="custom-file-input"
+                                                accept=".pdf,.jpg,.jpeg"
+                                                {{ $provimento->situacao_provimento === 'provida' ? 'name=arquivo_comprobatorio' : 'disabled' }}
+                                                {{ $provimento->situacao_provimento === 'provida' && !$provimento->arquivo_comprobatorio ?: '' }}>
+                                            <label class="custom-file-label small" for="arquivo_comprobatorio">
+                                                <i class="fas fa-cloud-upload-alt"></i> Escolher arquivo...
+                                            </label>
+                                        </div>
+
+                                        @if ($provimento->arquivo_comprobatorio)
+                                            <div class="mt-1">
+                                                <div class="list-group">
+                                                    <div
+                                                        class="list-group-item d-flex justify-content-between align-items-center p-2">
+                                                        <div class="d-flex align-items-center">
+                                                            <i
+                                                                class="fas {{ Str::endsWith(strtolower($provimento->arquivo_comprobatorio), '.pdf') ? 'fa-file-pdf text-danger' : 'fa-file-image text-primary' }} fa-lg mr-2"></i>
+                                                            <div class="small text-truncate" style="max-width:180px;">
+                                                                <strong>Arquivo atual:</strong>
+                                                                <div class="text-muted">
+                                                                    {{ Str::limit($provimento->arquivo_comprobatorio, 40) }}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="btn-group btn-group-sm" role="group">
+                                                            <a href="{{ route('provimento.arquivo', $provimento->arquivo_comprobatorio) }}"
+                                                                target="_blank" class="btn btn-outline-primary btn-sm">
+                                                                <i class="fas fa-external-link-alt"></i> Abrir
+                                                            </a>
+                                                            <a href="{{ route('provimento.arquivo', $provimento->arquivo_comprobatorio) }}"
+                                                                download class="btn btn-outline-secondary btn-sm">
+                                                                <i class="fas fa-download"></i> Baixar
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endif
+
+                                        @error('arquivo_comprobatorio')
+                                            <div class="invalid-feedback d-block mt-1 small">
+                                                <i class="fas fa-exclamation-triangle"></i> {{ $message }}
+                                            </div>
+                                        @enderror
+
+                                        <small class="form-text text-muted mt-1 small">Dica: nomes curtos facilitam o
+                                            download.</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="row g-3">
+                            <div class="mt-4 col-12 text-end">
+                                <div id="buttons" class="buttons">
+                                    <button id="" class="button" type="submit">
+                                        <span class="button__text">Salvar</span>
+                                        <span class="button__icon">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                class="icon icon-tabler icons-tabler-outline icon-tabler-device-floppy">
+                                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                <path
+                                                    d="M6 4h10l4 4v10a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2" />
+                                                <path d="M12 14m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                                                <path d="M14 4l0 4l-6 0l0 -4" />
+                                            </svg>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <script>
+                    // Toggle which date field is submitted and whether file is sent.
+                    (function() {
+                        const situacao = document.getElementById('situacao_provimento_detail');
+                        const arquivo = document.getElementById('arquivo_comprobatorio');
+                        const arquivoRow = document.getElementById('arquivo_comprobatorio_row');
+                        const dataEncCol = document.getElementById('data_encaminhamento_col');
+                        const dataAssCol = document.getElementById('data_assuncao_col');
+                        const dataEnc = document.getElementById('data_encaminhamento');
+                        const dataAss = document.getElementById('data_assuncao');
+
+                        function updateFields() {
+                            const isProvida = situacao.value === 'provida';
+
+                            // Show/hide blocks
+                            if (arquivoRow) arquivoRow.style.display = isProvida ? 'block' : 'none';
+                            if (dataAssCol) dataAssCol.style.display = isProvida ? 'block' : 'none';
+                            if (dataEncCol) dataEncCol.style.display = isProvida ? 'none' : 'block';
+
+                            // File input: only enabled and named when PROVIDA
+                            if (arquivo) {
+                                if (isProvida) {
+                                    arquivo.removeAttribute('disabled');
+                                    arquivo.setAttribute('name', 'arquivo_comprobatorio');
+                                    arquivo.required = true;
+                                } else {
+                                    arquivo.value = '';
+                                    arquivo.required = false;
+                                    arquivo.removeAttribute('name');
+                                    arquivo.setAttribute('disabled', 'disabled');
+                                    const lbl = arquivo.nextElementSibling;
+                                    if (lbl && lbl.classList.contains('custom-file-label')) {
+                                        lbl.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Escolher arquivo...';
+                                    }
+                                }
+                            }
+
+                            // Dates: only the active one should have a name/required so server receives only one
+                            if (dataEnc && dataAss) {
+                                if (isProvida) {
+                                    dataEnc.removeAttribute('name');
+                                    dataEnc.required = false;
+
+                                    dataAss.setAttribute('name', 'data_assuncao');
+                                    dataAss.required = true;
+                                } else {
+                                    dataAss.removeAttribute('name');
+                                    dataAss.required = false;
+
+                                    dataEnc.setAttribute('name', 'data_encaminhamento');
+                                    dataEnc.required = true;
+                                }
+                            }
+                        }
+
+                        if (situacao) {
+                            situacao.addEventListener('change', updateFields);
+                            // initialize on load
+                            setTimeout(updateFields, 50);
+                        }
+                    })();
+                </script>
+            </div>
+            <div class="collapse @if ($provimento->num_cop) show @endif  " id="validarAssuncao">
+                <div class="card card-body">
+                    <hr>
                     <form action="/update/atualizarCOP" method="POST">
                         @csrf
                         <input type="hidden" name="servidor_cadastro" value="{{ $servidor->cadastro }}">
@@ -116,8 +374,8 @@
                             <div class="col-md-3">
                                 <div class="form-group_disciplina">
                                     <label for="num_sei" class="">Nº PROCESSO SEI</label>
-                                    <input name="" id="num_sei" type="number" class="form-control form-control-sm"
-                                        value="">
+                                    <input name="" id="num_sei" type="number"
+                                        class="form-control form-control-sm" value="">
                                 </div>
                             </div>
                         </div>
@@ -147,3 +405,279 @@
         </div>
     </div>
 @endsection
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const provimentoMat = document.getElementById('provimento_matutino');
+            const provimentoVesp = document.getElementById('provimento_vespertino');
+            const provimentoNot = document.getElementById('provimento_noturno');
+            const totalEl = document.getElementById('total');
+            const situacaoSelect = document.getElementById('situacao_provimento_detail');
+            const arquivoRow = document.getElementById('arquivo_comprobatorio_row');
+            const arquivoInput = document.getElementById('arquivo_comprobatorio');
+
+            function toNumber(value) {
+                if (value === undefined || value === null) return 0;
+                const n = parseFloat(String(value).replace(',', '.'));
+                return Number.isFinite(n) ? n : 0;
+            }
+
+            function addTotal() {
+                if (!totalEl) return;
+                const sum = toNumber(provimentoMat && provimentoMat.value) + toNumber(provimentoVesp &&
+                    provimentoVesp.value) + toNumber(provimentoNot && provimentoNot.value);
+                totalEl.value = sum;
+            }
+
+            // Calculadora de total
+            if (provimentoMat && provimentoVesp && provimentoNot && totalEl) {
+                ['blur', 'change', 'input'].forEach(evt => {
+                    provimentoMat.addEventListener(evt, addTotal);
+                    provimentoVesp.addEventListener(evt, addTotal);
+                    provimentoNot.addEventListener(evt, addTotal);
+                });
+            }
+
+            // Controle do campo de arquivo baseado na situação do provimento
+            function toggleArquivoField() {
+                if (!situacaoSelect || !arquivoRow || !arquivoInput) {
+                    console.log('Elementos não encontrados:', {
+                        situacaoSelect: !!situacaoSelect,
+                        arquivoRow: !!arquivoRow,
+                        arquivoInput: !!arquivoInput
+                    });
+                    return;
+                }
+
+                const isProvida = situacaoSelect.value === 'provida';
+                console.log('Toggle arquivo field:', {
+                    value: situacaoSelect.value,
+                    isProvida
+                });
+
+                arquivoRow.style.display = isProvida ? 'block' : 'none';
+                arquivoInput.required = isProvida;
+
+                if (!isProvida) {
+                    arquivoInput.value = ''; // Limpa o arquivo se não for provida
+                    // Reset custom file label
+                    const label = arquivoInput.nextElementSibling;
+                    if (label && label.classList.contains('custom-file-label')) {
+                        label.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Escolher arquivo...';
+                    }
+                }
+            }
+
+            // Bootstrap 4 Custom File Input - Update label with selected filename
+            if (arquivoInput) {
+                arquivoInput.addEventListener('change', function() {
+                    const label = this.nextElementSibling;
+                    const fileName = this.files[0] ? this.files[0].name :
+                        '<i class="fas fa-cloud-upload-alt"></i> Escolher arquivo...';
+
+                    if (label && label.classList.contains('custom-file-label')) {
+                        if (this.files[0]) {
+                            // File selected - show file name with icon
+                            const fileSize = (this.files[0].size / 1024 / 1024).toFixed(2);
+                            label.innerHTML =
+                                `<i class="fas fa-file-${this.files[0].type.includes('pdf') ? 'pdf' : 'image'} text-primary"></i> ${fileName} <small class="text-muted">(${fileSize} MB)</small>`;
+                        } else {
+                            // No file selected - reset label
+                            label.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Escolher arquivo...';
+                        }
+                    }
+                });
+            }
+
+            if (situacaoSelect) {
+                // Suporte para select normal
+                situacaoSelect.addEventListener('change', function(e) {
+                    console.log('Change event triggered:', e.target.value);
+                    toggleArquivoField();
+                });
+
+                // Suporte para Select2 (se estiver sendo usado)
+                if (window.jQuery && $(situacaoSelect).length) {
+                    $(situacaoSelect).on('change', function() {
+                        console.log('Select2 change event triggered:', this.value);
+                        toggleArquivoField();
+                    });
+                }
+
+                // Executa na inicialização também
+                setTimeout(function() {
+                    console.log('Executando toggle inicial...');
+                    toggleArquivoField();
+                }, 500); // Aumentei o delay para garantir que tudo foi carregado
+            } else {
+                console.log('Elemento situacao_provimento_detail não encontrado');
+            }
+
+            // Função de teste para verificar se o toggle funciona
+            window.testToggle = function() {
+                console.log('Teste toggle executado');
+                if (arquivoRow) {
+                    const isVisible = arquivoRow.style.display !== 'none';
+                    arquivoRow.style.display = isVisible ? 'none' : 'block';
+                    console.log('Campo arquivo agora está:', isVisible ? 'oculto' : 'visível');
+                } else {
+                    console.log('arquivo_comprobatorio_row não encontrado');
+                }
+            };
+
+            // Expose searchServidor to global scope so existing onclicks keep working
+            window.searchServidor = function() {
+                const cadastroInput = document.getElementById('cadastro');
+                const servidorInput = document.getElementById('servidor');
+                const vinculoInput = document.getElementById('vinculo');
+                const regimeInput = document.getElementById('regime');
+
+                if (!cadastroInput) return;
+                const cadastro_servidor = String(cadastroInput.value || '').trim();
+                if (!cadastro_servidor) {
+                    if (window.Swal) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Atenção!',
+                            text: 'Matrícula não informada. Tente novamente.'
+                        });
+                    }
+                    return;
+                }
+
+                // Prefer jQuery post if available (project already loads jQuery)
+                if (window.jQuery && $.post) {
+                    $.post('/consultarServidor/' + cadastro_servidor)
+                        .done(function(response) {
+                            const data = response && response[0];
+                            if (data) {
+                                servidorInput && (servidorInput.value = data.nome || '');
+                                vinculoInput && (vinculoInput.value = data.vinculo || '');
+                                regimeInput && (regimeInput.value = data.regime || '');
+                                cadastroInput && (cadastroInput.value = data.cadastro || cadastroInput
+                                    .value);
+                            } else if (window.Swal) {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Atenção!',
+                                    text: 'Servidor não encontrado. Tente novamente.'
+                                });
+                            }
+                        })
+                        .fail(function() {
+                            if (window.Swal) Swal.fire({
+                                icon: 'error',
+                                title: 'Erro',
+                                text: 'Falha na requisição.'
+                            });
+                        });
+                    return;
+                }
+
+                // Fallback using fetch (POST) with CSRF token
+                const tokenMeta = document.querySelector('meta[name="csrf-token"]');
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                if (tokenMeta) headers['X-CSRF-TOKEN'] = tokenMeta.getAttribute('content');
+
+                fetch('/consultarServidor/' + cadastro_servidor, {
+                        method: 'POST',
+                        headers: headers
+                    })
+                    .then(res => res.json())
+                    .then(response => {
+                        const data = response && response[0];
+                        if (data) {
+                            servidorInput && (servidorInput.value = data.nome || '');
+                            vinculoInput && (vinculoInput.value = data.vinculo || '');
+                            regimeInput && (regimeInput.value = data.regime || '');
+                            cadastroInput && (cadastroInput.value = data.cadastro || cadastroInput.value);
+                        } else if (window.Swal) {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Atenção!',
+                                text: 'Servidor não encontrado. Tente novamente.'
+                            });
+                        }
+                    })
+                    .catch(() => {
+                        if (window.Swal) Swal.fire({
+                            icon: 'error',
+                            title: 'Erro',
+                            text: 'Falha na requisição.'
+                        });
+                    });
+            };
+        });
+    </script>
+
+    <style>
+        /* Estilos customizados para o campo de upload */
+        #arquivo_comprobatorio_row .custom-file-label {
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        #arquivo_comprobatorio_row .custom-file-label:hover {
+            border-color: #007bff;
+            background-color: #f8f9fa;
+        }
+
+        #arquivo_comprobatorio_row .custom-file-input:focus~.custom-file-label {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        #arquivo_comprobatorio_row .custom-file-input:valid~.custom-file-label {
+            border-color: #28a745;
+            border-style: solid;
+        }
+
+        #arquivo_comprobatorio_row .alert {
+            border-radius: 8px;
+            border: none;
+        }
+
+        #arquivo_comprobatorio_row .alert-success {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border-left: 4px solid #28a745;
+        }
+
+        #arquivo_comprobatorio_row .alert-danger {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            border-left: 4px solid #dc3545;
+        }
+
+        #arquivo_comprobatorio_row .btn-outline-primary {
+            border-radius: 6px;
+            font-size: 0.85rem;
+            padding: 0.375rem 0.75rem;
+            transition: all 0.2s ease;
+        }
+
+        #arquivo_comprobatorio_row .btn-outline-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+        }
+
+        /* Animação para aparecer/sumir */
+        #arquivo_comprobatorio_row {
+            transition: opacity 0.3s ease, max-height 0.3s ease;
+            overflow: hidden;
+        }
+
+        #arquivo_comprobatorio_row[style*="none"] {
+            opacity: 0;
+            max-height: 0;
+        }
+
+        #arquivo_comprobatorio_row[style*="block"] {
+            opacity: 1;
+            max-height: 500px;
+        }
+    </style>
+@endpush

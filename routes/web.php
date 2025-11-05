@@ -60,6 +60,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/processData', [ProvimentoController::class, 'processData']);
     Route::post('/provimentos', [ProvimentoController::class, 'showProvimentoByForm'])->name("provimentos.showByForm");
     Route::put('/provimento/update/{id}', [ProvimentoController::class, 'update'])->name("provimento.update");
+    Route::get('/provimento/arquivo/{filename}', [ProvimentoController::class, 'viewArquivo'])->name("provimento.arquivo");
     Route::get('/validarProvimento/{id}/{action}', [ProvimentoController::class, 'validarProvimento']);
     Route::get('/provimento/efetivo/prover', [ProvimentoController::class, 'createProvimentoEfetivo'])->name("provimento_efetivo.create");
     Route::get('/provimento/efetivo/show', [ProvimentoController::class, 'showProvimentoEfetivo']);
@@ -75,6 +76,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/update/inconsistencia/{id}', [ProvimentoController::class, 'update_inconsistencia']);
     Route::get('/provimentos/validar', [ProvimentoController::class, 'validarDocs'])->name("provimentos.validarDocs");
     Route::post('/update/atualizarCOP', [ProvimentoController::class, 'update_cop']);
+    Route::post('/update/atualizarAssuncao', [ProvimentoController::class, 'update_assuncao']);
     //Unidades Escolares
     Route::get('/uees/{tipo}', [UeeController::class, 'showUees'])->name('uees.show');
     Route::get('/uees/detail/{id}', [UeeController::class, 'detailUee']);

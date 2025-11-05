@@ -148,11 +148,15 @@ class ServidoreController extends Controller
     public function detalhesServidorAnuencia($cadastro)
     {
 
+        $anoRef = session()->get('ano_ref');
+
         $servidor = Servidore::where('cadastro', $cadastro)->first();
-        $provimentosByServidor = Provimento::where('cadastro', $cadastro)->get();
+        $provimentosByServidor = Provimento::where('cadastro', $cadastro)
+            ->where('ano_ref', $anoRef)
+            ->get();
         $num_cop = NumCop::all();
         $provimento = Provimento::where('cadastro', $cadastro)->first();
-        return view('servidores.detalhes_servidor_anuencia', compact('provimentosByServidor', 'servidor','num_cop','provimento'));
+        return view('servidores.detalhes_servidor_anuencia', compact('provimentosByServidor', 'servidor', 'num_cop', 'provimento'));
     }
 
     public function consultarEfetivo($cpf)

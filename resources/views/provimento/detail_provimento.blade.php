@@ -84,7 +84,31 @@
             </div>
         </div>
         <div class="shadow card_info">
-            <form action="{{ route('provimento.update', $provimento->id) }}" method="post">
+            @can('view-cpg-technician-or-administrator')
+                @if ($provimento->situacao_provimento != 'tramite')
+                    @if ($provimento->pch === 'OK')
+                        <div class="d-flex justify-content-end container-fluid print-none mb-4">
+                            <input id="check_provimento_id" value="{{ $provimento->id }}" type="text" hidden>
+                            <label class="toggle">
+                                <input id="check-pch" class="toggle-checkbox" type="checkbox" checked>
+                                <div class="toggle-switch"></div>
+                                <span class="toggle-label">PROGRAMADO - PCH</span>
+                            </label>
+                        </div>
+                    @endif
+                    @if ($provimento->pch === 'PENDENTE')
+                        <div class="d-flex justify-content-end container-fluid print-none mb-4">
+                            <input id="check_provimento_id" value="{{ $provimento->id }}" type="text" hidden>
+                            <label class="toggle">
+                                <input id="check-pch" class="toggle-checkbox" type="checkbox">
+                                <div class="toggle-switch"></div>
+                                <span class="toggle-label">PROGRAMADO - PCH</span>
+                            </label>
+                        </div>
+                    @endif
+                @endif
+            @endcan
+            <form action="{{ route('provimento.update', $provimento->id) }}" method="post" enctype="multipart/form-data">
                 @csrf
                 @method ('PUT')
                 <input value="{{ Auth::user()->name }}" id="" name="user_cpg_update" type="text"
@@ -109,8 +133,8 @@
                     <div class="col-md-7">
                         <div class="form-group_disciplina">
                             <label class="control-label" for="search_uee">NOME DA UNIDADE ESCOLAR</label>
-                            <input value="{{ $provimento->unidade_escolar }}" name="unidade_escolar" id="unidade_escolar"
-                                type="text" class="form-control form-control-sm" readonly>
+                            <input value="{{ $provimento->unidade_escolar }}" name="unidade_escolar"
+                                id="unidade_escolar" type="text" class="form-control form-control-sm" readonly>
                         </div>
                     </div>
                     <div class="col-md-2">
@@ -302,7 +326,14 @@
                             <div class="col-md-2" id="">
                                 <div class="form-group_disciplina">
                                     <label class="control-label" for="situacao_provimento">situação do provimento</label>
-                                    <select name="situacao_provimento" id="situacao_provimento_detail"
+                                    @if ($provimento->situacao_provimento === 'provida')
+                                        <input value="PROVIDO" name="" id="" type="text"
+                                            class="text-center form-control form-control-sm" readonly>
+                                    @else
+                                        <input value="EM TRÃMITE" name="" id="" type="text"
+                                            class="text-center form-control form-control-sm" readonly>
+                                    @endif
+                                    {{-- <select name="situacao_provimento" id="situacao_provimento_detail"
                                         class="form-control select2" required>
                                         @if ($provimento->situacao_provimento === 'tramite')
                                             <option value="{{ $provimento->situacao_provimento }}">EM TRÂMITE</option>
@@ -312,10 +343,45 @@
                                             <option value="{{ $provimento->situacao_provimento }}">PROVIDO</option>
                                             <option value="tramite">EM TRÂMITE</option>
                                         @endif
-                                    </select>
+                                    </select> --}}
                                 </div>
                             </div>
                         @endif
+
+
+                        {{-- @if ($provimento->situacao === 'DESBLOQUEADO' && $provimento->pch === 'PENDENTE')
+                            <div class="col-md-6" id="arquivo_comprobatorio_row" style="display: {{ $provimento->situacao_provimento === 'provida' ? 'block' : 'none' }};">
+                                <div class="form-group_disciplina">
+                                    <label class="control-label font-weight-bold" for="arquivo_comprobatorio">
+                                        <i class="fas fa-paperclip text-primary"></i> Arquivo Comprobatório 
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                
+                                    
+                                    @if ($provimento->arquivo_comprobatorio)
+                                        <div class="alert alert-success mt-2 p-2">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-check-circle text-success mr-2"></i>
+                                                <div>
+                                                    <strong>Arquivo atual:</strong><br>
+                                                    <a href="{{ route('provimento.arquivo', $provimento->arquivo_comprobatorio) }}" 
+                                                       target="_blank" class="btn btn-sm btn-outline-primary mt-1">
+                                                        <i class="fas fa-eye"></i> Visualizar: {{ Str::limit($provimento->arquivo_comprobatorio, 30) }}
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
+                                    
+                                    @error('arquivo_comprobatorio')
+                                        <div class="alert alert-danger mt-2 p-2">
+                                            <i class="fas fa-exclamation-triangle"></i> {{ $message }}
+                                        </div>
+                                    @enderror
+                                </div>
+                            </div>
+                        @endif --}}
+
                         @if ($provimento->situacao === 'BLOQUEADO' || $provimento->pch === 'OK')
                             <div class="col-md-2" id="">
                                 {{-- <div class="form-group_disciplina">
@@ -510,44 +576,77 @@
                                 </div>
                             </div>
                         @endcan
-                        @if ($provimento->situacao_programacao === 'NAO ASSUMIU' || $provimento->situacao_programacao === 'SEM INICIO DAS ATIVIDADES')
+                        @if (
+                            $provimento->situacao_programacao === 'NAO ASSUMIU' ||
+                                $provimento->situacao_programacao === 'SEM INICIO DAS ATIVIDADES')
                             <div class="col-md-2 print-none">
                                 <div class="form-group_disciplina">
                                     <label class="control-label" for="situacao_carencia">CARÊNCIA EXISTE ?</label>
-                                    <select name="situacao_carencia_existente" id="situacao_carencia" class="form-control select2">
+                                    <select name="situacao_carencia_existente" id="situacao_carencia"
+                                        class="form-control select2">
                                         <option value=""></option>
                                         @php
-                                            $selectedCarencia = old('situacao_carencia_existente', $provimento->situacao_carencia_existente ?? '');
+                                            $selectedCarencia = old(
+                                                'situacao_carencia_existente',
+                                                $provimento->situacao_carencia_existente ?? '',
+                                            );
                                         @endphp
-                                        <option value="SIM" {{ $selectedCarencia === 'SIM' ? 'selected' : '' }}>SIM</option>
-                                        <option value="NÃO" {{ $selectedCarencia === 'NÃO' ? 'selected' : '' }}>NÃO</option>
+                                        <option value="SIM" {{ $selectedCarencia === 'SIM' ? 'selected' : '' }}>SIM
+                                        </option>
+                                        <option value="NÃO" {{ $selectedCarencia === 'NÃO' ? 'selected' : '' }}>NÃO
+                                        </option>
                                     </select>
                                 </div>
                             </div>
                         @endif
-                        @if ($provimento->situacao_provimento != 'tramite')
-                            @if ($provimento->pch === 'OK')
-                                <div class="d-flex justify-content-end container-fluid print-none">
-                                    <input id="check_provimento_id" value="{{ $provimento->id }}" type="text" hidden>
-                                    <label class="toggle">
-                                        <input id="check-pch" class="toggle-checkbox" type="checkbox" checked>
-                                        <div class="toggle-switch"></div>
-                                        <span class="toggle-label">PROGRAMADO - PCH</span>
-                                    </label>
-                                </div>
-                            @endif
-                            @if ($provimento->pch === 'PENDENTE')
-                                <div class="d-flex justify-content-end container-fluid print-none">
-                                    <input id="check_provimento_id" value="{{ $provimento->id }}" type="text" hidden>
-                                    <label class="toggle">
-                                        <input id="check-pch" class="toggle-checkbox" type="checkbox">
-                                        <div class="toggle-switch"></div>
-                                        <span class="toggle-label">PROGRAMADO - PCH</span>
-                                    </label>
-                                </div>
-                            @endif
-                        @endif
                     @endcan
+
+
+
+                    <div class="col-md-6 ml-auto" id="arquivo_comprobatorio_row"
+                        style="display: {{ $provimento->situacao_provimento === 'provida' ? 'block' : 'none' }}; max-width:420px;">
+                        <div class="form-group_disciplina d-flex flex-column align-items-end">
+                            <label class="control-label font-weight-bold w-100 text-right" for="arquivo_comprobatorio">
+                                <i class="fas fa-paperclip text-primary"></i> Termo de assunção
+                            </label>
+                            @if ($provimento->arquivo_comprobatorio)
+                                <div class="mt-2">
+                                    <div class="list-group">
+                                        <div class="list-group-item d-flex justify-content-between align-items-center p-2"
+                                            style="width: 415px">
+                                            <div class="d-flex align-items-center">
+                                                <i
+                                                    class="fas {{ Str::endsWith(strtolower($provimento->arquivo_comprobatorio), '.pdf') ? 'fa-file-pdf text-danger' : 'fa-file-image text-primary' }} fa-lg mr-2"></i>
+                                                <div class="small text-truncate" style="max-width:220px;">
+                                                    <strong>Arquivo atual:</strong>
+                                                    <div class="text-muted">
+                                                        {{ Str::limit($provimento->arquivo_comprobatorio, 40) }}</div>
+                                                </div>
+                                            </div>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <a href="{{ route('provimento.arquivo', $provimento->arquivo_comprobatorio) }}"
+                                                    target="_blank" class="btn btn-outline-primary">
+                                                    <i class="fas fa-external-link-alt"></i> Abrir
+                                                </a>
+                                                <a href="{{ route('provimento.arquivo', $provimento->arquivo_comprobatorio) }}"
+                                                    download class="btn btn-outline-secondary">
+                                                    <i class="fas fa-download"></i> Baixar
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+
+
+                            @error('arquivo_comprobatorio')
+                                <div class="alert alert-danger mt-2 p-2 w-100">
+                                    <i class="fas fa-exclamation-triangle"></i> {{ $message }}
+                                </div>
+                            @enderror
+                        </div>
+                    </div>
+
 
                 </div>
                 @can('view-cpm-technician-or-administrator')
@@ -616,59 +715,281 @@
         </div>
     </div>
 
-    <Script>
-        const provimento_matutino = document.getElementById("provimento_matutino")
-        const provimento_vespertino = document.getElementById("provimento_vespertino")
-        const provimento_noturno = document.getElementById("provimento_noturno")
-        const total = document.getElementById("total")
 
-        provimento_matutino.addEventListener("blur", addTotal1)
-        provimento_vespertino.addEventListener("blur", addTotal1)
-        provimento_noturno.addEventListener("blur", addTotal1)
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const provimentoMat = document.getElementById('provimento_matutino');
+                const provimentoVesp = document.getElementById('provimento_vespertino');
+                const provimentoNot = document.getElementById('provimento_noturno');
+                const totalEl = document.getElementById('total');
+                const situacaoSelect = document.getElementById('situacao_provimento_detail');
+                const arquivoRow = document.getElementById('arquivo_comprobatorio_row');
+                const arquivoInput = document.getElementById('arquivo_comprobatorio');
 
-        // ADICIONA O TOTAL DE FORMA ASSINCRONA
-        function addTotal1() {
+                function toNumber(value) {
+                    if (value === undefined || value === null) return 0;
+                    const n = parseFloat(String(value).replace(',', '.'));
+                    return Number.isFinite(n) ? n : 0;
+                }
 
-            let matModify = parseFloat(provimento_matutino.value)
-            let vespModify = parseFloat(provimento_vespertino.value)
-            let notpModify = parseFloat(provimento_noturno.value)
+                function addTotal() {
+                    if (!totalEl) return;
+                    const sum = toNumber(provimentoMat && provimentoMat.value) + toNumber(provimentoVesp &&
+                        provimentoVesp.value) + toNumber(provimentoNot && provimentoNot.value);
+                    totalEl.value = sum;
+                }
 
-            total.value = matModify + vespModify + notpModify
-        }
+                // Calculadora de total
+                if (provimentoMat && provimentoVesp && provimentoNot && totalEl) {
+                    ['blur', 'change', 'input'].forEach(evt => {
+                        provimentoMat.addEventListener(evt, addTotal);
+                        provimentoVesp.addEventListener(evt, addTotal);
+                        provimentoNot.addEventListener(evt, addTotal);
+                    });
+                }
 
-        function searchServidor() {
+                // Controle do campo de arquivo baseado na situação do provimento
+                function toggleArquivoField() {
+                    if (!situacaoSelect || !arquivoRow || !arquivoInput) {
+                        console.log('Elementos não encontrados:', {
+                            situacaoSelect: !!situacaoSelect,
+                            arquivoRow: !!arquivoRow,
+                            arquivoInput: !!arquivoInput
+                        });
+                        return;
+                    }
 
-            let cadastro_servidor = cadastro.value;
+                    const isProvida = situacaoSelect.value === 'provida';
+                    console.log('Toggle arquivo field:', {
+                        value: situacaoSelect.value,
+                        isProvida
+                    });
 
-            if (cadastro_servidor == "") {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Atenção!',
-                    text: 'Matrícula não informada. Tente novamente.',
-                })
+                    arquivoRow.style.display = isProvida ? 'block' : 'none';
+                    arquivoInput.required = isProvida;
+
+                    if (!isProvida) {
+                        arquivoInput.value = ''; // Limpa o arquivo se não for provida
+                        // Reset custom file label
+                        const label = arquivoInput.nextElementSibling;
+                        if (label && label.classList.contains('custom-file-label')) {
+                            label.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Escolher arquivo...';
+                        }
+                    }
+                }
+
+                // Bootstrap 4 Custom File Input - Update label with selected filename
+                if (arquivoInput) {
+                    arquivoInput.addEventListener('change', function() {
+                        const label = this.nextElementSibling;
+                        const fileName = this.files[0] ? this.files[0].name :
+                            '<i class="fas fa-cloud-upload-alt"></i> Escolher arquivo...';
+
+                        if (label && label.classList.contains('custom-file-label')) {
+                            if (this.files[0]) {
+                                // File selected - show file name with icon
+                                const fileSize = (this.files[0].size / 1024 / 1024).toFixed(2);
+                                label.innerHTML =
+                                    `<i class="fas fa-file-${this.files[0].type.includes('pdf') ? 'pdf' : 'image'} text-primary"></i> ${fileName} <small class="text-muted">(${fileSize} MB)</small>`;
+                            } else {
+                                // No file selected - reset label
+                                label.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Escolher arquivo...';
+                            }
+                        }
+                    });
+                }
+
+                if (situacaoSelect) {
+                    // Suporte para select normal
+                    situacaoSelect.addEventListener('change', function(e) {
+                        console.log('Change event triggered:', e.target.value);
+                        toggleArquivoField();
+                    });
+
+                    // Suporte para Select2 (se estiver sendo usado)
+                    if (window.jQuery && $(situacaoSelect).length) {
+                        $(situacaoSelect).on('change', function() {
+                            console.log('Select2 change event triggered:', this.value);
+                            toggleArquivoField();
+                        });
+                    }
+
+                    // Executa na inicialização também
+                    setTimeout(function() {
+                        console.log('Executando toggle inicial...');
+                        toggleArquivoField();
+                    }, 500); // Aumentei o delay para garantir que tudo foi carregado
+                } else {
+                    console.log('Elemento situacao_provimento_detail não encontrado');
+                }
+
+                // Função de teste para verificar se o toggle funciona
+                window.testToggle = function() {
+                    console.log('Teste toggle executado');
+                    if (arquivoRow) {
+                        const isVisible = arquivoRow.style.display !== 'none';
+                        arquivoRow.style.display = isVisible ? 'none' : 'block';
+                        console.log('Campo arquivo agora está:', isVisible ? 'oculto' : 'visível');
+                    } else {
+                        console.log('arquivo_comprobatorio_row não encontrado');
+                    }
+                };
+
+                // Expose searchServidor to global scope so existing onclicks keep working
+                window.searchServidor = function() {
+                    const cadastroInput = document.getElementById('cadastro');
+                    const servidorInput = document.getElementById('servidor');
+                    const vinculoInput = document.getElementById('vinculo');
+                    const regimeInput = document.getElementById('regime');
+
+                    if (!cadastroInput) return;
+                    const cadastro_servidor = String(cadastroInput.value || '').trim();
+                    if (!cadastro_servidor) {
+                        if (window.Swal) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Atenção!',
+                                text: 'Matrícula não informada. Tente novamente.'
+                            });
+                        }
+                        return;
+                    }
+
+                    // Prefer jQuery post if available (project already loads jQuery)
+                    if (window.jQuery && $.post) {
+                        $.post('/consultarServidor/' + cadastro_servidor)
+                            .done(function(response) {
+                                const data = response && response[0];
+                                if (data) {
+                                    servidorInput && (servidorInput.value = data.nome || '');
+                                    vinculoInput && (vinculoInput.value = data.vinculo || '');
+                                    regimeInput && (regimeInput.value = data.regime || '');
+                                    cadastroInput && (cadastroInput.value = data.cadastro || cadastroInput
+                                        .value);
+                                } else if (window.Swal) {
+                                    Swal.fire({
+                                        icon: 'warning',
+                                        title: 'Atenção!',
+                                        text: 'Servidor não encontrado. Tente novamente.'
+                                    });
+                                }
+                            })
+                            .fail(function() {
+                                if (window.Swal) Swal.fire({
+                                    icon: 'error',
+                                    title: 'Erro',
+                                    text: 'Falha na requisição.'
+                                });
+                            });
+                        return;
+                    }
+
+                    // Fallback using fetch (POST) with CSRF token
+                    const tokenMeta = document.querySelector('meta[name="csrf-token"]');
+                    const headers = {
+                        'Content-Type': 'application/json'
+                    };
+                    if (tokenMeta) headers['X-CSRF-TOKEN'] = tokenMeta.getAttribute('content');
+
+                    fetch('/consultarServidor/' + cadastro_servidor, {
+                            method: 'POST',
+                            headers: headers
+                        })
+                        .then(res => res.json())
+                        .then(response => {
+                            const data = response && response[0];
+                            if (data) {
+                                servidorInput && (servidorInput.value = data.nome || '');
+                                vinculoInput && (vinculoInput.value = data.vinculo || '');
+                                regimeInput && (regimeInput.value = data.regime || '');
+                                cadastroInput && (cadastroInput.value = data.cadastro || cadastroInput.value);
+                            } else if (window.Swal) {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Atenção!',
+                                    text: 'Servidor não encontrado. Tente novamente.'
+                                });
+                            }
+                        })
+                        .catch(() => {
+                            if (window.Swal) Swal.fire({
+                                icon: 'error',
+                                title: 'Erro',
+                                text: 'Falha na requisição.'
+                            });
+                        });
+                };
+            });
+        </script>
+
+        <style>
+            /* Estilos customizados para o campo de upload */
+            #arquivo_comprobatorio_row .custom-file-label {
+                border: 2px dashed #dee2e6;
+                border-radius: 8px;
+                transition: all 0.3s ease;
+                cursor: pointer;
+                font-weight: 500;
             }
 
-            $.post('/consultarServidor/' + cadastro_servidor, function(response) {
+            #arquivo_comprobatorio_row .custom-file-label:hover {
+                border-color: #007bff;
+                background-color: #f8f9fa;
+            }
 
-                let data = response[0]
+            #arquivo_comprobatorio_row .custom-file-input:focus~.custom-file-label {
+                border-color: #007bff;
+                box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            }
 
-                if (data) {
+            #arquivo_comprobatorio_row .custom-file-input:valid~.custom-file-label {
+                border-color: #28a745;
+                border-style: solid;
+            }
 
-                    const cadastro = document.getElementById("cadastro")
-                    servidor.value = data.nome
-                    vinculo.value = data.vinculo
-                    regime.value = data.regime
-                    cadastro.value = data.cadastro
+            #arquivo_comprobatorio_row .alert {
+                border-radius: 8px;
+                border: none;
+            }
 
-                } else {
+            #arquivo_comprobatorio_row .alert-success {
+                background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+                border-left: 4px solid #28a745;
+            }
 
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Atenção!',
-                        text: 'Servidor não encontrado. Tente novamente.',
-                    })
-                }
-            })
-        }
-    </Script>
+            #arquivo_comprobatorio_row .alert-danger {
+                background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+                border-left: 4px solid #dc3545;
+            }
+
+            #arquivo_comprobatorio_row .btn-outline-primary {
+                border-radius: 6px;
+                font-size: 0.85rem;
+                padding: 0.375rem 0.75rem;
+                transition: all 0.2s ease;
+            }
+
+            #arquivo_comprobatorio_row .btn-outline-primary:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+            }
+
+            /* Animação para aparecer/sumir */
+            #arquivo_comprobatorio_row {
+                transition: opacity 0.3s ease, max-height 0.3s ease;
+                overflow: hidden;
+            }
+
+            #arquivo_comprobatorio_row[style*="none"] {
+                opacity: 0;
+                max-height: 0;
+            }
+
+            #arquivo_comprobatorio_row[style*="block"] {
+                opacity: 1;
+                max-height: 500px;
+            }
+        </style>
+    @endpush
 @endsection
