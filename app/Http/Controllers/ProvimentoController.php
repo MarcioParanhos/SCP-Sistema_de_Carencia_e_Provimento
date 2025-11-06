@@ -1402,11 +1402,6 @@ class ProvimentoController extends Controller
 
         $query = Provimento::query();
 
-        $query->where(function ($subQuery) {
-            $subQuery->where('metodo', '!=', 'RESERVA')
-                ->orWhereNull('metodo');
-        });
-
         $query->select('servidor', 'cadastro', 'vinculo', 'situacao_provimento', 'num_cop', 'nte', 'municipio', 'unidade_escolar', 'cod_unidade');
 
         $query->where('ano_ref', $anoRef);

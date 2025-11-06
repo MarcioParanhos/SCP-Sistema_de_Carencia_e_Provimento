@@ -4,7 +4,6 @@
 
 @section('content')
 
-
     <div class="card p-2 shadow">
         <div class="bg-primary d-flex flex-row card text-white card_title">
             <h3 class=" title_show_carencias">DETALHES DO SUPRIMENTO DO SERVIDOR</h3>
@@ -144,9 +143,6 @@
                         </tr>
                     @endforeach
                 </tbody>
-
-
-
             </table>
             <div class="collapse @if ($provimento->arquivo_comprobatorio) show @endif  " id="validarDocs">
                 <div class="card card-body">
@@ -404,6 +400,7 @@
             </div>
         </div>
     </div>
+
 @endsection
 @push('scripts')
     <script>

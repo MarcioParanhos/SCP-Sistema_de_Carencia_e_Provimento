@@ -147,15 +147,60 @@ class ServidoreController extends Controller
 
     public function detalhesServidorAnuencia($cadastro)
     {
-
         $anoRef = session()->get('ano_ref');
 
+        // Busca o servidor na tabela servidores
         $servidor = Servidore::where('cadastro', $cadastro)->first();
+        
+        // Busca provimentos do servidor
         $provimentosByServidor = Provimento::where('cadastro', $cadastro)
             ->where('ano_ref', $anoRef)
             ->get();
         $num_cop = NumCop::all();
         $provimento = Provimento::where('cadastro', $cadastro)->first();
+
+        // Se servidor não existir na tabela servidores, criar objeto com dados do provimento
+        if (!$servidor && $provimento) {
+            $servidor = (object) [
+                'nome' => $provimento->servidor ?? 'Nome não informado',
+                'cadastro' => $provimento->cadastro ?? $cadastro,
+                'vinculo' => $provimento->vinculo ?? 'Não informado',
+                'regime' => $provimento->regime ?? '0',
+                'nte' => $provimento->nte ?? 0,
+                'unidade_escolar' => $provimento->unidade_escolar ?? 'Não informado',
+                'cod_unidade' => $provimento->cod_unidade ?? 'Não informado',
+                'disciplina' => $provimento->disciplina ?? 'Não informado',
+                'provimento_matutino' => $provimento->provimento_matutino ?? 0,
+                'provimento_vespertino' => $provimento->provimento_vespertino ?? 0,
+                'provimento_noturno' => $provimento->provimento_noturno ?? 0,
+                'total' => $provimento->total ?? 0,
+                'forma_suprimento' => $provimento->forma_suprimento ?? 'Não informado',
+                'tipo_movimentacao' => $provimento->tipo_movimentacao ?? 'Não informado',
+                'situacao_provimento' => $provimento->situacao_provimento ?? 'Não informado',
+                'data_encaminhamento' => $provimento->data_encaminhamento ?? null,
+            ];
+        } elseif (!$servidor && !$provimento) {
+            // Se nem servidor nem provimento existem, criar objeto vazio para evitar erros
+            $servidor = (object) [
+                'nome' => 'Servidor não encontrado',
+                'cadastro' => $cadastro,
+                'vinculo' => 'Não informado',
+                'regime' => '0',
+                'nte' => 0,
+                'unidade_escolar' => 'Não informado',
+                'cod_unidade' => 'Não informado',
+                'disciplina' => 'Não informado',
+                'provimento_matutino' => 0,
+                'provimento_vespertino' => 0,
+                'provimento_noturno' => 0,
+                'total' => 0,
+                'forma_suprimento' => 'Não informado',
+                'tipo_movimentacao' => 'Não informado',
+                'situacao_provimento' => 'Não informado',
+                'data_encaminhamento' => null,
+            ];
+        }
+
         return view('servidores.detalhes_servidor_anuencia', compact('provimentosByServidor', 'servidor', 'num_cop', 'provimento'));
     }
 

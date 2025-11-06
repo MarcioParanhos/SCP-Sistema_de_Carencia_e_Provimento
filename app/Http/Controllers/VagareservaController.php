@@ -22,7 +22,6 @@ class VagareservaController extends Controller
     public function create(Request $request)
     {
 
-
         $servidor = Servidore::where('cadastro', 'LIKE', '%' . $request->cadastro . '%')->first();
 
         $servidor_id = $servidor->id;
@@ -48,6 +47,8 @@ class VagareservaController extends Controller
 
     public function index(Request $request)
     {
+
+        $anoRef = session()->get('ano_ref');
         // ETAPA 1: INICIA A CONSTRUÇÃO DA QUERY
         $query = VagaReserva::query()->with(['servidor', 'carencia']);
 
