@@ -28,8 +28,9 @@
 
     </div>
     <div class="mb-2 d-flex justify-content-end " style="gap: 3px;">
-        <a id="btn_toggle_filters" class="mb-2 btn bg-primary text-white" title="Filtros Personalizaveis" data-toggle="collapse"
-            href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">
+        <a id="btn_toggle_filters" class="mb-2 btn bg-primary text-white" title="Filtros Personalizaveis"
+            data-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false"
+            aria-controls="collapseExample">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                 class="icon icon-tabler icons-tabler-outline icon-tabler-filter">
@@ -52,7 +53,7 @@
                             <select name="nte_seacrh" id="nte_seacrh" class="form-control form-control-sm select2">
                                 <option value=""></option>
                                 @for ($i = 1; $i <= 27; $i++)
-                                    <option value="{{ $i }}" @if (isset($input['nte_seacrh']) && $input['nte_seacrh'] == $i) @endif>
+                                    <option value="{{ $i }}" @if (isset($input['nte_seacrh']) && $input['nte_seacrh'] == $i)  @endif>
                                         {{ $i }}</option>
                                 @endfor
                             </select>
@@ -78,7 +79,8 @@
                     <div class="col-md-2">
                         <div class="form-group_disciplina">
                             <label for="search_servidor_matricula" class="">MATRÍCULA/CPF</label>
-                            <input name="search_servidor_matricula" id="search_servidor_matricula" type="text" class="form-control form-control-sm">
+                            <input name="search_servidor_matricula" id="search_servidor_matricula" type="text"
+                                class="form-control form-control-sm">
                         </div>
                     </div>
                 </div>
@@ -87,8 +89,8 @@
                         <span class="button__text">BUSCAR</span>
                         <span class="button__icon">
                             <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search"
-                                width="24" height="24" viewBox="0 0 24 24" stroke-width="2"
-                                stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+                                fill="none" stroke-linecap="round" stroke-linejoin="round">
                                 <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                                 <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
                                 <path d="M21 21l-6 -6" />
@@ -126,6 +128,7 @@
                     <th class="text-center" scope="col">VINCULO</th>
                     <th class="text-center" scope="col">SITUAÇÃO</th>
                     <th class="text-center" scope="col">Nº COPE</th>
+                    <th class="text-center" scope="col">ASSUNÇÃO</th>
                     <th class="text-center" scope="col">AÇÃO</th>
                 </tr>
             </thead>
@@ -147,6 +150,22 @@
                             @endif
                         </td>
                         <td class="text-center">{{ $servidor->num_cop }}</td>
+                        <td class="text-center">
+                            @if ($servidor->arquivo_comprobatorio)
+                                <svg class="text-success" xmlns="http://www.w3.org/2000/svg" width="24"
+                                    height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                    class="icon icon-tabler icons-tabler-outline icon-tabler-checklist">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                    <path d="M9.615 20h-2.615a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v8" />
+                                    <path d="M14 19l2 2l4 -4" />
+                                    <path d="M9 8h4" />
+                                    <path d="M9 12h2" />
+                                </svg>
+                            @else
+                                -
+                            @endif
+                        </td>
                         <td class="text-center">
                             <a title="Detalhar" href="/detalhes_servidor/{{ $servidor->cadastro }}"
                                 class=" btn btn-primary"><svg xmlns="http://www.w3.org/2000/svg" width="24"
@@ -170,7 +189,7 @@
 @push('scripts')
     <script>
         // Toggle button color when the collapse opens/closes
-        (function () {
+        (function() {
             const toggleBtn = document.getElementById('btn_toggle_filters');
             const collapseEl = document.getElementById('collapseExample');
 
@@ -190,10 +209,10 @@
             if (window.jQuery && window.jQuery.fn && window.jQuery.fn.collapse) {
                 try {
                     const $ = window.jQuery;
-                    $(collapseEl).on('shown.bs.collapse', function () {
+                    $(collapseEl).on('shown.bs.collapse', function() {
                         setOpenState(true);
                     });
-                    $(collapseEl).on('hidden.bs.collapse', function () {
+                    $(collapseEl).on('hidden.bs.collapse', function() {
                         setOpenState(false);
                     });
                     // initialize based on current state
@@ -204,8 +223,8 @@
             } else {
                 // Fallback: listen to clicks and toggle after a small delay to allow class change
                 if (toggleBtn && collapseEl) {
-                    toggleBtn.addEventListener('click', function () {
-                        setTimeout(function () {
+                    toggleBtn.addEventListener('click', function() {
+                        setTimeout(function() {
                             const isOpen = collapseEl.classList.contains('show');
                             setOpenState(isOpen);
                         }, 200);
@@ -216,8 +235,10 @@
             }
 
             // clear form helper
-            window.clearFilters = function () {
-                const ids = ['nte_seacrh', 'municipio_search', 'search_uee', 'search_servidor_matricula', 'search_situacao_provimento'];
+            window.clearFilters = function() {
+                const ids = ['nte_seacrh', 'municipio_search', 'search_uee', 'search_servidor_matricula',
+                    'search_situacao_provimento'
+                ];
                 ids.forEach(id => {
                     const el = document.getElementById(id);
                     if (!el) return;
@@ -227,7 +248,9 @@
             }
 
             // keep compatibility with existing onclick="clearForm()"
-            window.clearForm = function () { window.clearFilters(); };
+            window.clearForm = function() {
+                window.clearFilters();
+            };
         })();
     </script>
 @endpush

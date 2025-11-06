@@ -23,6 +23,20 @@ use Illuminate\Http\Request;
 
 class ProvimentoController extends Controller
 {
+    /**
+     * Converte string de tamanho de arquivo para KB
+     */
+    private function parseSize($size)
+    {
+        $unit = preg_replace('/[^bkmgtpezy]/i', '', $size);
+        $size = preg_replace('/[^0-9\.]/', '', $size);
+        
+        if ($unit) {
+            return round($size * pow(1024, stripos('bkmgtpezy', $unit[0])) / 1024);
+        } else {
+            return round($size / 1024);
+        }
+    }
 
     public function newProvimento()
     {
@@ -495,33 +509,72 @@ class ProvimentoController extends Controller
         session()->put('ref_rota', '');
         session()->put('ref_rota', 'provimento');
 
-        return view('provimento.detail_provimento', compact('provimento'));
+        // Calcular limite máximo de arquivo
+        $maxFileSize = min(
+            $this->parseSize(ini_get('upload_max_filesize')),
+            $this->parseSize(ini_get('post_max_size')),
+            2048 // 2MB em KB
+        );
+        
+        $maxFileSizeMB = round($maxFileSize / 1024, 1);
+
+        return view('provimento.detail_provimento', compact('provimento', 'maxFileSizeMB'));
     }
 
     public function update(Request $request)
     {
         $anoRef = session()->get('ano_ref');
 
+        // Verificar limitações do servidor antes da validação
+        $maxFileSize = min(
+            $this->parseSize(ini_get('upload_max_filesize')),
+            $this->parseSize(ini_get('post_max_size')),
+            2048 // 2MB em KB
+        );
+
         // Validação para arquivo quando situacao_provimento for 'provida'
         if ($request->situacao_provimento === 'provida') {
             $request->validate([
-                'arquivo_comprobatorio' => 'required|file|mimes:pdf,jpeg,jpg|max:5120', // 5MB max
+                'arquivo_comprobatorio' => "required|file|mimes:pdf,jpeg,jpg|max:{$maxFileSize}",
             ], [
                 'arquivo_comprobatorio.required' => 'O arquivo comprobatório é obrigatório quando a situação for PROVIDA.',
                 'arquivo_comprobatorio.mimes' => 'O arquivo deve ser do tipo PDF, JPEG ou JPG.',
-                'arquivo_comprobatorio.max' => 'O arquivo não pode ser maior que 5MB.',
+                'arquivo_comprobatorio.max' => "O arquivo não pode ser maior que " . ($maxFileSize / 1024) . "MB.",
             ]);
         }
 
         if (($request->profile_cpg_update === 'cpm_tecnico') || ($request->profile_cpg_update === 'cpm_coordenador')) {
             $requestData = $request->all();
 
-            // Handle file upload
+            // Handle file upload with detailed error checking
             if ($request->hasFile('arquivo_comprobatorio') && $request->situacao_provimento === 'provida') {
                 $arquivo = $request->file('arquivo_comprobatorio');
-                $filename = time() . '_' . uniqid() . '.' . $arquivo->getClientOriginalExtension();
-                $path = $arquivo->storeAs('provimentos', $filename, 'public');
-                $requestData['arquivo_comprobatorio'] = $filename;
+                
+                // Verificações adicionais
+                if (!$arquivo->isValid()) {
+                    return redirect()->back()->withErrors(['arquivo_comprobatorio' => 'Arquivo inválido ou corrompido.']);
+                }
+                
+                $fileSize = $arquivo->getSize() / 1024; // em KB
+                if ($fileSize > $maxFileSize) {
+                    return redirect()->back()->withErrors([
+                        'arquivo_comprobatorio' => "Arquivo muito grande ({$fileSize}KB). Máximo permitido: {$maxFileSize}KB."
+                    ]);
+                }
+                
+                // Gerar nome único e organizar por data
+                $year = date('Y');
+                $month = date('m');
+                $filename = $request->id . '_' . time() . '_' . uniqid() . '.' . $arquivo->getClientOriginalExtension();
+                
+                try {
+                    $path = $arquivo->storeAs("provimentos/{$year}/{$month}", $filename, 'public');
+                    $requestData['arquivo_comprobatorio'] = "{$year}/{$month}/{$filename}";
+                } catch (\Exception $e) {
+                    return redirect()->back()->withErrors([
+                        'arquivo_comprobatorio' => 'Erro ao salvar arquivo: ' . $e->getMessage()
+                    ]);
+                }
             }
 
             Provimento::findOrFail($request->id)->update($requestData);
@@ -1402,7 +1455,7 @@ class ProvimentoController extends Controller
 
         $query = Provimento::query();
 
-        $query->select('servidor', 'cadastro', 'vinculo', 'situacao_provimento', 'num_cop', 'nte', 'municipio', 'unidade_escolar', 'cod_unidade');
+        $query->select('servidor', 'cadastro', 'vinculo', 'situacao_provimento', 'num_cop', 'nte', 'municipio', 'unidade_escolar', 'cod_unidade', 'arquivo_comprobatorio');
 
         $query->where('ano_ref', $anoRef);
 
@@ -1575,10 +1628,17 @@ class ProvimentoController extends Controller
 
     public function viewArquivo($filename)
     {
+        // Suporta tanto nomes simples quanto caminhos completos (YYYY/MM/arquivo)
         $path = storage_path('app/public/provimentos/' . $filename);
 
         if (!file_exists($path)) {
             abort(404, 'Arquivo não encontrado');
+        }
+
+        // Verificação de tamanho para evitar problemas de memória
+        $fileSize = filesize($path);
+        if ($fileSize > 10 * 1024 * 1024) { // 10MB
+            abort(413, 'Arquivo muito grande para visualização');
         }
 
         // Verifica se o usuário tem permissão para ver o arquivo
@@ -1590,10 +1650,12 @@ class ProvimentoController extends Controller
         $mimeType = mime_content_type($path);
         $filename = basename($path);
 
-        // Return file response with proper headers
+        // Return file response with proper headers for cache
         return response()->file($path, [
             'Content-Type' => $mimeType,
-            'Content-Disposition' => 'inline; filename="' . $filename . '"'
+            'Content-Disposition' => 'inline; filename="' . $filename . '"',
+            'Cache-Control' => 'public, max-age=31536000', // Cache por 1 ano
+            'Expires' => gmdate('D, d M Y H:i:s \G\M\T', time() + 31536000)
         ]);
     }
 }
