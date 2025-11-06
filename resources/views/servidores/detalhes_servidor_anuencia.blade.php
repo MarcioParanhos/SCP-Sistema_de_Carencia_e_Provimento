@@ -51,39 +51,19 @@
                         </div>
                     </div>
 
-                    <div class="col-auto text-right">
-                        <a class="btn btn-primary mr-2" data-toggle="collapse" href="#validarDocs" role="button"
-                            aria-expanded="false" aria-controls="validarDocs">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round"
-                                class="icon icon-tabler icons-tabler-outline icon-tabler-file-invoice">
-                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                <path d="M14 3v4a1 1 0 0 0 1 1h4" />
-                                <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
-                                <path d="M9 7l1 0" />
-                                <path d="M9 13l6 0" />
-                                <path d="M13 17l2 0" />
-                            </svg>
-                            ASSUNÇÃO
-                        </a>
-                        <a class="btn btn-primary mr-2" data-toggle="collapse" href="#validarAssuncao" role="button"
-                            aria-expanded="false" aria-controls="validarDocs">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round"
-                                class="icon icon-tabler icons-tabler-outline icon-tabler-file-text-shield">
-                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                <path d="M13 3v4a.997 .997 0 0 0 1 1h4" />
-                                <path d="M11 21h-5a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v3.5" />
-                                <path d="M8 9h1" />
-                                <path d="M8 12.994l3 0" />
-                                <path d="M8 16.997l2 0" />
-                                <path
-                                    d="M21 15.994c0 4 -2.5 6 -3.5 6s-3.5 -2 -3.5 -6c1 0 2.5 -.5 3.5 -1.5c1 1 2.5 1.5 3.5 1.5" />
-                            </svg>
-                            ASSOCIAR COPE
-                        </a>
+                    <div class="col-auto">
+                        <div class="btn-group-vertical" role="group">
+                            <a class="btn btn-gradient-primary mb-2 shadow-sm" data-toggle="collapse" href="#validarDocs" role="button"
+                                aria-expanded="false" aria-controls="validarDocs">
+                                <i><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-checklist"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9.615 20h-2.615a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v8" /><path d="M14 19l2 2l4 -4" /><path d="M9 8h4" /><path d="M9 12h2" /></svg></i>
+                                ASSUNÇÃO
+                            </a>
+                            <a class="btn btn-gradient-success shadow-sm" data-toggle="collapse" href="#validarAssuncao" role="button"
+                                aria-expanded="false" aria-controls="validarDocs">
+                                <i><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-file-text-spark"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M12 21h-5a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v3.5" /><path d="M9 9h1" /><path d="M9 13h6" /><path d="M9 17h3" /><path d="M19 22.5a4.75 4.75 0 0 1 3.5 -3.5a4.75 4.75 0 0 1 -3.5 -3.5a4.75 4.75 0 0 1 -3.5 3.5a4.75 4.75 0 0 1 3.5 3.5" /></svg></i>
+                                COP
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -263,7 +243,7 @@
 
                         </div>
                         <div class="row g-3">
-                            <div class="mt-4 col-12 text-end">
+                            <div class="mt-4 col-12 d-flex justify-content-end">
                                 <div id="buttons" class="buttons">
                                     <button id="" class="button" type="submit">
                                         <span class="button__text">Salvar</span>
@@ -377,7 +357,7 @@
                         </div>
 
                         <div class="row g-3">
-                            <div class="mt-4 col-12 text-end">
+                            <div class="mt-4 col-12 d-flex justify-content-end">
                                 <div id="buttons" class="buttons">
                                     <button id="" class="button" type="submit">
                                         <span class="button__text">Atualizar</span>
@@ -610,6 +590,93 @@
     </script>
 
     <style>
+        /* Botões com cores do sistema e animações avançadas */
+        .btn-gradient-primary {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            border: none;
+            color: white;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            min-width: 150px;
+        }
+
+        .btn-gradient-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-gradient-primary:hover::before {
+            left: 100%;
+        }
+
+        .btn-gradient-primary:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(0, 123, 255, 0.4);
+            background: linear-gradient(135deg, #0056b3 0%, #007bff 100%);
+            color: white;
+        }
+
+        .btn-gradient-success {
+            background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+            border: none;
+            color: white;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            min-width: 150px;
+        }
+
+        .btn-gradient-success::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-gradient-success:hover::before {
+            left: 100%;
+        }
+
+        .btn-gradient-success:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+            background: linear-gradient(135deg, #1e7e34 0%, #28a745 100%);
+            color: white;
+        }
+
+        .btn-group-vertical .btn {
+            border-radius: 12px !important;
+            padding: 12px 20px;
+            font-size: 0.9rem;
+        }
+
+        .btn-group-vertical .btn:active {
+            transform: translateY(-1px) scale(0.98);
+        }
+
+        .btn-group-vertical .btn i {
+            transition: transform 0.3s ease;
+        }
+
+        .btn-group-vertical .btn:hover i {
+            transform: scale(1.1) rotate(5deg);
+        }
+
         /* Estilos customizados para o campo de upload */
         #arquivo_comprobatorio_row .custom-file-label {
             border: 2px dashed #dee2e6;
