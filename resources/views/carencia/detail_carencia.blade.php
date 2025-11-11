@@ -165,6 +165,7 @@
             </div>
         </div>
         <div class="shadow card_info">
+
             <form class="mb-3" action="/carencias/update/{{ $carencia->id }}" method="post">
                 @csrf
                 @method ('PUT')
@@ -533,63 +534,84 @@
                         @endif
                     @endif
                 </div>
-
             </form>
-            <h5>COMPONENTES PROVIDOS PARA ESTA VAGA</h5>
-            <div class="p-1 table-responsive">
-                <table class=" table table-sm table-hover table-bordered">
-                    <thead class="bg-primary text-white">
-                        <tr class="text-center">
-                            <th scope="col">SERVIDOR</th>
-                            <th scope="col">MATRICULA</th>
-                            <th scope="col">VINCULO</th>
-                            <th scope="col">DISCPLINA</th>
-                            <th scope="col">MAT</th>
-                            <th scope="col">VESP</th>
-                            <th scope="col">NOT</th>
-                            <th scope="col">TOTAL</th>
-                            <th scope="col">TIPO DE AULA</th>
-                            <th scope="col">FORMA</th>
-                            <th scope="col">TIPO MOVIMENTAÇÃO</th>
-                            <th scope="col">SITUAÇÃO</th>
-                            <th scope="col">ENCAMINHAMENTO</th>
-                            <th scope="col">ASSUNÇÃO</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($detailProvimentos as $detailProvimento)
-                            <tr>
-                                <td class="text-center">{{ $detailProvimento->servidor }}</td>
-                                <td class="text-center">{{ $detailProvimento->cadastro }}</td>
-                                <td class="text-center">{{ $detailProvimento->vinculo }}</td>
-                                <td class="text-center">{{ $detailProvimento->disciplina }}</td>
-                                <td class="text-center">{{ $detailProvimento->provimento_matutino }}</td>
-                                <td class="text-center">{{ $detailProvimento->provimento_vespertino }}</td>
-                                <td class="text-center">{{ $detailProvimento->provimento_noturno }}</td>
-                                <td class="text-center">{{ $detailProvimento->total }}</td>
-                                <td class="text-center">{{ $detailProvimento->tipo_aula }}</td>
-                                <td class="text-center">{{ $detailProvimento->forma_suprimento }}</td>
-                                <td class="text-center">{{ $detailProvimento->tipo_movimentacao }}</td>
-                                @if ($detailProvimento->situacao_provimento === 'tramite')
-                                    <td class="text-center">EM TRÂMITE</td>
-                                @endif
-                                @if ($detailProvimento->situacao_provimento === 'provida')
-                                    <td class="text-center">PROVIDA</td>
-                                @endif
-                                <td class="text-center">
-                                    {{ \Carbon\Carbon::parse($detailProvimento->data_encaminhamento)->format('d/m/Y') }}
-                                </td>
-                                @if (!$detailProvimento->data_assuncao)
-                                    <td class="text-center">PENDENTE</td>
-                                @endif
-                                @if ($detailProvimento->data_assuncao)
-                                    <td class="text-center">
-                                        {{ \Carbon\Carbon::parse($detailProvimento->data_assuncao)->format('d/m/Y') }}</td>
-                                @endif
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+            
+            <div class="card mt-3">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Componentes providos para esta vaga</h5>
+                    <span class="badge badge-light">{{ $detailProvimentos->count() }} registro(s)</span>
+                </div>
+
+                <div class="card-body p-2">
+                    @if ($detailProvimentos->isEmpty())
+                        <div class="alert alert-info mb-0">Nenhum provimento encontrado para esta vaga.</div>
+                    @else
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover table-striped mb-0 text-center">
+                                <thead class="bg-secondary text-white small">
+                                    <tr>
+                                        <th scope="col">SERVIDOR</th>
+                                        <th scope="col" class="text-nowrap">MATRÍCULA</th>
+                                        <th scope="col">VÍNCULO</th>
+                                        <th scope="col">DISCIPLINA</th>
+                                        <th scope="col" class="text-nowrap">MAT</th>
+                                        <th scope="col" class="text-nowrap">VESP</th>
+                                        <th scope="col" class="text-nowrap">NOT</th>
+                                        <th scope="col" class="text-nowrap">TOTAL</th>
+                                        <th scope="col">TIPO AULA</th>
+                                        <th scope="col">FORMA</th>
+                                        <th scope="col">MOVIMENTAÇÃO</th>
+                                        <th scope="col">SITUAÇÃO</th>
+                                        <th scope="col">ENCAMINHAMENTO</th>
+                                        <th scope="col">ASSUNÇÃO</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="small">
+                                    @foreach ($detailProvimentos as $detailProvimento)
+                                        <tr>
+                                            <td class="align-middle text-left text-truncate" style="max-width:200px;">
+                                                {{ $detailProvimento->servidor }}
+                                            </td>
+                                            <td class="align-middle text-nowrap">{{ $detailProvimento->cadastro }}</td>
+                                            <td class="align-middle">{{ $detailProvimento->vinculo }}</td>
+                                            <td class="align-middle">{{ $detailProvimento->disciplina }}</td>
+                                            <td class="align-middle">{{ $detailProvimento->provimento_matutino }}</td>
+                                            <td class="align-middle">{{ $detailProvimento->provimento_vespertino }}</td>
+                                            <td class="align-middle">{{ $detailProvimento->provimento_noturno }}</td>
+                                            <td class="align-middle font-weight-bold">{{ $detailProvimento->total }}</td>
+                                            <td class="align-middle">{{ $detailProvimento->tipo_aula }}</td>
+                                            <td class="align-middle">{{ $detailProvimento->forma_suprimento }}</td>
+                                            <td class="align-middle">{{ $detailProvimento->tipo_movimentacao }}</td>
+                                            <td class="align-middle">
+                                                @if ($detailProvimento->situacao_provimento === 'tramite')
+                                                    <span class="badge badge-warning">Em trâmite</span>
+                                                @elseif ($detailProvimento->situacao_provimento === 'provida')
+                                                    <span class="badge badge-success">Provida</span>
+                                                @else
+                                                    <span class="badge badge-secondary text-uppercase">{{ $detailProvimento->situacao_provimento }}</span>
+                                                @endif
+                                            </td>
+                                            <td class="align-middle text-nowrap">
+                                                @if ($detailProvimento->data_encaminhamento)
+                                                    {{ \Carbon\Carbon::parse($detailProvimento->data_encaminhamento)->format('d/m/Y') }}
+                                                @else
+                                                    &mdash;
+                                                @endif
+                                            </td>
+                                            <td class="align-middle text-nowrap">
+                                                @if ($detailProvimento->data_assuncao)
+                                                    {{ \Carbon\Carbon::parse($detailProvimento->data_assuncao)->format('d/m/Y') }}
+                                                @else
+                                                    <span class="badge badge-danger">Pendente</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </div>
             </div>
         </div>
     </div>

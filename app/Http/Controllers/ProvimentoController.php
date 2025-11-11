@@ -513,7 +513,7 @@ class ProvimentoController extends Controller
         $maxFileSize = min(
             $this->parseSize(ini_get('upload_max_filesize')),
             $this->parseSize(ini_get('post_max_size')),
-            2048 // 2MB em KB
+            5120 // 2MB em KB
         );
         
         $maxFileSizeMB = round($maxFileSize / 1024, 1);
@@ -529,7 +529,7 @@ class ProvimentoController extends Controller
         $maxFileSize = min(
             $this->parseSize(ini_get('upload_max_filesize')),
             $this->parseSize(ini_get('post_max_size')),
-            2048 // 2MB em KB
+            5120 // 2MB em KB
         );
 
         // Validação para arquivo quando situacao_provimento for 'provida'

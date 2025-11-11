@@ -523,86 +523,87 @@
                         </div>
 
                     @endcan
-                    @can('view-cpg-technician-or-administrator')
-                        <div class="col-md-2" id="">
-                            <div class="form-group_disciplina">
-                                <label class="control-label" for="situacao_programacao">situação da
-                                    Programação</label>
-                                <select name="situacao_programacao" id="situacao_programacao" class="form-control select2">
 
-                                    {{-- Opção para limpar/deixar em branco --}}
-                                    <option value=""
-                                        {{ old('situacao_programacao', $provimento->situacao_programacao ?? '') == '' ? 'selected' : '' }}>
-                                        Selecione uma opção...
-                                    </option>
-
-                                    {{-- Opções existentes --}}
-                                    <option value="NO ACOMPANHAMENTO"
-                                        {{ old('situacao_programacao', $provimento->situacao_programacao ?? '') == 'NO ACOMPANHAMENTO' ? 'selected' : '' }}>
-                                        NO ACOMPANHAMENTO
-                                    </option>
-
-                                    <option value="EM SUBSTITUIÇÃO"
-                                        {{ old('situacao_programacao', $provimento->situacao_programacao ?? '') == 'EM SUBSTITUIÇÃO' ? 'selected' : '' }}>
-                                        EM SUBSTITUIÇÃO
-                                    </option>
-
-                                    <option value="SEM INICIO DAS ATIVIDADES"
-                                        {{ old('situacao_programacao', $provimento->situacao_programacao ?? '') == 'SEM INICIO DAS ATIVIDADES' ? 'selected' : '' }}>
-                                        SEM INICIO DAS ATIVIDADES
-                                    </option>
-
-                                    <option value="NAO ASSUMIU"
-                                        {{ old('situacao_programacao', $provimento->situacao_programacao ?? '') == 'NAO ASSUMIU' ? 'selected' : '' }}>
-                                        NÃO ASSUMIU
-                                    </option>
-                                </select>
-                            </div>
-                        </div>
-                        @can('view-blocked-provimento')
-                            <div class="col-md-2 print-none" id="">
+                    @if ($provimento->situacao_provimento === 'provida')
+                        @can('view-cpg-technician-or-administrator')
+                            <div class="col-md-2" id="">
                                 <div class="form-group_disciplina">
-                                    <label class="control-label" for="situacao_provimento">situação</label>
-                                    <select name="situacao" id="situacao" class="form-control select2" required>
-                                        @if ($provimento->situacao === 'DESBLOQUEADO')
-                                            <option value="{{ $provimento->situacao }}">{{ $provimento->situacao }}</option>
-                                            <option value="BLOQUEADO">BLOQUEADO</option>
-                                        @endif
-                                        @if ($provimento->situacao === 'BLOQUEADO')
-                                            <option value="{{ $provimento->situacao }}">{{ $provimento->situacao }}</option>
-                                            <option value="DESBLOQUEADO">DESBLOQUEADO</option>
-                                        @endif
-                                    </select>
-                                </div>
-                            </div>
-                        @endcan
-                        @if (
-                            $provimento->situacao_programacao === 'NAO ASSUMIU' ||
-                                $provimento->situacao_programacao === 'SEM INICIO DAS ATIVIDADES')
-                            <div class="col-md-2 print-none">
-                                <div class="form-group_disciplina">
-                                    <label class="control-label" for="situacao_carencia">CARÊNCIA EXISTE ?</label>
-                                    <select name="situacao_carencia_existente" id="situacao_carencia"
+                                    <label class="control-label" for="situacao_programacao">situação da
+                                        Programação</label>
+                                    <select name="situacao_programacao" id="situacao_programacao"
                                         class="form-control select2">
-                                        <option value=""></option>
-                                        @php
-                                            $selectedCarencia = old(
-                                                'situacao_carencia_existente',
-                                                $provimento->situacao_carencia_existente ?? '',
-                                            );
-                                        @endphp
-                                        <option value="SIM" {{ $selectedCarencia === 'SIM' ? 'selected' : '' }}>SIM
+
+                                        {{-- Opção para limpar/deixar em branco --}}
+                                        <option value=""
+                                            {{ old('situacao_programacao', $provimento->situacao_programacao ?? '') == '' ? 'selected' : '' }}>
+                                            Selecione uma opção...
                                         </option>
-                                        <option value="NÃO" {{ $selectedCarencia === 'NÃO' ? 'selected' : '' }}>NÃO
+
+                                        {{-- Opções existentes --}}
+                                        <option value="NO ACOMPANHAMENTO"
+                                            {{ old('situacao_programacao', $provimento->situacao_programacao ?? '') == 'NO ACOMPANHAMENTO' ? 'selected' : '' }}>
+                                            NO ACOMPANHAMENTO
+                                        </option>
+
+                                        <option value="EM SUBSTITUIÇÃO"
+                                            {{ old('situacao_programacao', $provimento->situacao_programacao ?? '') == 'EM SUBSTITUIÇÃO' ? 'selected' : '' }}>
+                                            EM SUBSTITUIÇÃO
+                                        </option>
+
+                                        <option value="SEM INICIO DAS ATIVIDADES"
+                                            {{ old('situacao_programacao', $provimento->situacao_programacao ?? '') == 'SEM INICIO DAS ATIVIDADES' ? 'selected' : '' }}>
+                                            SEM INICIO DAS ATIVIDADES
+                                        </option>
+
+                                        <option value="NAO ASSUMIU"
+                                            {{ old('situacao_programacao', $provimento->situacao_programacao ?? '') == 'NAO ASSUMIU' ? 'selected' : '' }}>
+                                            NÃO ASSUMIU
                                         </option>
                                     </select>
                                 </div>
                             </div>
-                        @endif
-                    @endcan
-
-
-
+                            @can('view-blocked-provimento')
+                                <div class="col-md-2 print-none" id="">
+                                    <div class="form-group_disciplina">
+                                        <label class="control-label" for="situacao_provimento">situação</label>
+                                        <select name="situacao" id="situacao" class="form-control select2" required>
+                                            @if ($provimento->situacao === 'DESBLOQUEADO')
+                                                <option value="{{ $provimento->situacao }}">{{ $provimento->situacao }}</option>
+                                                <option value="BLOQUEADO">BLOQUEADO</option>
+                                            @endif
+                                            @if ($provimento->situacao === 'BLOQUEADO')
+                                                <option value="{{ $provimento->situacao }}">{{ $provimento->situacao }}</option>
+                                                <option value="DESBLOQUEADO">DESBLOQUEADO</option>
+                                            @endif
+                                        </select>
+                                    </div>
+                                </div>
+                            @endcan
+                            @if (
+                                $provimento->situacao_programacao === 'NAO ASSUMIU' ||
+                                    $provimento->situacao_programacao === 'SEM INICIO DAS ATIVIDADES')
+                                <div class="col-md-2 print-none">
+                                    <div class="form-group_disciplina">
+                                        <label class="control-label" for="situacao_carencia">CARÊNCIA EXISTE ?</label>
+                                        <select name="situacao_carencia_existente" id="situacao_carencia"
+                                            class="form-control select2">
+                                            <option value=""></option>
+                                            @php
+                                                $selectedCarencia = old(
+                                                    'situacao_carencia_existente',
+                                                    $provimento->situacao_carencia_existente ?? '',
+                                                );
+                                            @endphp
+                                            <option value="SIM" {{ $selectedCarencia === 'SIM' ? 'selected' : '' }}>SIM
+                                            </option>
+                                            <option value="NÃO" {{ $selectedCarencia === 'NÃO' ? 'selected' : '' }}>NÃO
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                            @endif
+                        @endcan
+                    @endif
                     <div class="col-md-6 ml-auto" id="arquivo_comprobatorio_row"
                         style="display: {{ $provimento->situacao_provimento === 'provida' ? 'block' : 'none' }}; max-width:420px;">
                         <div class="form-group_disciplina d-flex flex-column align-items-end">
