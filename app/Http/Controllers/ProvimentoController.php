@@ -648,32 +648,53 @@ class ProvimentoController extends Controller
 
     public function destroy(Provimento $provimento)
     {
-        $id_carencia = $provimento->id_carencia;
+        // Usar uma transação garante que todas as operações falhem ou tenham
+        // sucesso juntas, mantendo a integridade dos dados (atomicidade).
+        try {
+            DB::transaction(function () use ($provimento) {
+                
+                $id_carencia = $provimento->id_carencia;
 
-        // Recupera a carência para atualizar seus valores
-        $carencias = Carencia::where('id', $id_carencia)->first();
+                // =======================================================================
+                // CORREÇÃO DA LÓGICA
+                // =======================================================================
+                // A condição agora é: "Se a situação NÃO FOR 'NÃO'".
+                // Isso inclui "SIM", NULO, string vazia, "ACOMPANHAMENTO DE ERROS", etc.
+                if ($provimento->situacao_carencia_existente !== "NÃO") {
+                    
+                    // Verifica se existe uma carência para atualizar, evitando erros.
+                    if ($id_carencia) {
+                        
+                        // ATUALIZAÇÃO ATÔMICA (MELHOR PRÁTICA)
+                        // Usar DB::raw() previne "race conditions". O banco de dados
+                        // faz a soma, eliminando a necessidade de um ->first() anterior.
+                        Carencia::where('id', $id_carencia)
+                            ->update([
+                                'matutino'   => DB::raw("matutino + {$provimento->provimento_matutino}"),
+                                'vespertino' => DB::raw("vespertino + {$provimento->provimento_vespertino}"),
+                                'noturno'    => DB::raw("noturno + {$provimento->provimento_noturno}"),
+                                'total'      => DB::raw("total + {$provimento->total}"),
+                            ]);
+                    }
+                }
 
+                // Apaga os registros de log associados (dentro da transação)
+                Log::where('provimento_id', $provimento->id)->delete();
 
-        if ($provimento->situacao_carencia_existente === "SIM" || is_null($provimento->situacao_carencia_existente)) {
+                // Exclui o provimento (dentro da transação)
+                $provimento->delete();
+            });
 
-            // Atualiza os valores da carência
-            Carencia::where('id', $id_carencia)
-                ->update([
-                    'matutino' => $carencias->matutino + $provimento->provimento_matutino,
-                    'vespertino' => $carencias->vespertino + $provimento->provimento_vespertino,
-                    'noturno' => $carencias->noturno + $provimento->provimento_noturno,
-                    'total' => $carencias->total + $provimento->total,
-                ]);
+            // Se a transação for bem-sucedida
+            return redirect('/buscar/provimento/filter_provimentos')
+                ->with('msg', 'Provimento excluído e carência atualizada com sucesso!');
+
+        } catch (\Exception $e) {
+            // Se qualquer parte da transação falhar
+            Log::error('Falha ao excluir provimento: ' . $e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Ocorreu um erro ao tentar excluir o provimento.');
         }
-
-        // Apaga os registros da tabela logs associados ao provimento antes de excluir o provimento
-        Log::where('provimento_id', $provimento->id)->delete();
-
-        // Exclui o provimento
-        $provimento->delete();
-
-        return redirect('/buscar/provimento/filter_provimentos')
-            ->with('msg', 'Provimento excluído e carência atualizada com sucesso!');
     }
 
     public function gerarAnuencia($cadastro)

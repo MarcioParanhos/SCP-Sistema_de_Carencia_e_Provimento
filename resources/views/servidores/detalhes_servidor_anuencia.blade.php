@@ -309,12 +309,12 @@
 
                                 </div>
 
-                                <small class="form-text text-muted mb-2">Formatos aceitos: PDF, JPG. Máx. 5MB. Use nomes
+                                <small class="form-text text-muted mb-2 ">Formatos aceitos: PDF, JPG. Máx. 5MB. Use nomes
                                     curtos para facilitar downloads.</small>
 
                                 @if ($provimento->arquivo_comprobatorio)
                                     <div class="card border-0 bg-light p-2 small">
-                                        <div class="d-flex align-items-center">
+                                        <div class="d-flex align-items-center ">
                                             <i
                                                 class="fas {{ Str::endsWith(strtolower($provimento->arquivo_comprobatorio), '.pdf') ? 'fa-file-pdf text-danger' : 'fa-file-image text-primary' }} fa-lg mr-2"></i>
                                             <div class="text-truncate" style="max-width:280px;">
