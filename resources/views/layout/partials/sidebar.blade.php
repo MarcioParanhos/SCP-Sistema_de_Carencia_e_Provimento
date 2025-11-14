@@ -1,14 +1,20 @@
 <nav class="print-none  sidebar shadow rounded sidebar-offcanvas print-hidden" id="sidebar">
+    <div class="sidebar-header text-center ">
+        <a href="{{ url('/') }}" class="d-inline-block" title="SCP">
+            <img src="{{ asset('images/SCP.png') }}" alt="SCP" class="sidebar-logo-top" style="height: 130px"/>
+        </a>
+    </div>
     <ul class="nav">
+        <li class="nav-item">
+            <a class="nav-link" href="{{ route('home') }}">
+                <i class="icon-grid menu-icon"></i>
+                <span class="menu-title">Dashboard</span>
+            </a>
+        </li>
         @if (Auth::user()->profile != 'cad_tecnico' &&
                 Auth::user()->profile != 'cgi_tecnico' &&
                 (Auth::user()->name != 'Usuario CPG' && Auth::user()->name != 'Usuario CPM'))
-            <li class="nav-item">
-                <a class="nav-link" href="/">
-                    <i class="icon-grid menu-icon"></i>
-                    <span id="new-venda" class="menu-title">DASHBOARD</span>
-                </a>
-            </li>
+             
 
             <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" href="#ui-basic" aria-expanded="false"
@@ -408,4 +414,5 @@
             </li>
         @endif
     </ul>
+    
 </nav>

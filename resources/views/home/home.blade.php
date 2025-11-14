@@ -8,30 +8,37 @@
     <div class="row">
         <div class="col-md-12 grid-margin">
             <div class="row">
-                <div class="col-12 col-xl-8 mb-4 mb-xl-0">
-                    <h3 class="title-app font-weight-bold">VISÃO GERAL</h3>
+                <div class="d-flex col-12 col-xl-8 mb-4 mb-xl-0">
+                    <div>
+                        <h3 class="title-app font-weight-bold">VISÃO GERAL</h3>
                     <h6 class="user_auth font-weight-normal mb-0"><span
-                            class="text-primary subheader">{{ Auth::user()->name }} | {{ Auth::user()->sector->name }} - {{ Auth::user()->sector->tag }}</span></h6>
+  80                         class="text-primary subheader">{{ Auth::user()->name }} | {{ Auth::user()->sector->name }} - {{ Auth::user()->sector->tag }}</span></h6>
+                    </div>
                 </div>
-                <div class="justify-content-end align-items-center d-flex col-12 col-xl-4">
-                    <label class="mr-3 pt-2 ano-title" for="">Ano de Referência</label>
-                    <select id="ref_year" class="form-control-sm dropdown-toggle">
-                        @if ($anoRef === '2025')
-                            <option selected>{{ $anoRef }}</option>
-                            <option value="2024">2024</option>
-                            <option value="2023">2023</option>
-                        @endif
-                        @if ($anoRef === '2024')
-                            <option value="2025">2025</option>
-                            <option selected>{{ $anoRef }}</option>
-                            <option value="2023">2023</option>
-                        @endif
-                        @if ($anoRef === '2023')
-                            <option value="2025">2025</option>
-                            <option value="2024">2024</option>
-                            <option selected>{{ $anoRef }}</option>
-                        @endif
-                    </select>
+                <div class="d-flex justify-content-end align-items-center col-12 col-xl-4">
+                    <div class="d-flex align-items-center bg-white shadow-sm px-3 py-2 rounded-pill border" style="gap:.5rem;">
+                        <span class="d-inline-flex align-items-center" aria-hidden="true" title="Ano de Referência">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler" width="20" height="20" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" role="img" aria-hidden="true">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                <rect x="4" y="5" width="16" height="16" rx="2" />
+                                <line x1="16" y1="3" x2="16" y2="7" />
+                                <line x1="8" y1="3" x2="8" y2="7" />
+                                <line x1="4" y1="11" x2="20" y2="11" />
+                            </svg>
+                        </span>
+
+                        <label for="ref_year" class="sr-only">Ano de Referência</label>
+
+                        @php
+                            $years = ['2025','2024','2023'];
+                        @endphp
+
+                        <select id="ref_year" class="custom-select custom-select-sm border-0 bg-transparent" style="min-width:100px;">
+                            @foreach ($years as $y)
+                                <option value="{{ $y }}" {{ ($anoRef == $y) ? 'selected' : '' }}>{{ $y }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
             </div>
         </div>

@@ -1,0 +1,83 @@
+/* sidebar-fixed.css
+   Makes the sidebar fixed on wide screens and shifts main content to the right.
+   Adjust --navbar-height and --sidebar-width if your layout uses different sizes.
+*/
+
+:root{
+  --navbar-height: 56px;
+  --sidebar-width: 240px;
+}
+
+@media (min-width: 992px) {
+  #sidebar {
+    position: fixed;
+    top: var(--navbar-height);
+    left: 0;
+    width: var(--sidebar-width);
+    height: calc(100vh - var(--navbar-height));
+    overflow-y: auto;
+    /* put sidebar visually under the navbar (navbar fixed-top default z-index is 1030) */
+    z-index: 1020;
+    padding-top: 0.75rem;
+  }
+
+  /* ensure internal nav scrolls if too tall */
+  #sidebar .nav {
+    max-height: calc(100vh - var(--navbar-height));
+    overflow-y: auto;
+    padding-bottom: 2rem;
+  }
+
+  /* shift the main panel so content is not overlapped */
+  .sidebar-fixed .main-panel {
+    margin-left: var(--sidebar-width);
+    transition: margin-left .2s ease;
+  }
+}
+
+/* Sidebar footer (logo) pinned to bottom of sidebar */
+#sidebar .sidebar-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 0.6rem 0;
+  text-align: center;
+  border-top: 1px solid rgba(0,0,0,0.04);
+  background: transparent;
+}
+
+#sidebar .sidebar-footer img {
+  height: 150px;
+  display: inline-block;
+}
+
+/* Sidebar header (logo at top) */
+#sidebar .sidebar-header {
+  padding: .75rem 0;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+  background: transparent;
+}
+#sidebar .sidebar-logo-top {
+  height: 90px;
+  display: inline-block;
+}
+
+@media (max-width: 991px) {
+  #sidebar .sidebar-logo-top {
+    height: 56px;
+  }
+}
+
+/* Mobile / small screens: keep original (not fixed) behaviour */
+@media (max-width: 991px) {
+  #sidebar {
+    position: relative;
+    width: 100%;
+    height: auto;
+    top: 0;
+  }
+  .sidebar-fixed .main-panel {
+    margin-left: 0;
+  }
+}
