@@ -131,7 +131,7 @@ class AuthServiceProvider extends ServiceProvider
 
             // Verifica as combinações permitidas:
             return ($profileId === 4 && $sectorId === 3) || // Administrador (4) + Administração (3)
-                ($profileId === 2 && $sectorId === 2);   // coordenador (2) + Provimento (2)
+                ($profileId === 1 && $sectorId === 2);   // coordenador (2) + Provimento (2)
         });
         Gate::define('view-sensitive-validation-fields-cpm-coordinator', function (User $user) {
 

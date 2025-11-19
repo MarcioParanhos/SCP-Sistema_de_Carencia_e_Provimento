@@ -562,23 +562,7 @@
                                     </select>
                                 </div>
                             </div>
-                            @can('view-blocked-provimento')
-                                <div class="col-md-2 print-none" id="">
-                                    <div class="form-group_disciplina">
-                                        <label class="control-label" for="situacao_provimento">situação</label>
-                                        <select name="situacao" id="situacao" class="form-control select2" required>
-                                            @if ($provimento->situacao === 'DESBLOQUEADO')
-                                                <option value="{{ $provimento->situacao }}">{{ $provimento->situacao }}</option>
-                                                <option value="BLOQUEADO">BLOQUEADO</option>
-                                            @endif
-                                            @if ($provimento->situacao === 'BLOQUEADO')
-                                                <option value="{{ $provimento->situacao }}">{{ $provimento->situacao }}</option>
-                                                <option value="DESBLOQUEADO">DESBLOQUEADO</option>
-                                            @endif
-                                        </select>
-                                    </div>
-                                </div>
-                            @endcan
+
                             @if (
                                 $provimento->situacao_programacao === 'NAO ASSUMIU' ||
                                     $provimento->situacao_programacao === 'SEM INICIO DAS ATIVIDADES')
@@ -602,6 +586,23 @@
                                     </div>
                                 </div>
                             @endif
+                        @endcan
+                        @can('view-blocked-provimento')
+                            <div class="col-md-2 print-none" id="">
+                                <div class="form-group_disciplina">
+                                    <label class="control-label" for="situacao_provimento">situação</label>
+                                    <select name="situacao" id="situacao" class="form-control select2" required>
+                                        @if ($provimento->situacao === 'DESBLOQUEADO')
+                                            <option value="{{ $provimento->situacao }}">{{ $provimento->situacao }}</option>
+                                            <option value="BLOQUEADO">BLOQUEADO</option>
+                                        @endif
+                                        @if ($provimento->situacao === 'BLOQUEADO')
+                                            <option value="{{ $provimento->situacao }}">{{ $provimento->situacao }}</option>
+                                            <option value="DESBLOQUEADO">DESBLOQUEADO</option>
+                                        @endif
+                                    </select>
+                                </div>
+                            </div>
                         @endcan
                     @endif
                     <div class="col-md-6 ml-auto" id="arquivo_comprobatorio_row"
