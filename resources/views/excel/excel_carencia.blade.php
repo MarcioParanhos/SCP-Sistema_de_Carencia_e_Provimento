@@ -44,11 +44,14 @@ if (empty($colunasSelecionadas)) {
 $html = '';
 $html .= '<table border="1">';
 $html .= '<tr>';
-$html .= '<td bgcolor="#9cc2e5" align="center" colspan="' . count($colunasSelecionadas) . '"><b><font size="4">RELATÓRIO GERAL DE CARÊNCIAS</font></b></td>';
+$extraCol = 1; // coluna adicional para sinalizar reserva
+$html .= '<td bgcolor="#9cc2e5" align="center" colspan="' . (count($colunasSelecionadas) + $extraCol) . '"><b><font size="4">RELATÓRIO GERAL DE CARÊNCIAS</font></b></td>';
 $html .= '</tr>';
 
 // Cabeçalho da tabela baseado nas colunas escolhidas
 $html .= '<tr>';
+// Coluna adicional de Reserva
+$html .= '<td bgcolor="#9cc2e5" align="center"><b>Reserva</b></td>';
 foreach ($colunasSelecionadas as $coluna) {
     if (isset($colunasDisponiveis[$coluna])) {
         $html .= '<td bgcolor="#9cc2e5" align="center"><b>' . $colunasDisponiveis[$coluna] . '</b></td>';
@@ -65,7 +68,8 @@ foreach ($carencias as $carencia) {
     if ($nteAtual !== null && $nteAtual !== $carencia->nte) {
         // Exibe subtotal quando muda o NTE
         $html .= '<tr style="font-weight:bold;">';
-        $html .= '<td colspan="' . (count($colunasSelecionadas) - 4) . '" align="right" style="background-color:#d3d3d3; font-weight:bold;">SUBTOTAL NTE ' . ($nteAtual < 10 ? '0' . $nteAtual : $nteAtual) . ':</td>';
+        // Ajusta colspan considerando a coluna extra de Reserva
+        $html .= '<td colspan="' . (count($colunasSelecionadas) + $extraCol - 4) . '" align="right" style="background-color:#d3d3d3; font-weight:bold;">SUBTOTAL NTE ' . ($nteAtual < 10 ? '0' . $nteAtual : $nteAtual) . ':</td>';
         foreach (['matutino', 'vespertino', 'noturno', 'total'] as $campo) {
             if (in_array($campo, $colunasSelecionadas)) {
                 $html .= '<td align="center" style="background-color:#d3d3d3;">' . $subtotal[$campo] . '</td>';
@@ -88,9 +92,16 @@ foreach ($carencias as $carencia) {
 
     // Adiciona os dados da linha conforme colunas escolhidas
     $html .= '<tr>';
+    // Sinalização de reserva (coluna extra)
+    $hasReserva = !empty($carencia->vagaReserva);
+    if ($hasReserva) {
+        $html .= '<td align="center" bgcolor="#fff2cc"><b>RESERVADA</b></td>';
+    } else {
+        $html .= '<td align="center">-</td>';
+    }
     foreach ($colunasSelecionadas as $coluna) {
         // Verifica se o valor da coluna existe; se não, insere uma célula vazia
-        $valor = isset($carencia->$coluna) ? htmlspecialchars($carencia->$coluna) : ''; 
+        $valor = isset($carencia->$coluna) ? htmlspecialchars($carencia->$coluna) : '';
         $html .= '<td align="center">' . $valor . '</td>';
     }
     $html .= '</tr>';

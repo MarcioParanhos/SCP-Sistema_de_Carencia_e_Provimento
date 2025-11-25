@@ -380,6 +380,7 @@
                                 </svg>
                             </td>
                         @endif
+                        
                         <td class="text-center" scope="row">
                             {{ str_pad($carencia->uee->nte, 2, '0', STR_PAD_LEFT) }}
                         </td>
@@ -527,6 +528,8 @@
             </tr>
         </table>
     </div>
+
+    
 
     <!-- Modal -->
     <div class="modal fade" id="modalInfo" tabindex="-1" role="dialog" aria-labelledby="TitulomodalInfo"
