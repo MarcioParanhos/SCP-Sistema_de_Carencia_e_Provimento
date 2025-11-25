@@ -100,7 +100,7 @@
                     <form id="logout-form" action="/logout" method="POST" class="m-0 w-100">
                         @csrf
                         <button type="button" id="logout-button"
-                            class="dropdown-item d-flex align-items-center w-100 text-left">
+                            class="dropdown-item d-flex align-items-center w-100">
                             <i class="ti-power-off text-primary mr-2"></i>
                             <span>Sair</span>
                         </button>

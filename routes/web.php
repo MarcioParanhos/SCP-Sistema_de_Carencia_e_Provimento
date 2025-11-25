@@ -170,6 +170,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/motivo_de_vagas/destroy/{id}', [CarenciaController::class, 'destroyMotivo']);
     // Logs
     Route::get('/logs', [LogController::class, 'index'])->name("logs.show");
+    // DataTables server-side endpoint for logs
+    Route::get('/logs/data', [LogController::class, 'data'])->name('logs.data');
     //Manutenção
     Route::get('/manutencoes', [ManutencaoController::class, 'index'])->name("manutencao.show");
     Route::get('/manutencoes/create', [ManutencaoController::class, 'create'])->name("manutencao.create");
