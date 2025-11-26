@@ -526,40 +526,50 @@
 
                     @if ($provimento->situacao_provimento === 'provida')
                         @can('view-cpg-technician-or-administrator')
-                            <div class="col-md-2" id="">
+                            <div class="col-md-3" id="">
                                 <div class="form-group_disciplina">
                                     <label class="control-label" for="situacao_programacao">situação da
                                         Programação</label>
-                                    <select name="situacao_programacao" id="situacao_programacao"
-                                        class="form-control select2">
+                                    <div class="input-group">
+                                        <select name="situacao_programacao" id="situacao_programacao"
+                                            class="form-control select2" data-placeholder="Selecione uma opção">
+                                            {{-- Opção para limpar/deixar em branco --}}
+                                            <option value=""
+                                                {{ old('situacao_programacao', $provimento->situacao_programacao ?? '') == '' ? 'selected' : '' }}>
+                                                -- Deixar em branco --
+                                            </option>
 
-                                        {{-- Opção para limpar/deixar em branco --}}
-                                        <option value=""
-                                            {{ old('situacao_programacao', $provimento->situacao_programacao ?? '') == '' ? 'selected' : '' }}>
-                                            Selecione uma opção...
-                                        </option>
+                                            {{-- Opções existentes --}}
+                                            <option value="NO ACOMPANHAMENTO"
+                                                {{ old('situacao_programacao', $provimento->situacao_programacao ?? '') == 'NO ACOMPANHAMENTO' ? 'selected' : '' }}>
+                                                NO ACOMPANHAMENTO
+                                            </option>
 
-                                        {{-- Opções existentes --}}
-                                        <option value="NO ACOMPANHAMENTO"
-                                            {{ old('situacao_programacao', $provimento->situacao_programacao ?? '') == 'NO ACOMPANHAMENTO' ? 'selected' : '' }}>
-                                            NO ACOMPANHAMENTO
-                                        </option>
+                                            <option value="EM SUBSTITUIÇÃO"
+                                                {{ old('situacao_programacao', $provimento->situacao_programacao ?? '') == 'EM SUBSTITUIÇÃO' ? 'selected' : '' }}>
+                                                EM SUBSTITUIÇÃO
+                                            </option>
 
-                                        <option value="EM SUBSTITUIÇÃO"
-                                            {{ old('situacao_programacao', $provimento->situacao_programacao ?? '') == 'EM SUBSTITUIÇÃO' ? 'selected' : '' }}>
-                                            EM SUBSTITUIÇÃO
-                                        </option>
+                                            <option value="SEM INICIO DAS ATIVIDADES"
+                                                {{ old('situacao_programacao', $provimento->situacao_programacao ?? '') == 'SEM INICIO DAS ATIVIDADES' ? 'selected' : '' }}>
+                                                SEM INICIO DAS ATIVIDADES
+                                            </option>
 
-                                        <option value="SEM INICIO DAS ATIVIDADES"
-                                            {{ old('situacao_programacao', $provimento->situacao_programacao ?? '') == 'SEM INICIO DAS ATIVIDADES' ? 'selected' : '' }}>
-                                            SEM INICIO DAS ATIVIDADES
-                                        </option>
+                                            <option value="NAO ASSUMIU"
+                                                {{ old('situacao_programacao', $provimento->situacao_programacao ?? '') == 'NAO ASSUMIU' ? 'selected' : '' }}>
+                                                NÃO ASSUMIU
+                                            </option>
+                                        </select>
 
-                                        <option value="NAO ASSUMIU"
-                                            {{ old('situacao_programacao', $provimento->situacao_programacao ?? '') == 'NAO ASSUMIU' ? 'selected' : '' }}>
-                                            NÃO ASSUMIU
-                                        </option>
-                                    </select>
+                                        <div class="input-group-append">
+                                            <!-- Botão estilizado para parecer continuação do input -->
+                                            <button type="button" class="btn btn-outline-secondary" title="Limpar seleção"
+                                                style="border-top-left-radius:0;border-bottom-left-radius:0;border-left:0;"
+                                                onclick="(function(){const el=document.getElementById('situacao_programacao'); if(!el) return; el.value=''; if(window.jQuery && $(el).length) { $(el).val('').trigger('change'); } else { el.dispatchEvent(new Event('change')); } })()">
+                                                Limpar
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
