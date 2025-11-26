@@ -241,6 +241,8 @@
                         class="needs-validation" novalidate>
                         @csrf
                         <input type="hidden" name="servidor_cadastro" value="{{ $servidor->cadastro }}">
+                        <input type="hidden" name="provimento_id" value="{{ $provimento->id ?? '' }}">
+                        <input type="hidden" name="cod_unidade" value="{{ $provimento->cod_unidade ?? '' }}">
 
                         <div class="form-row align-items-end">
                             <div class="col-12 col-sm-6 col-md-3 mb-2">
@@ -309,12 +311,12 @@
 
                                 </div>
 
-                                <small class="form-text text-muted mb-2 ">Formatos aceitos: PDF, JPG. Máx. 5MB. Use nomes
+                                <small class="form-text text-muted mb-2">Formatos aceitos: PDF, JPG. Máx. 5MB. Use nomes
                                     curtos para facilitar downloads.</small>
 
                                 @if ($provimento->arquivo_comprobatorio)
                                     <div class="card border-0 bg-light p-2 small">
-                                        <div class="d-flex align-items-center ">
+                                        <div class="d-flex align-items-center">
                                             <i
                                                 class="fas {{ Str::endsWith(strtolower($provimento->arquivo_comprobatorio), '.pdf') ? 'fa-file-pdf text-danger' : 'fa-file-image text-primary' }} fa-lg mr-2"></i>
                                             <div class="text-truncate" style="max-width:280px;">

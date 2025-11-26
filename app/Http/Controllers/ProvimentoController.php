@@ -648,53 +648,32 @@ class ProvimentoController extends Controller
 
     public function destroy(Provimento $provimento)
     {
-        // Usar uma transação garante que todas as operações falhem ou tenham
-        // sucesso juntas, mantendo a integridade dos dados (atomicidade).
-        try {
-            DB::transaction(function () use ($provimento) {
-                
-                $id_carencia = $provimento->id_carencia;
+        $id_carencia = $provimento->id_carencia;
 
-                // =======================================================================
-                // CORREÇÃO DA LÓGICA
-                // =======================================================================
-                // A condição agora é: "Se a situação NÃO FOR 'NÃO'".
-                // Isso inclui "SIM", NULO, string vazia, "ACOMPANHAMENTO DE ERROS", etc.
-                if ($provimento->situacao_carencia_existente !== "NÃO") {
-                    
-                    // Verifica se existe uma carência para atualizar, evitando erros.
-                    if ($id_carencia) {
-                        
-                        // ATUALIZAÇÃO ATÔMICA (MELHOR PRÁTICA)
-                        // Usar DB::raw() previne "race conditions". O banco de dados
-                        // faz a soma, eliminando a necessidade de um ->first() anterior.
-                        Carencia::where('id', $id_carencia)
-                            ->update([
-                                'matutino'   => DB::raw("matutino + {$provimento->provimento_matutino}"),
-                                'vespertino' => DB::raw("vespertino + {$provimento->provimento_vespertino}"),
-                                'noturno'    => DB::raw("noturno + {$provimento->provimento_noturno}"),
-                                'total'      => DB::raw("total + {$provimento->total}"),
-                            ]);
-                    }
-                }
+        // Recupera a carência para atualizar seus valores
+        $carencias = Carencia::where('id', $id_carencia)->first();
 
-                // Apaga os registros de log associados (dentro da transação)
-                Log::where('provimento_id', $provimento->id)->delete();
 
-                // Exclui o provimento (dentro da transação)
-                $provimento->delete();
-            });
+        if ($provimento->situacao_carencia_existente === "SIM" || is_null($provimento->situacao_carencia_existente)) {
 
-            // Se a transação for bem-sucedida
-            return redirect('/buscar/provimento/filter_provimentos')
-                ->with('msg', 'Provimento excluído e carência atualizada com sucesso!');
-
-        } catch (\Exception $e) {
-            // Se qualquer parte da transação falhar
-            Log::error('Falha ao excluir provimento: ' . $e->getMessage());
-            return redirect()->back()
-                ->with('error', 'Ocorreu um erro ao tentar excluir o provimento.');
+            // Atualiza os valores da carência
+            Carencia::where('id', $id_carencia)
+                ->update([
+                    'matutino' => $carencias->matutino + $provimento->provimento_matutino,
+                    'vespertino' => $carencias->vespertino + $provimento->provimento_vespertino,
+                    'noturno' => $carencias->noturno + $provimento->provimento_noturno,
+                    'total' => $carencias->total + $provimento->total,
+                ]);
         }
+
+        // Apaga os registros da tabela logs associados ao provimento antes de excluir o provimento
+        Log::where('provimento_id', $provimento->id)->delete();
+
+        // Exclui o provimento
+        $provimento->delete();
+
+        return redirect('/buscar/provimento/filter_provimentos')
+            ->with('msg', 'Provimento excluído e carência atualizada com sucesso!');
     }
 
     public function gerarAnuencia($cadastro)
@@ -1476,9 +1455,22 @@ class ProvimentoController extends Controller
 
         $query = Provimento::query();
 
-        $query->select('servidor', 'cadastro', 'vinculo', 'situacao_provimento', 'num_cop', 'nte', 'municipio', 'unidade_escolar', 'cod_unidade', 'arquivo_comprobatorio');
+        $query->select(
+            DB::raw('MIN(id) as provimento_id'),
+            'servidor',
+            'cadastro',
+            'vinculo',
+            'situacao_provimento',
+            'num_cop',
+            'nte',
+            'municipio',
+            'unidade_escolar',
+            'cod_unidade',
+            'arquivo_comprobatorio'
+        );
 
-        $query->where('ano_ref', $anoRef);
+        $query->where('ano_ref', $anoRef)
+            ->groupBy('servidor', 'cadastro', 'vinculo', 'situacao_provimento', 'num_cop', 'nte', 'municipio', 'unidade_escolar', 'cod_unidade', 'arquivo_comprobatorio');
 
         // filtros simples via query string (GET)
         if ($request->filled('nte_seacrh')) {
@@ -1573,6 +1565,27 @@ class ProvimentoController extends Controller
         $situacao = $request->situacao_provimento;
         $servidorCadastro = $request->servidor_cadastro;
         $updatedCount = 0;
+        // Decide quais provimentos atualizar: por padrão todos do cadastro,
+        // mas se `cod_unidade` ou `provimento_id` vier no request, limitamos a atualização.
+        $provimentosQuery = Provimento::where('cadastro', $servidorCadastro);
+
+        // If a provimento_id was provided, try to limit by its unidade (cod_unidade or unidade_escolar)
+        if ($request->filled('provimento_id')) {
+            $selected = Provimento::find($request->provimento_id);
+            if ($selected) {
+                if (!empty($selected->cod_unidade)) {
+                    $provimentosQuery->where('cod_unidade', $selected->cod_unidade);
+                } elseif (!empty($selected->unidade_escolar)) {
+                    $ue = trim(mb_strtolower($selected->unidade_escolar));
+                    $provimentosQuery->whereRaw('LOWER(TRIM(unidade_escolar)) = ?', [$ue]);
+                }
+            }
+        } elseif ($request->filled('cod_unidade')) {
+            $provimentosQuery->where('cod_unidade', $request->cod_unidade);
+        } elseif ($request->filled('unidade_escolar')) {
+            $ue = trim(mb_strtolower($request->unidade_escolar));
+            $provimentosQuery->whereRaw('LOWER(TRIM(unidade_escolar)) = ?', [$ue]);
+        }
 
         // Trata cenário PROVIDA: exige arquivo e salva data_assuncao.
         if ($situacao === 'provida') {
@@ -1592,7 +1605,7 @@ class ProvimentoController extends Controller
 
             $dataAssuncao = $request->data_assuncao;
 
-            $provimentos = Provimento::where('cadastro', $servidorCadastro)->get();
+            $provimentos = $provimentosQuery->get();
 
             foreach ($provimentos as $provimento) {
                 // Remove arquivo antigo se existir
@@ -1609,7 +1622,15 @@ class ProvimentoController extends Controller
                 }
             }
 
-            return redirect("/detalhes_servidor/{$servidorCadastro}");
+            // Redirect back to the detalhes view, preserving the provimento_id filter when possible
+            $redirectUrl = "/detalhes_servidor/{$servidorCadastro}";
+            if ($request->filled('provimento_id')) {
+                $redirectUrl .= '?provimento_id=' . $request->provimento_id;
+            } elseif ($request->filled('cod_unidade')) {
+                $rep = Provimento::where('cadastro', $servidorCadastro)->where('cod_unidade', $request->cod_unidade)->first();
+                if ($rep) $redirectUrl .= '?provimento_id=' . $rep->id;
+            }
+            return redirect($redirectUrl);
         }
 
         // Trata cenário TRAMITE: grava situacao_provimento = 'tramite', seta data_encaminhamento e limpa data_assuncao e arquivo.
@@ -1622,7 +1643,7 @@ class ProvimentoController extends Controller
 
             $dataEncaminhamento = $request->data_encaminhamento;
 
-            $provimentos = Provimento::where('cadastro', $servidorCadastro)->get();
+            $provimentos = $provimentosQuery->get();
 
             foreach ($provimentos as $provimento) {
                 // Remove arquivo antigo se existir
@@ -1640,7 +1661,15 @@ class ProvimentoController extends Controller
                 }
             }
 
-            return redirect("/detalhes_servidor/{$servidorCadastro}");
+            // Redirect back to the detalhes view, preserving the provimento_id filter when possible
+            $redirectUrl = "/detalhes_servidor/{$servidorCadastro}";
+            if ($request->filled('provimento_id')) {
+                $redirectUrl .= '?provimento_id=' . $request->provimento_id;
+            } elseif ($request->filled('cod_unidade')) {
+                $rep = Provimento::where('cadastro', $servidorCadastro)->where('cod_unidade', $request->cod_unidade)->first();
+                if ($rep) $redirectUrl .= '?provimento_id=' . $rep->id;
+            }
+            return redirect($redirectUrl);
         }
 
         // Se não for PROVIDA nem TRAMITE, não faz nada

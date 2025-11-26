@@ -145,19 +145,38 @@ class ServidoreController extends Controller
         return redirect('/servidores')->with('msg', 'Registro excluído com sucesso!');
     }
 
-    public function detalhesServidorAnuencia($cadastro)
+    public function detalhesServidorAnuencia(Request $request, $cadastro)
     {
         $anoRef = session()->get('ano_ref');
 
         // Busca o servidor na tabela servidores
         $servidor = Servidore::where('cadastro', $cadastro)->first();
-        
-        // Busca provimentos do servidor
-        $provimentosByServidor = Provimento::where('cadastro', $cadastro)
-            ->where('ano_ref', $anoRef)
-            ->get();
-        $num_cop = NumCop::all();
+
+        $provimentoQuery = Provimento::where('cadastro', $cadastro)
+            ->where('ano_ref', $anoRef);
+
         $provimento = Provimento::where('cadastro', $cadastro)->first();
+
+        $provimentoId = $request->query('provimento_id');
+
+        if ($provimentoId) {
+            $selectedProv = Provimento::find($provimentoId);
+            if ($selectedProv) {
+                // Preferir filtragem por cod_unidade (mais consistente). Caso não exista, usar unidade_escolar normalizada.
+                if (!empty($selectedProv->cod_unidade)) {
+                    $provimentoQuery->where('cod_unidade', $selectedProv->cod_unidade);
+                } else if (!empty($selectedProv->unidade_escolar)) {
+                    $ue = trim(mb_strtolower($selectedProv->unidade_escolar));
+                    $provimentoQuery->whereRaw('LOWER(TRIM(unidade_escolar)) = ?', [$ue]);
+                }
+                // Use the selected provimento as the representative provimento for the view/form
+                $provimento = $selectedProv;
+            }
+        }
+
+        $provimentosByServidor = $provimentoQuery->get();
+
+        $num_cop = NumCop::all();
 
         // Se servidor não existir na tabela servidores, criar objeto com dados do provimento
         if (!$servidor && $provimento) {
