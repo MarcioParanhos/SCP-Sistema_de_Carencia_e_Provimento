@@ -232,7 +232,7 @@
                     </div>
                 </div>
                 <hr>
-                <form class="forms-sample" id="InsertForm" action="/addNewProvimento" method="post">
+                <form class="forms-sample" id="InsertForm" action="/addNewProvimento" method="post" enctype="multipart/form-data">
                     @csrf
                     <input name="nte" value="{{ $uee->nte }}" type="text" hidden>
                     <input name="municipio" value="{{ $uee->municipio }}" type="text" hidden>
@@ -430,7 +430,140 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="form-row">
+                            <div id="arquivo_comprobatorio_row" class="col-12 col-md-6 mb-3">
+                                <label class="small font-weight-bold d-block mb-2">Termo de Assunção <span
+                                        class="text-danger">*</span></label>
 
+                                <div class="input-group input-group-sm mb-2">
+                                    <div class="custom-file">
+                                        <input type="file" id="arquivo_comprobatorio" name="arquivo_comprobatorio" class="custom-file-input"
+                                            accept=".pdf,.jpg,.jpeg">
+                                        <label class="custom-file-label" for="arquivo_comprobatorio">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
+                                                class="icon icon-tabler icon-tabler-upload mr-1"
+                                                style="vertical-align:middle;width:14px;height:14px;margin-right:6px;">
+                                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" />
+                                                <path d="M7 9l5 -5l5 5" />
+                                                <path d="M12 4l0 12" />
+                                            </svg> Escolher arquivo...</label>
+                                    </div>
+
+                                </div>
+
+                                <small class="form-text text-muted mb-2">Formatos aceitos: PDF, JPG. Máx. 5MB. Use nomes
+                                    curtos para facilitar downloads.</small>
+
+
+
+                                @error('arquivo_comprobatorio')
+                                    <div class="invalid-feedback d-block mt-2 small">
+                                        <i class="fas fa-exclamation-triangle"></i> {{ $message }}
+                                    </div>
+                                @enderror
+
+
+                            </div>
+                        </div>
+                        <script>
+                            (function() {
+                                const situacao = document.getElementById('situacao_provimento_detail');
+                                const arquivo = document.getElementById('arquivo_comprobatorio');
+                                const arquivoRow = document.getElementById('arquivo_comprobatorio_row');
+                                const dataEncCol = document.getElementById('data_encaminhamento_col');
+                                const dataAssCol = document.getElementById('data_assuncao_col');
+                                const dataEnc = document.getElementById('data_encaminhamento');
+                                const dataAss = document.getElementById('data_assuncao');
+
+                                function fmtBytes(bytes) {
+                                    if (!bytes) return '0 B';
+                                    const units = ['B', 'KB', 'MB', 'GB'];
+                                    let i = 0;
+                                    while (bytes >= 1024 && i < units.length - 1) {
+                                        bytes /= 1024;
+                                        i++;
+                                    }
+                                    return `${bytes.toFixed(2)} ${units[i]}`;
+                                }
+
+                                function updateFields() {
+                                    const isProvida = situacao && situacao.value === 'provida';
+
+                                    if (arquivoRow) arquivoRow.style.display = isProvida ? 'block' : 'none';
+                                    if (dataAssCol) dataAssCol.style.display = isProvida ? 'block' : 'none';
+                                    if (dataEncCol) dataEncCol.style.display = isProvida ? 'none' : 'block';
+
+                                    if (arquivo) {
+                                        if (isProvida) {
+                                            arquivo.removeAttribute('disabled');
+                                            arquivo.setAttribute('name', 'arquivo_comprobatorio');
+                                            arquivo.required = true;
+                                        } else {
+                                            arquivo.value = '';
+                                            arquivo.required = false;
+                                            arquivo.removeAttribute('name');
+                                            arquivo.setAttribute('disabled', 'disabled');
+                                            const lbl = arquivo.nextElementSibling;
+                                            if (lbl && lbl.classList.contains('custom-file-label')) {
+                                                lbl.innerHTML = '<i class="fas fa-cloud-upload-alt mr-1"></i> Escolher arquivo...';
+                                            }
+                                        }
+                                    }
+
+                                    if (dataEnc && dataAss) {
+                                        if (isProvida) {
+                                            dataEnc.removeAttribute('name');
+                                            dataEnc.required = false;
+
+                                            dataAss.setAttribute('name', 'data_assuncao');
+                                            dataAss.required = true;
+                                        } else {
+                                            dataAss.removeAttribute('name');
+                                            dataAss.required = false;
+
+                                            dataEnc.setAttribute('name', 'data_encaminhamento');
+                                            dataEnc.required = true;
+                                        }
+                                    }
+                                }
+
+                                // file input label update
+                                if (arquivo) {
+                                    arquivo.addEventListener('change', function() {
+                                        const label = this.nextElementSibling;
+                                        if (!label) return;
+                                        if (this.files && this.files[0]) {
+                                            const f = this.files[0];
+                                            const size = fmtBytes(f.size);
+                                            const icon = f.type && f.type.includes('pdf') ? 'fa-file-pdf text-danger' :
+                                                'fa-file-image text-primary';
+                                            label.innerHTML =
+                                                `<i class="fas ${icon} mr-1"></i> ${f.name} <small class="text-muted ml-2">(${size})</small>`;
+                                        } else {
+                                            label.innerHTML = '<i class="fas fa-cloud-upload-alt mr-1"></i> Escolher arquivo...';
+                                        }
+                                    }, {
+                                        passive: true
+                                    });
+                                }
+
+                                if (situacao) {
+                                    situacao.addEventListener('change', updateFields);
+                                    // init after short delay to allow other scripts to run
+                                    setTimeout(updateFields, 50);
+                                }
+
+                                // enable bootstrap tooltips if available
+                                if (window.jQuery && typeof $(function() {}) === 'function') {
+                                    try {
+                                        $('[data-toggle="tooltip"]').tooltip();
+                                    } catch (e) {}
+                                }
+                            })();
+                        </script>
                         <div class="form-row">
                             <div id="data_assuncao_row" class="col-md-12">
                                 <div class="form-group_disciplina">

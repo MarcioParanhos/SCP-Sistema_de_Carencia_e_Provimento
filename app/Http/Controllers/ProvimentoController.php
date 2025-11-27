@@ -103,11 +103,34 @@ class ProvimentoController extends Controller
             return redirect()->to(url()->previous())->with('msg', 'carência inexistente');
         }
 
+        // Validação de arquivo/data quando marcar como PROVIDA
+        if ($request->input('situacao_provimento') === 'provida') {
+            $request->validate([
+                'arquivo_comprobatorio' => 'required|file|mimes:pdf,jpeg,jpg|max:5120', // 5MB
+                'data_assuncao' => 'required|date',
+            ], [
+                'arquivo_comprobatorio.required' => 'O termo de assunção é obrigatório quando a situação for PROVIDA.',
+                'arquivo_comprobatorio.mimes' => 'O arquivo deve ser do tipo PDF, JPEG ou JPG.',
+                'arquivo_comprobatorio.max' => 'O arquivo não pode ser maior que 5MB.',
+                'data_assuncao.required' => 'A data de assunção é obrigatória quando a situação for PROVIDA.',
+            ]);
+        }
+
         // Usar uma transação é crucial para garantir a integridade dos dados.
         // Se qualquer parte falhar, tudo é revertido.
         try {
             DB::transaction(function () use ($request, $data) {
                 $anoRef = session()->get('ano_ref');
+
+                // Prepare file once (same file will be attached to all created provimentos)
+                $uploadedFile = null;
+                $storedFilename = null;
+                if ($request->hasFile('arquivo_comprobatorio')) {
+                    $uploadedFile = $request->file('arquivo_comprobatorio');
+                    $storedFilename = time() . '_' . uniqid() . '.' . $uploadedFile->getClientOriginalExtension();
+                    // store file now (will overwrite if multiple provimentos created)
+                    $uploadedFile->storeAs('provimentos', $storedFilename, 'public');
+                }
 
                 foreach ($data as $carenciaId) {
                     $matutino = $request->provimento_matutino[$carenciaId] ?? 0;
@@ -163,6 +186,15 @@ class ProvimentoController extends Controller
                         'provimento_id' => $provimento->id,
                         'ano_ref' => $anoRef,
                     ]);
+
+                    // Se houve upload e a situação foi marcada como PROVIDA, atualiza o registro com o arquivo e data de assunção
+                    if ($storedFilename && ($request->input('situacao_provimento') === 'provida')) {
+                        $provimento->arquivo_comprobatorio = $storedFilename;
+                        $provimento->situacao_provimento = 'provida';
+                        // data_assuncao já pode ter sido informada no request
+                        $provimento->data_assuncao = $request->input('data_assuncao');
+                        $provimento->save();
+                    }
 
                     // OTIMIZAÇÃO: Atualiza a carência com uma única query atômica.
                     $carencia->update([
