@@ -205,6 +205,7 @@
                                                     <label for="matricula_cpf" class="">MATRÍCULA/CPF</label>
                                                     <input value="{{ $cpf_servidor }}" name="matricula_cpf"
                                                         id="matricula_cpf" type="text"
+                                                        inputmode="numeric" pattern="\d*"
                                                         class="form-control form-control-sm">
                                                 </div>
                                             </div>
@@ -385,4 +386,29 @@
 @push('scripts')
     <script src="{{ asset('js/pages/reserva/reserva.js') }}" defer></script>
     <script src="{{ asset('js/alerts.js') }}" defer></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var el = document.getElementById('matricula_cpf');
+            if (!el) return;
+
+            // Remove qualquer caractere que não seja dígito enquanto o usuário digita
+            el.addEventListener('input', function() {
+                var cleaned = this.value.replace(/[^0-9]/g, '');
+                if (this.value !== cleaned) this.value = cleaned;
+            });
+
+            // Ao colar, filtra o texto colado mantendo apenas dígitos
+            el.addEventListener('paste', function(e) {
+                e.preventDefault();
+                var text = (e.clipboardData || window.clipboardData).getData('text');
+                var cleaned = text.replace(/[^0-9]/g, '');
+                var start = this.selectionStart;
+                var end = this.selectionEnd;
+                var newVal = this.value.slice(0, start) + cleaned + this.value.slice(end);
+                this.value = newVal.replace(/[^0-9]/g, '');
+                var caret = start + cleaned.length;
+                this.setSelectionRange(caret, caret);
+            });
+        });
+    </script>
 @endpush
