@@ -375,8 +375,8 @@
                         <td>{{ $provimento->municipio }}</td>
                         <td>{{ $provimento->unidade_escolar }}</td>
                         <td class="text-center">{{ $provimento->cod_unidade }}</td>
-                        <td>{{ $provimento->servidor }}</td>
-                        <td class="text-center">{{ $provimento->cadastro }}</td>
+                        <td>{{ optional($provimento->servidore)->nome ?? $provimento->servidor }}</td>
+                        <td class="text-center">{{ optional($provimento->servidore)->cadastro ?? $provimento->cadastro }}</td>
                         @if ($provimento->tipo_carencia_provida === 'Real')
                             <td class="text-center"><span class="tipo_carencia">R</span></td>
                         @endif

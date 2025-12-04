@@ -19,4 +19,9 @@ class Servidore extends Model
 {
     return $this->hasMany(VagaReserva::class);
 }
+
+    public function provimentos()
+    {
+        return $this->hasMany(Provimento::class, 'servidor_id');
+    }
 }

@@ -12,6 +12,41 @@
     $ano_atual = $data_atual->year;
     ?>
 
+    @php
+        // Preferência pelo relacionamento `servidore`, com fallback para os campos legados
+        $nomeServidor = '';
+        $cadastroServidor = '';
+        $vinculoServidor = '';
+        $regimeServidor = '';
+
+        if (isset($provimento)) {
+            if (isset($provimento->servidore) && is_object($provimento->servidore)) {
+                $nomeServidor = $provimento->servidore->nome ?? ($provimento->servidor ?? '');
+                $cadastroServidor = $provimento->servidore->cadastro ?? ($provimento->cadastro ?? '');
+                $vinculoServidor = $provimento->servidore->vinculo ?? ($provimento->vinculo ?? '');
+                $regimeServidor = $provimento->servidore->regime ?? ($provimento->regime ?? '');
+            } elseif (!empty($provimento->servidor_id)) {
+                $related = \App\Models\Servidore::find($provimento->servidor_id);
+                if ($related) {
+                    $nomeServidor = $related->nome;
+                    $cadastroServidor = $related->cadastro;
+                    $vinculoServidor = $related->vinculo ?? ($provimento->vinculo ?? '');
+                    $regimeServidor = $related->regime ?? ($provimento->regime ?? '');
+                } else {
+                    $nomeServidor = $provimento->servidor ?? '';
+                    $cadastroServidor = $provimento->cadastro ?? '';
+                    $vinculoServidor = $provimento->vinculo ?? '';
+                    $regimeServidor = $provimento->regime ?? '';
+                }
+            } else {
+                $nomeServidor = $provimento->servidor ?? '';
+                $cadastroServidor = $provimento->cadastro ?? '';
+                $vinculoServidor = $provimento->vinculo ?? '';
+                $regimeServidor = $provimento->regime ?? '';
+            }
+        }
+    @endphp
+
     @if (session('msg'))
         <div class="col-12">
             <div class="alert text-center text-white bg-success container alert-success alert-dismissible fade show"
@@ -146,35 +181,35 @@
                     </div>
                 </div>
                 <div class="form-row">
-                    @if ($provimento->pch === 'OK')
-                        <div class="col-md-2">
-                            <div class="form-group_disciplina">
-                                <label class="control-label" for="nte_seacrh">MATRÍCULA / CPF</label>
-                                <input value="{{ $provimento->cadastro }}" name="cadastro" id="cadastro"
-                                    type="text" class="form-control form-control-sm" readonly>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group_disciplina">
-                                <label class="control-label" for="municipio_search">Servidor</label>
-                                <input value="{{ $provimento->servidor }}" name="servidor" id="servidor"
-                                    type="text" class="form-control form-control-sm" readonly>
-                            </div>
-                        </div>
-                    @endif
-                    @if ($provimento->pch === 'PENDENTE')
-                        @can('view-blocked-provimento-details', $provimento)
+                        @if ($provimento->pch === 'OK')
                             <div class="col-md-2">
                                 <div class="form-group_disciplina">
                                     <label class="control-label" for="nte_seacrh">MATRÍCULA / CPF</label>
-                                    <input value="{{ $provimento->cadastro }}" name="cadastro" id="cadastro"
+                                    <input value="{{ $cadastroServidor }}" name="cadastro" id="cadastro"
                                         type="text" class="form-control form-control-sm" readonly>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group_disciplina">
                                     <label class="control-label" for="municipio_search">Servidor</label>
-                                    <input value="{{ $provimento->servidor }}" name="servidor" id="servidor"
+                                    <input value="{{ $nomeServidor }}" name="servidor" id="servidor"
+                                        type="text" class="form-control form-control-sm" readonly>
+                                </div>
+                            </div>
+                        @endif
+                    @if ($provimento->pch === 'PENDENTE')
+                        @can('view-blocked-provimento-details', $provimento)
+                            <div class="col-md-2">
+                                <div class="form-group_disciplina">
+                                    <label class="control-label" for="nte_seacrh">MATRÍCULA / CPF</label>
+                                    <input value="{{ $cadastroServidor }}" name="cadastro" id="cadastro"
+                                        type="text" class="form-control form-control-sm" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group_disciplina">
+                                    <label class="control-label" for="municipio_search">Servidor</label>
+                                    <input value="{{ $nomeServidor }}" name="servidor" id="servidor"
                                         type="text" class="form-control form-control-sm" readonly>
                                 </div>
                             </div>
@@ -185,9 +220,9 @@
                                     <div class="display_btn position-relative form-group">
                                         <div>
                                             <label for="cadastro" class="">Matrícula / CPF</label>
-                                            <input value="{{ $provimento->cadastro }}" minlength="8" maxlength="11"
-                                                name="cadastro" id="cadastro" type="text"
-                                                class="form-control form-control-sm">
+                                            <input value="{{ $cadastroServidor }}" minlength="8" maxlength="11"
+                                            name="cadastro" id="cadastro" type="text"
+                                            class="form-control form-control-sm">
                                         </div>
                                         <div class="btn_carencia_seacrh print-none">
                                             <button id="cadastro_btn"
@@ -201,7 +236,7 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label class="control-label" for="servidor">Servidor</label>
-                                        <input value="{{ $provimento->servidor }}" name="servidor" id="servidor"
+                                        <input value="{{ $nomeServidor }}" name="servidor" id="servidor"
                                             type="text" class="form-control form-control-sm">
                                     </div>
                                 </div>
@@ -211,14 +246,14 @@
                     <div class="col-md-1">
                         <div class="form-group_disciplina">
                             <label class="control-label" for="search_uee">VÍNCULO</label>
-                            <input value="{{ $provimento->vinculo }}" name="vinculo" id="vinculo" type="text"
+                            <input value="{{ $vinculoServidor }}" name="vinculo" id="vinculo" type="text"
                                 class="form-control form-control-sm" readonly>
                         </div>
                     </div>
                     <div class="col-md-1">
                         <div class="form-group_disciplina">
                             <label for="codigo_unidade_escolar" class="control-label">regime</label>
-                            <input value="{{ $provimento->regime }}" name="regime" id="regime" type="text"
+                            <input value="{{ $regimeServidor }}" name="regime" id="regime" type="text"
                                 class="form-control form-control-sm" readonly>
                         </div>
                     </div>

@@ -207,11 +207,37 @@ class VagareservaController extends Controller
             $provimento->tipo_carencia_provida = $carencia->tipo_carencia;
 
             // Adicionando informações do servidor e da reserva
+            // Busca (ou cria) o registro na tabela `servidores` e armazena o id em `provimentos.servidor_id`.
+            $existing = null;
+            if (!empty($vaga_reserva->matricula_cpf)) {
+                $existing = \App\Models\Servidore::where('cadastro', $vaga_reserva->matricula_cpf)->first();
+            }
 
+            if (!$existing) {
+                $newServer = new \App\Models\Servidore();
+                $newServer->nome = $vaga_reserva->nome_servidor;
+                $newServer->cadastro = $vaga_reserva->matricula_cpf;
+                $newServer->vinculo = 'REDA';
+                $newServer->regime = '20';
+                // Preencher outros campos mínimos necessários conforme o seu model (ajuste se necessário)
+                $newServer->save();
+                $servidorId = $newServer->id;
+            } else {
+                $servidorId = $existing->id;
+                // Atualiza alguns campos caso queira mantê-los sincronizados
+                $existing->nome = $vaga_reserva->nome_servidor ?: $existing->nome;
+                $existing->vinculo = $existing->vinculo ?: 'REDA';
+                $existing->regime = $existing->regime ?: '20';
+                $existing->save();
+            }
+
+            // Armazena a referência por id no provimento
+            $provimento->servidor_id = $servidorId;
+            // Mantemos também os campos legados (nome/cadastro) para compatibilidade, caso deseje remover depois
             $provimento->servidor = $vaga_reserva->nome_servidor;
             $provimento->cadastro = $vaga_reserva->matricula_cpf;
-            $provimento->vinculo = "REDA";
-            $provimento->regime = "20";
+            $provimento->vinculo = 'REDA';
+            $provimento->regime = '20';
 
             // Campos da reserva
             $provimento->tipo_movimentacao = $vaga_reserva->tipo_movimentacao;

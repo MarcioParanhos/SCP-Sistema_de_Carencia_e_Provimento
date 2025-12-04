@@ -9,4 +9,9 @@ class Provimento extends Model
 {
     protected $guarded = [];
     use HasFactory;
+
+    public function servidore()
+    {
+        return $this->belongsTo(Servidore::class, 'servidor_id');
+    }
 }
