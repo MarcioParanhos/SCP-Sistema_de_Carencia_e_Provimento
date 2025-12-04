@@ -62,10 +62,7 @@ class ServidoreController extends Controller
         $query = Servidore::where('tipo', '=', 'cadastrado')
             ->whereYear('created_at', $currentYear);
 
-        $userProfile = Auth::user()->profile;
-        if ($userProfile === 'cpg_tecnico') {
-            $query->where('profile', 'cpg_tecnico');
-        }
+        
 
         // total records
         $totalData = $query->count();
