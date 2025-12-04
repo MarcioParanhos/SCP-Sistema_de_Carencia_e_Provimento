@@ -92,6 +92,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/uees/desativation_uee', [UeeController::class, 'createDesativationUee'])->name("uees.desativation_uee");
     //Servidores
     Route::get('/servidores', [ServidoreController::class, 'addShowServidores'])->name("servidores.show");
+    // DataTables server-side endpoint
+    Route::get('/servidores/data', [ServidoreController::class, 'data'])->name('servidores.data');
     Route::get('/detalhes_servidor/{cadastro}', [ServidoreController::class, 'detalhesServidorAnuencia']);
     Route::get('/servidor/detalhes/{servidor}', [ServidoreController::class, 'detalharServidor'])->name("servidores.detail");
     Route::post('/consultarServidor/{cadastro_servidor}', [ServidoreController::class, 'searchServidor']);

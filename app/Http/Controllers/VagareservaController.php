@@ -218,6 +218,7 @@ class VagareservaController extends Controller
                 $newServer->nome = $vaga_reserva->nome_servidor;
                 $newServer->cadastro = $vaga_reserva->matricula_cpf;
                 $newServer->vinculo = 'REDA';
+                $newServer->tipo = 'cadastrado';
                 $newServer->regime = '20';
                 // Preencher outros campos mínimos necessários conforme o seu model (ajuste se necessário)
                 $newServer->save();

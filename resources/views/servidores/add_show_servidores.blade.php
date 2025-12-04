@@ -24,42 +24,19 @@
             <a class="mb-2 btn bg-primary text-white" data-toggle="modal" data-target="#ExemploModalCentralizado55"><i class="ti-plus"></i> ADICIONAR</a>
         </div>
         <div class="table-responseive">
-            <table id="consultarCarencias" class="table table-hover table-bordered table-sm">
+            <table id="servidoresTable" class="table table-hover table-bordered table-sm" style="width:100%">
                 <thead class="bg-primary text-white">
                     <tr>
                         <th scope="col">SERVIDOR</th>
                         <th class="text-center" scope="col">CPF</th>
-                        <th class="text-center" scope="col">MATRICULA</th>
+                        <th class="text-center" scope="col">MATRÍCULA</th>
                         <th class="text-center" scope="col">VINCULO</th>
                         <th class="text-center" scope="col">REGIME</th>
                         <th class="text-center" scope="col">DATA DO CADASTRO</th>
                         <th class="text-center" scope="col">AÇÃO</th>
                     </tr>
                 </thead>
-                <tbody>
-                    @foreach ($servidores as $servidores)
-                    <tr>
-                        <td>{{$servidores->nome}}</td>
-                        <td class="text-center">{{$servidores->cpf}}</td>
-                        @if ($servidores->cadastro === $servidores->cpf)
-                        <td class="text-center">PENDENTE</td>
-                        @elseif ($servidores->cadastro !== $servidores->cpf)
-                        <td class="text-center">{{ $servidores->cadastro }}</td>
-                        @endif
-                        <td class="text-center">{{$servidores->vinculo}}</td>
-                        <td class="text-center">{{$servidores->regime}}h</td>
-                        <td class="text-center">{{ \Carbon\Carbon::parse($servidores->created_at)->format('d/m/Y') }}</td>
-                        <td class="text-center d-flex align-items-center justify-content-center">
-                            <a href="/servidor/detalhes/{{ $servidores->id }}" class="mr-2"><button id="" type="submit" class="btn-show-carência btn btn-primary"><i class="ti-pencil"></i></button></a>
-                            <form class="" action='/servidor/destroy/{{ $servidores->id }}' method='post'>
-                                @csrf
-                                @method('DELETE')
-                                <a title="Excluir"><button id="" type="submit" class="btn-show-carência btn btn-danger"><i class="ti-trash"></i></button></a>
-                            </form>
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
+                <tbody></tbody>
             </table>
         </div>
     </div>
@@ -138,3 +115,63 @@
 </div>
 
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize DataTable with server-side processing
+        if (window.jQuery && $.fn.dataTable) {
+            $('#servidoresTable').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: '{{ route('servidores.data') }}',
+                    type: 'GET'
+                },
+                columns: [
+                    { data: 'nome', name: 'nome' },
+                    { data: 'cpf', name: 'cpf', className: 'text-center' },
+                    { data: 'cadastro', name: 'cadastro', className: 'text-center' },
+                    { data: 'vinculo', name: 'vinculo', className: 'text-center' },
+                    { data: 'regime', name: 'regime', className: 'text-center' },
+                    { data: 'created_at', name: 'created_at', className: 'text-center' },
+                    { data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-center' }
+                ],
+                ordering: false,
+                drawCallback: function(settings) {
+                    // initialize Bootstrap tooltips for dynamically created buttons
+                    if (window.jQuery && $.fn.tooltip) {
+                        $('[data-toggle="tooltip"]').tooltip({container: 'body'});
+                    }
+                },
+                language: {
+                    decimal: ',',
+                    thousands: '.',
+                    processing: 'Processando...',
+                    search: 'Pesquisar:',
+                    lengthMenu: 'Mostrar _MENU_ registros',
+                    info: 'Mostrando _START_ até _END_ de _TOTAL_ registros',
+                    infoEmpty: 'Mostrando 0 até 0 de 0 registros',
+                    infoFiltered: '(filtrado de _MAX_ registros no total)',
+                    infoPostFix: '',
+                    loadingRecords: 'Carregando...',
+                    zeroRecords: 'Nenhum registro encontrado',
+                    emptyTable: 'Nenhum dado disponível na tabela',
+                    paginate: {
+                        first: 'Primeiro',
+                        previous: 'Anterior',
+                        next: 'Próximo',
+                        last: 'Último'
+                    },
+                    aria: {
+                        sortAscending: ': ativar para ordenar a coluna de forma crescente',
+                        sortDescending: ': ativar para ordenar a coluna de forma decrescente'
+                    }
+                }
+            });
+        } else {
+            console.warn('jQuery or DataTables not loaded');
+        }
+    });
+</script>
+@endpush

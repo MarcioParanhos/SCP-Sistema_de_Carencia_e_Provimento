@@ -52,6 +52,87 @@ class ServidoreController extends Controller
         return view('servidores.add_show_servidores', compact('servidores'));
     }
 
+    /**
+     * Server-side endpoint for DataTables
+     */
+    public function data(Request $request)
+    {
+        $currentYear = date('Y');
+
+        $query = Servidore::where('tipo', '=', 'cadastrado')
+            ->whereYear('created_at', $currentYear);
+
+        $userProfile = Auth::user()->profile;
+        if ($userProfile === 'cpg_tecnico') {
+            $query->where('profile', 'cpg_tecnico');
+        }
+
+        // total records
+        $totalData = $query->count();
+
+        // Search
+        $search = $request->input('search.value');
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nome', 'LIKE', "%{$search}%")
+                    ->orWhere('cpf', 'LIKE', "%{$search}%")
+                    ->orWhere('cadastro', 'LIKE', "%{$search}%")
+                    ->orWhere('vinculo', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $recordsFiltered = $query->count();
+
+        // Ordering
+        $columns = ['nome', 'cpf', 'cadastro', 'vinculo', 'regime', 'created_at'];
+        $orderColIndex = $request->input('order.0.column', 0);
+        $orderDir = $request->input('order.0.dir', 'asc');
+        $orderColumn = $columns[$orderColIndex] ?? 'nome';
+
+        // Pagination
+        $start = intval($request->input('start', 0));
+        $length = intval($request->input('length', 10));
+
+        $data = $query->orderBy($orderColumn, $orderDir)
+            ->offset($start)
+            ->limit($length)
+            ->get();
+
+        $rows = [];
+        foreach ($data as $row) {
+            $editUrl = url('/servidor/detalhes/' . $row->id);
+            $deleteUrl = url('/servidor/destroy/' . $row->id);
+            $csrf = csrf_token();
+
+            // Old-style action buttons (edit + form delete) with Portuguese titles
+            $actions = "<a href='" . $editUrl . "' class='mr-2' title='Editar'>";
+            $actions .= "<button type='button' class='btn-show-carência btn btn-primary'><i class='ti-pencil'></i></button></a>";
+
+            $actions .= "<form style='display:inline-block' method='POST' action='" . $deleteUrl . "' onsubmit=\"return confirm('Confirmar exclusão?');\">";
+            $actions .= "<input type='hidden' name='_token' value='" . $csrf . "'>";
+            $actions .= "<input type='hidden' name='_method' value='DELETE'>";
+            $actions .= "<button type='submit' class='btn-show-carência btn btn-danger' title='Excluir'><i class='ti-trash'></i></button>";
+            $actions .= "</form>";
+
+            $rows[] = [
+                'nome' => $row->nome,
+                'cpf' => $row->cpf,
+                'cadastro' => $row->cadastro === $row->cpf ? 'PENDENTE' : $row->cadastro,
+                'vinculo' => $row->vinculo,
+                'regime' => $row->regime . 'h',
+                'created_at' => \Carbon\Carbon::parse($row->created_at)->format('d/m/Y'),
+                'action' => $actions,
+            ];
+        }
+
+        return response()->json([
+            'draw' => intval($request->input('draw')),
+            'recordsTotal' => $totalData,
+            'recordsFiltered' => $recordsFiltered,
+            'data' => $rows,
+        ]);
+    }
+
     public function addShowServidoresByForm(Request $request)
     {
 
