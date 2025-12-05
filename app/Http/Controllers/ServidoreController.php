@@ -59,12 +59,10 @@ class ServidoreController extends Controller
     {
         $currentYear = date('Y');
 
-        $query = Servidore::where('tipo', '=', 'cadastrado')
-            ->whereYear('created_at', $currentYear);
+        // use a query builder so we can apply where/orderBy/offset/limit
+        $query = Servidore::query();
 
-        
-
-        // total records
+        // total records (before filtering)
         $totalData = $query->count();
 
         // Search

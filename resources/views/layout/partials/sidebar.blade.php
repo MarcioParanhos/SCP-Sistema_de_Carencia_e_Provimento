@@ -134,40 +134,10 @@
                                     data-bs-placement="right"
                                     href="{{ route('provimentos.validarDocs') }}">VALIDAR</a>
                             </li>
-                            {{-- <li class="nav-item"><i class="ti-download"></i><a class="nav-link sub-title"
-                                                href="{{ route('provimentos.servidores_encaminhamento') }}">TERMOS</a>
-                                        </li> --}}
                         @endif
                     </ul>
                 </div>
             </li>
-            {{-- <li class="nav-item">
-                            <a class="nav-link" data-toggle="collapse" href="#ingresso" aria-expanded="false"
-                                aria-controls="ingresso">
-                                <i class="ti-user menu-icon"></i>
-                                <span class="menu-title">Ingresso</span>
-                                <i class="menu-arrow"></i>
-                            </a>
-                            <div class="collapse subheader" id="ingresso">
-                                <ul class="nav flex-column sub-menu">
-                                    @if (Auth::user()->profile === 'cpm_tecnico' || Auth::user()->profile === 'administrador' || Auth::user()->profile === 'cpm_coordenador' || Auth::user()->profile === 'cpg_tecnico')
-                                        @if (session('ano_ref') == $ano_atual || Auth::user()->profile === 'administrador')
-                                            <li class="nav-item"><i class="ti-plus"></i><a class="nav-link sub-title"
-                                                    href="{{ route('provimentos.add') }}">Incluir</a></li>
-                                        @endif
-                                    @endif
-                                    <li class="nav-item"><i class="ti-search"></i><a class="nav-link sub-title"
-                                            href="/buscar/provimento/all_provimentos">Buscar</a></li>
-                                    @if (Auth::user()->profile === 'cpm_tecnico' || Auth::user()->profile === 'administrador' || Auth::user()->profile === 'cpm_coordenador')
-                                        <li class="nav-item"><i class="ti-file"></i><a class="nav-link sub-title"
-                                                href="{{ route('reserva.index') }}">RESERVA</a></li>
-                                        <li class="nav-item"><i class="ti-download"></i><a class="nav-link sub-title"
-                                                href="{{ route('provimentos.servidores_encaminhamento') }}">TERMOS</a>
-                                        </li>
-                                    @endif
-                                </ul>
-                            </div>
-                        </li> --}}
             <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" href="#encaminhamentos" aria-expanded="false"
                     aria-controls="encaminhamentos">
@@ -201,7 +171,6 @@
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item"><i class="ti-zoom-in"></i><a class="nav-link sub-title"
                                 href="/aposentadorias">Definitivo</a></li>
-                        <!-- <li class="nav-item"><i class="ti-search"></i><a class="nav-link sub-title" href="/aposentadorias">Temporário</a></li> -->
                     </ul>
                 </div>
             </li>
@@ -281,25 +250,6 @@
                                 </svg>
                                 <a class="nav-link sub-title" href="/status/digitacao">DIGITAÇÃO</a>
                             </li>
-                            {{-- <li class="nav-item">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2"
-                                                stroke-linecap="round" stroke-linejoin="round"
-                                                class="icon icon-tabler icons-tabler-outline icon-tabler-keyboard-hide">
-                                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                                <path
-                                                    d="M2 3m0 2a2 2 0 0 1 2 -2h16a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-16a2 2 0 0 1 -2 -2z" />
-                                                <path d="M6 7l0 .01" />
-                                                <path d="M10 7l0 .01" />
-                                                <path d="M14 7l0 .01" />
-                                                <path d="M18 7l0 .01" />
-                                                <path d="M6 11l0 .01" />
-                                                <path d="M18 11l0 .01" />
-                                                <path d="M10 11l4 0" />
-                                                <path d="M10 21l2 -2l2 2" />
-                                            </svg>
-                                            <a class="nav-link sub-title" href="#">MANUTENÇÕES</a>
-                                        </li> --}}
                         @endif
                         @if (Auth::user()->profile === 'cpg_tecnico' ||
                                 Auth::user()->profile === 'administrador' ||
@@ -407,8 +357,6 @@
                             </svg>
                             <a class="nav-link sub-title" href="{{ route('logs.show') }}">Logs</a>
                         </li>
-
-                        <!-- <li class="nav-item"><i class="fa-solid fa-user-slash"></i><a class="nav-link sub-title" href="{{ route('motivo_vagas.show') }}">Motivo Vagas</a></li> -->
                     </ul>
                 </div>
             </li>
