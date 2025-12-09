@@ -154,7 +154,7 @@
                                     href="{{ route('provimento_efetivo.create') }}">Incluir</a></li>
                         @endif
                         <li class="nav-item"><i class="ti-search"></i><a class="nav-link sub-title"
-                                href="/provimento/efetivo/show">Buscar</a></li>
+                                href="{{ route('provimento_efetivo.show') }}">Buscar</a></li>
                     </ul>
                 </div>
             </li>

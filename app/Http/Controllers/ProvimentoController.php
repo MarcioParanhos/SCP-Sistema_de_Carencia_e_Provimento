@@ -106,10 +106,9 @@ class ProvimentoController extends Controller
         // Validação de arquivo/data quando marcar como PROVIDA
         if ($request->input('situacao_provimento') === 'provida') {
             $request->validate([
-                'arquivo_comprobatorio' => 'required|file|mimes:pdf,jpeg,jpg|max:5120', // 5MB
+                'arquivo_comprobatorio' => '|file|mimes:pdf,jpeg,jpg|max:5120', // 5MB
                 'data_assuncao' => 'required|date',
             ], [
-                'arquivo_comprobatorio.required' => 'O termo de assunção é obrigatório quando a situação for PROVIDA.',
                 'arquivo_comprobatorio.mimes' => 'O arquivo deve ser do tipo PDF, JPEG ou JPG.',
                 'arquivo_comprobatorio.max' => 'O arquivo não pode ser maior que 5MB.',
                 'data_assuncao.required' => 'A data de assunção é obrigatória quando a situação for PROVIDA.',

@@ -500,7 +500,7 @@
                                         if (isProvida) {
                                             arquivo.removeAttribute('disabled');
                                             arquivo.setAttribute('name', 'arquivo_comprobatorio');
-                                            arquivo.required = true;
+                                            arquivo.required = false;
                                         } else {
                                             arquivo.value = '';
                                             arquivo.required = false;
