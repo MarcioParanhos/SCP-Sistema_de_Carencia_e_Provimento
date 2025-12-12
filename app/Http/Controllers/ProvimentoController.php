@@ -272,18 +272,19 @@ class ProvimentoController extends Controller
             $novosProvimentos = [];
 
             foreach ($provimentos as $provimento) {
-                $dbProvimento = DB::table('provimentos')->where('id', $provimento->id)->first();
+                // Use Eloquent to retrieve the current record so we return a Provimento model
+                // (not a stdClass) and can access relations like `servidore` safely.
+                $dbProvimento = Provimento::with('servidore')->find($provimento->id);
 
                 if ($dbProvimento && $dbProvimento->updated_at != $provimento->updated_at) {
                     // Se a linha existe no banco de dados e a data de atualização é diferente,
-                    // consideramos que houve alteração, então adicionamos os novos dados à matriz $novasCarencias
+                    // consideramos que houve alteração, então adicionamos os novos dados à matriz
                     $novosProvimentos[] = $dbProvimento;
                 } elseif (!$dbProvimento) {
                     // Se a linha não existe mais no banco de dados, consideramos que foi excluída,
-                    // então não a incluímos na matriz $novasCarencias
-                    // Isso é equivalente a verificar se houve exclusão.
+                    // então não a incluímos na matriz
                 } else {
-                    // Mantém os dados antigos na matriz $novasCarencias
+                    // Mantém os dados antigos na matriz
                     $novosProvimentos[] = $provimento;
                 }
             }
