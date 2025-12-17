@@ -193,6 +193,10 @@ Route::middleware('auth')->group(function () {
     // Ingresso (acessível via rota nomeada ingresso.index)
     
     Route::get('/ingresso', [IngressoController::class, 'index'])->name('ingresso.index');
+    // Dashboard for ingresso (overview)
+    Route::get('/ingresso/dashboard', [IngressoController::class, 'dashboard'])->name('ingresso.dashboard');
+    // DataTables server-side endpoint for ingresso
+    Route::get('/ingresso/data', [IngressoController::class, 'data'])->name('ingresso.data');
     
 });
 

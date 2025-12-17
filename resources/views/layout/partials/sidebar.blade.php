@@ -9,7 +9,7 @@
     @if(isset($sidebarUser) && $sidebarUser->sector_id == 7 && $sidebarUser->profile_id == 1)
         <ul class="nav">
             <li class="nav-item">
-                <a class="nav-link" href="{{ route('ingresso.index') }}">
+                <a class="nav-link" href="{{ route('ingresso.dashboard') }}">
                     <i class="ti-bell menu-icon"></i>
                     <span class="menu-title">Ingresso</span>
                 </a>
