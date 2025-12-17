@@ -19,6 +19,7 @@ use App\Http\Controllers\LogController;
 use App\Http\Controllers\ManutencaoController;
 use App\Http\Controllers\VagareservaController;
 use App\Models\VagaReserva;
+use App\Http\Controllers\IngressoController;
 
 Route::middleware('auth')->group(function () {
     //Home
@@ -189,6 +190,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/reservas/data/excel', [VagareservaController::class, 'excel_reservas'])->name("reservas.excel");
     Route::get('/reservas/bloco/destroy/{blocoId}', [VagareservaController::class, 'destroyBloco'])->name('reservas.bloco.destroy');
     Route::post('/reservas/bloco/filter', [VagareservaController::class, 'index'])->name('reservas.index');
+    // Ingresso (acessível via rota nomeada ingresso.index)
+    
+    Route::get('/ingresso', [IngressoController::class, 'index'])->name('ingresso.index');
     
 });
 

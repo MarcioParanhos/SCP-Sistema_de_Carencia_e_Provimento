@@ -4,7 +4,19 @@
             <img src="{{ asset('images/SCP.png') }}" alt="SCP" class="sidebar-logo-top" style="height: 130px"/>
         </a>
     </div>
-    <ul class="nav">
+    @php $sidebarUser = Auth::user(); @endphp
+
+    @if(isset($sidebarUser) && $sidebarUser->sector_id == 7 && $sidebarUser->profile_id == 1)
+        <ul class="nav">
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('ingresso.index') }}">
+                    <i class="ti-bell menu-icon"></i>
+                    <span class="menu-title">Ingresso</span>
+                </a>
+            </li>
+        </ul>
+    @else
+        <ul class="nav">
         <li class="nav-item">
             <a class="nav-link" href="{{ route('home') }}">
                 <i class="icon-grid menu-icon"></i>
@@ -15,7 +27,6 @@
                 Auth::user()->profile != 'cgi_tecnico' &&
                 (Auth::user()->name != 'Usuario CPG' && Auth::user()->name != 'Usuario CPM'))
              
-
             <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" href="#ui-basic" aria-expanded="false"
                     aria-controls="ui-basic">
@@ -362,5 +373,6 @@
             </li>
         @endif
     </ul>
+    @endif
     
 </nav>
