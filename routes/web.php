@@ -87,6 +87,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/consultarUnidadeForCodSap/{cod_unidade}', [UeeController::class, 'searchUnidadeCodSap']);
     Route::post('/consultarMunicipio/{search_nte}', [UeeController::class, 'searchMunicipio']);
     Route::post('/consultarUees/{search_municipio}', [UeeController::class, 'searchUees']);
+    Route::post('/uees/autocomplete', [UeeController::class, 'autocomplete'])->name('uees.autocomplete');
+    Route::get('/uees/list', [UeeController::class, 'listAll'])->name('uees.list');
     Route::post('/uees/search', [UeeController::class, 'showUeesByForm'])->name("uees.showByForm");
     Route::get('/uee/destroy/{id}', [UeeController::class, 'destroy']);
     Route::get('/uees/excel/generate', [UeeController::class, 'gerarExcel'])->name("uees.excel");
@@ -190,13 +192,24 @@ Route::middleware('auth')->group(function () {
     Route::get('/reservas/data/excel', [VagareservaController::class, 'excel_reservas'])->name("reservas.excel");
     Route::get('/reservas/bloco/destroy/{blocoId}', [VagareservaController::class, 'destroyBloco'])->name('reservas.bloco.destroy');
     Route::post('/reservas/bloco/filter', [VagareservaController::class, 'index'])->name('reservas.index');
-    // Ingresso (acessível via rota nomeada ingresso.index)
-    
+    // Ingresso
     Route::get('/ingresso', [IngressoController::class, 'index'])->name('ingresso.index');
-    // Dashboard for ingresso (overview)
     Route::get('/ingresso/dashboard', [IngressoController::class, 'dashboard'])->name('ingresso.dashboard');
-    // DataTables server-side endpoint for ingresso
+    Route::post('/ingresso/{id}/validar', [IngressoController::class, 'validateIngresso'])->name('ingresso.validar');
+    Route::get('/ingresso/{id}/oficio', [IngressoController::class, 'oficio'])->name('ingresso.oficio');
+    Route::get('/ingresso/export/csv', [IngressoController::class, 'exportCsv'])->name('ingresso.export.csv');
+    // Debug route (authorized users only) to inspect candidate DB row and recent encaminhamentos
+    Route::get('/ingresso/debug-status/{id}', [IngressoController::class, 'debugStatus'])->name('ingresso.debug');
     Route::get('/ingresso/data', [IngressoController::class, 'data'])->name('ingresso.data');
+    Route::get('/ingresso/{identifier}', [IngressoController::class, 'show'])->name('ingresso.show');
+    Route::get('/ingresso/{id}/documentos', [IngressoController::class, 'getDocumentChecklist'])->name('ingresso.documentos.get');
+    Route::post('/ingresso/{id}/documentos', [IngressoController::class, 'storeDocumentChecklist'])->name('ingresso.documentos.store');
+    Route::post('/ingresso/{id}/assign', [IngressoController::class, 'assign'])->name('ingresso.assign');
+    Route::match(['put','post'],'/ingresso/{id}/update', [IngressoController::class, 'updateCandidate'])->name('ingresso.update');
+    Route::post('/ingresso/{id}/encaminhar', [IngressoController::class, 'forward'])->name('ingresso.encaminhar');
+    Route::delete('/ingresso/{id}/encaminhar/{encaminhamento}', [IngressoController::class, 'destroyEncaminhamento'])->name('ingresso.encaminhar.destroy');
+    Route::post('/ingresso/{id}/assign', [IngressoController::class, 'assign'])->name('ingresso.assign');
+    Route::delete('/ingresso/{id}', [IngressoController::class, 'destroy'])->name('ingresso.destroy');
     
 });
 

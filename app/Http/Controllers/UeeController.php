@@ -406,6 +406,50 @@ class UeeController extends Controller
         ]);
     }
 
+    /**
+     * Simple autocomplete for unidades escolares used by AJAX widgets.
+     */
+    public function autocomplete(Request $request)
+    {
+        $q = trim($request->input('q', ''));
+
+        $query = Uee::select('unidade_escolar as name', 'municipio', 'cod_unidade');
+
+        if ($q !== '') {
+            $query->where(function ($b) use ($q) {
+                $b->where('unidade_escolar', 'like', "%{$q}%")
+                  ->orWhere('municipio', 'like', "%{$q}%")
+                  ->orWhere('cod_unidade', 'like', "%{$q}%");
+            });
+        }
+
+        $results = $query->where(function ($query) {
+                $query->where('desativation_situation', 'Ativa')
+                      ->orWhereNull('desativation_situation');
+            })->orderBy('unidade_escolar')->limit(20)->get();
+
+        return response()->json($results);
+    }
+
+    /**
+     * Return a larger list of UEE for populating selects (fallback).
+     */
+    public function listAll(Request $request)
+    {
+        $limit = intval($request->input('limit', 200));
+        $results = Uee::select('unidade_escolar as name', 'municipio', 'cod_unidade')
+            ->where(function ($query) {
+                $query->where('desativation_situation', 'Ativa')
+                      ->orWhereNull('desativation_situation');
+            })
+            ->orderBy('unidade_escolar')
+            ->limit($limit)
+            ->get();
+            
+
+        return response()->json($results);
+    }
+
     public function gerarExcel()
     {
         $uees = session()->get('uees');

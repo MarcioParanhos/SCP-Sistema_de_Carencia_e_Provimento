@@ -39,6 +39,8 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('regularizacao_funcional.show');
         }
 
+        // NTE users will follow the default redirect (RouteServiceProvider::HOME -> '/')
+
         return redirect()->intended(RouteServiceProvider::HOME);
     }
 

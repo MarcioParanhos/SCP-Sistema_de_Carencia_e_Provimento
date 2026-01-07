@@ -34,7 +34,7 @@
                         <label for="ref_year" class="sr-only">Ano de Referência</label>
 
                         @php
-                            $years = ['2025', '2024', '2023'];
+                            $years = ['2026','2025', '2024', '2023'];
                         @endphp
 
                         <select id="ref_year" class="custom-select custom-select-sm border-0 bg-transparent"

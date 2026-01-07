@@ -48,8 +48,8 @@
     <div class="row mb-3">
         <div class="col-12 d-flex align-items-center justify-content-between mb-2">
             <div>
-                <h3 class="mb-0">Ingresso — Painel</h3>
-                <small class="text-muted">Visão geral do processo de ingresso (dados de exemplo)</small>
+                <h3 class="mb-0">Ingresso</h3>
+                <small class="text-muted">Visão geral do processo de ingresso</small>
             </div>
             <div class="top-action">
                 <a href="{{ route('ingresso.index') }}" class="btn btn-outline-primary">Ver todos os convocados</a>

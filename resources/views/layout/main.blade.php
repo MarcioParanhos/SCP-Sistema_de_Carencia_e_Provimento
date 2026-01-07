@@ -14,7 +14,7 @@
 
     <link rel="stylesheet" href="/vendors/datatables.net-bs4/dataTables.bootstrap4.css">
     <link rel="stylesheet" href="/vendors/ti-icons/css/themify-icons.css">
-    <link rel="stylesheet" type="text/css" href="js/select.dataTables.min.css">
+    <link rel="stylesheet" type="text/css" href="/js/select.dataTables.min.css">
 
     <link rel="stylesheet" href="/css/vertical-layout-light/style.css">
     <link rel="stylesheet" href="/css/styles.css">
@@ -107,15 +107,15 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
     <script>
-        new MultiSelectTag('search_disciplina', {
-            placeholder: 'Buscar',
-        })
+        if (document.getElementById('search_disciplina')) {
+            new MultiSelectTag('search_disciplina', { placeholder: 'Buscar' })
+        }
     </script>
 
     <script>
-        new MultiSelectTag('areas', {
-            placeholder: 'Buscar',
-        })
+        if (document.getElementById('areas')) {
+            new MultiSelectTag('areas', { placeholder: 'Buscar' })
+        }
     </script>
     <script>
         new MultiSelectTag('search_codigo', {

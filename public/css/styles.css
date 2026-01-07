@@ -248,7 +248,7 @@ a {
     display: flex !important;
     align-items: center !important;
     height: 25px !important;
-    margin-top: -9px !important;
+    /* margin-top: -9px !important; */
 }
 
 .select2-container .select2-selection--single .select2-selection__rendered {
@@ -1185,4 +1185,25 @@ ul.ks-cboxtags li input[type="checkbox"]:focus + label {
 .swal-title-sm .swal2-title {
     font-size: 1.2rem; /* Valor ajustado para ser visivelmente menor */
     line-height: 1.4;  /* Melhora a legibilidade com o novo tamanho */
+}
+
+/* Make all cards behave like 12-column full-width blocks inside their container */
+.card,
+.card-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Ensure card inner spacing remains consistent when forcing full width */
+.card-panel {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+}
+
+/* For content areas that previously used side-by-side panels, ensure they stack cleanly */
+.candidate-left,
+.candidate-right {
+    flex: 1 1 100% !important;
+    max-width: 100% !important;
 }

@@ -368,8 +368,20 @@
                 if (window.jQuery && jQuery.fn.modal) {
                     jQuery('#changesModal').modal('show');
                 } else {
-                    // fallback: simple alert
-                    alert('Alterações: ' + changes + ' campos (sem modal, jQuery não disponível)');
+                    // fallback: show using SweetAlert2 when available, otherwise alert
+                    (function(){
+                        function ensureSwal(){
+                            return new Promise(function(resolve,reject){
+                                if (typeof Swal !== 'undefined') return resolve(window.Swal);
+                                var s = document.createElement('script');
+                                s.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11';
+                                s.onload = function(){ resolve(window.Swal); };
+                                s.onerror = function(){ reject(); };
+                                document.head.appendChild(s);
+                            });
+                        }
+                        ensureSwal().then(function(swal){ swal.fire({icon:'info', title: 'Alterações', text: 'Alterações: ' + changes + ' campos (sem modal, jQuery não disponível)'}); }).catch(function(){ console.warn('Swal load failed'); });
+                    })();
                 }
             });
         })();

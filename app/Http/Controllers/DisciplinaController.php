@@ -10,9 +10,15 @@ use Illuminate\Support\Facades\Mail;
 
 class DisciplinaController extends Controller
 {
-    public function searchDisciplinas() {
-        $data = Disciplina::all()->orderBy('nome', 'asc');
-        return Response()->json($data);
+    public function searchDisciplinas(Request $request) {
+        // Return list filtered by query 'q' for Select2 autocomplete
+        $q = $request->input('q');
+        $query = Disciplina::query();
+        if (!empty($q)) {
+            $query->where('nome', 'like', '%' . $q . '%');
+        }
+        $data = $query->orderBy('nome', 'asc')->limit(60)->get();
+        return response()->json($data);
     }
 
     public function create (Request $request) {

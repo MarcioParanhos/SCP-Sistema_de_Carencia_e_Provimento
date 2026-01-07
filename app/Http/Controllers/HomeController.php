@@ -16,6 +16,7 @@ class HomeController extends Controller
 {
     public function index()
     {
+        // NTE users should see the standard home dashboard; do not redirect to ingresso.dashboard
         $actualDate = Carbon::now();
         $formattedDate = $actualDate->format('Y-m-d');
         $anoRef = session()->get('ano_ref');
