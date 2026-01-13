@@ -80,8 +80,8 @@
                     @endif
                     <div class="ml-2 d-none d-md-block text-left">
                         <div class="name_profile" style="font-weight:700;line-height:1;">{{ $shortName }}</div>
-                        <div class="small text-muted" style="font-size:0.75rem;">{{ Auth::user()->sector->name }} -
-                            {{ Auth::user()->sector->tag }}</div>
+                        <div class="small text-muted" style="font-size:0.75rem;">{{ $user && $user->sector ? $user->sector->name : '' }} -
+                            {{ $user && $user->sector ? $user->sector->tag : '' }}</div>
                     </div>
 
                 </a>

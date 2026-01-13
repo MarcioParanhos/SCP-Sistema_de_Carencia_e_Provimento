@@ -15,7 +15,7 @@ echo "total={$total}, notValidated={$notValidated}\n";
 $update = [];
 // emulate NTE confirm (not CPM)
 if ($total > 0 && $notValidated === 0) {
-    $update['status'] = 'Pendente validação pela CPM';
+    $update['status'] = 'Aguardando Confirmação pela CPM';
 }
 
 if (!empty($update)) {

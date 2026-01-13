@@ -18,6 +18,16 @@
         flex-direction: column;
         justify-content: center;
     }
+    /* make the metric row support five equal columns on wide screens */
+    .row.card-section { display: flex; flex-wrap: nowrap; gap: 0.6rem; margin: 0 -0.3rem; }
+    .metric-col { flex: 0 0 calc(20% - 0.48rem); max-width: calc(20% - 0.48rem); padding: 0 0.3rem; box-sizing: border-box; }
+    @media (max-width: 1199.98px) {
+        .row.card-section { flex-wrap: wrap; }
+        .metric-col { flex: 0 0 50%; max-width: 50%; padding: 0 0.5rem; }
+    }
+    @media (max-width: 575.98px) {
+        .metric-col { flex: 0 0 100%; max-width: 100%; padding: 0; }
+    }
     .metric-title { font-size: 0.95rem; opacity: 0.9; }
     .metric-value { font-size: 2.2rem; font-weight: 700; }
     .metric-icon { font-size: 2.4rem; opacity: 0.15; position: absolute; right: 18px; top: 18px; }
@@ -58,7 +68,7 @@
     </div>
 
     <div class="row card-section">
-        <div class="col-xl-3 col-md-6 mb-3">
+        <div class="metric-col mb-3">
             <div class="position-relative metric-card bg-primary">
                 <div>
                     <div class="metric-title">Total de Candidatos</div>
@@ -67,7 +77,7 @@
                 <div class="metric-icon">&#9881;</div>
             </div>
         </div>
-        <div class="col-xl-3 col-md-6 mb-3">
+        <div class="metric-col mb-3">
             <div class="position-relative metric-card" style="background: linear-gradient(90deg,#28a745,#20c997);">
                 <div>
                     <div class="metric-title">Já Ingressados</div>
@@ -76,7 +86,7 @@
                 <div class="metric-icon">&#10004;</div>
             </div>
         </div>
-        <div class="col-xl-3 col-md-6 mb-3">
+        <div class="metric-col mb-3">
             <div class="position-relative metric-card" style="background: linear-gradient(90deg,#ffc107,#ff9800);">
                 <div>
                     <div class="metric-title">Pendência de Docs</div>
@@ -85,13 +95,22 @@
                 <div class="metric-icon">&#9888;</div>
             </div>
         </div>
-        <div class="col-xl-3 col-md-6 mb-3">
+        <div class="metric-col mb-3">
             <div class="position-relative metric-card" style="background: linear-gradient(90deg,#17a2b8,#0dcaf0);">
                 <div>
                     <div class="metric-title">Docs Validados</div>
                     <div class="metric-value">{{ $stats['documentos_validados'] }}</div>
                 </div>
                 <div class="metric-icon">&#128214;</div>
+            </div>
+        </div>
+        <div class="metric-col mb-3">
+            <div class="position-relative metric-card" style="background: linear-gradient(90deg,#6f42c1,#8e44ad);">
+                <div>
+                    <div class="metric-title">Pendente Confirmação CPM</div>
+                    <div class="metric-value">{{ $stats['pendente_confirmacao_cpm'] ?? '-' }}</div>
+                </div>
+                <div class="metric-icon">&#9203;</div>
             </div>
         </div>
     </div>

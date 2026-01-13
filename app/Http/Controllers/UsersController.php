@@ -9,7 +9,7 @@ class UsersController extends Controller
 {
     public function showUsers()
     {
-        $users = User::orderBy('id', 'asc')->paginate(10);
+        $users = User::orderBy('id', 'asc')->get();
 
         return view('usuarios.show_users', compact('users'));
     }
@@ -43,7 +43,8 @@ class UsersController extends Controller
             return response()->json(['message' => 'Usuário não encontrado'], 404);
         }
 
-        $user->password = bcrypt('123456789');
+        // Assign plain password; the User model's mutator will hash it on save.
+        $user->password = '123456789';
         $user->save();
 
         return response()->json(['message' => 'Senha atualizada com sucesso']);
@@ -56,7 +57,8 @@ class UsersController extends Controller
         $user->setor = $request->user_sector;
         $user->profile = $request->user_profile;
         $user->email = $request->user_email;
-        $user->password = bcrypt('123456789');
+        // Assign plain password; the User model's mutator will hash it on save.
+        $user->password = '123456789';
 
         $user->save();
 

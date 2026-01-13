@@ -69,7 +69,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/encaminhamento/efetivo/show/search', [ProvimentoController::class, 'showProvimentoEfetivoByForm'])->name("provimento_efetivo.showByForm");
     Route::get('/encaminhamento/efetivo/excel', [ProvimentoController::class, 'gerarExcelEncaminhamentoEfetivos'])->name("provimentosEfetivos.excel");
     Route::get('/encaminhamento/efetivo/detail/{id}', [ProvimentoController::class, 'detailProvimentoEfetivo'])->name("provimentosEfetivos.detail");
+    // Alias route kept for backwards-compatibility / older links
+    Route::get('/provimento/efetivo/detail/{id}', [ProvimentoController::class, 'detailProvimentoEfetivo'])->name("provimentosEfetivos.detail.alias");
     Route::put('/encaminhamento/efetivo/update/{id}', [ProvimentoController::class, 'updateProvimentoEfetivo'])->name("provimentosEfetivos.update");
+    // Alias route for older links/forms that post to /provimento/efetivo/update/{id}
+    Route::put('/provimento/efetivo/update/{id}', [ProvimentoController::class, 'updateProvimentoEfetivo'])->name("provimentosEfetivos.update.alias");
     Route::get('/encaminhamento/efetivo/destroy/{provimentosEncaminhado}', [ProvimentoController::class, 'destroyProvimentoEfetivo']);
     Route::post('/update/situation_server1/{situation}/{id}', [ProvimentoController::class, 'update_situation_server1']);
     Route::post('/update/situation_server2/{situation}/{id}', [ProvimentoController::class, 'update_situation_server2']);
@@ -195,7 +199,9 @@ Route::middleware('auth')->group(function () {
     // Ingresso
     Route::get('/ingresso', [IngressoController::class, 'index'])->name('ingresso.index');
     Route::get('/ingresso/dashboard', [IngressoController::class, 'dashboard'])->name('ingresso.dashboard');
+    Route::post('/ingresso/search-cpf', [IngressoController::class, 'searchByCpf']);
     Route::post('/ingresso/{id}/validar', [IngressoController::class, 'validateIngresso'])->name('ingresso.validar');
+    Route::post('/ingresso/{id}/retirar-validacao', [IngressoController::class, 'unvalidateIngresso'])->name('ingresso.retirar_validacao');
     Route::get('/ingresso/{id}/oficio', [IngressoController::class, 'oficio'])->name('ingresso.oficio');
     Route::get('/ingresso/export/csv', [IngressoController::class, 'exportCsv'])->name('ingresso.export.csv');
     // Debug route (authorized users only) to inspect candidate DB row and recent encaminhamentos
@@ -204,6 +210,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/ingresso/{identifier}', [IngressoController::class, 'show'])->name('ingresso.show');
     Route::get('/ingresso/{id}/documentos', [IngressoController::class, 'getDocumentChecklist'])->name('ingresso.documentos.get');
     Route::post('/ingresso/{id}/documentos', [IngressoController::class, 'storeDocumentChecklist'])->name('ingresso.documentos.store');
+    Route::post('/ingresso/{id}/documentos/confirmar_cpm', [IngressoController::class, 'confirmDocumentosCpm'])->name('ingresso.documentos.confirmar_cpm');
     Route::post('/ingresso/{id}/assign', [IngressoController::class, 'assign'])->name('ingresso.assign');
     Route::match(['put','post'],'/ingresso/{id}/update', [IngressoController::class, 'updateCandidate'])->name('ingresso.update');
     Route::post('/ingresso/{id}/encaminhar', [IngressoController::class, 'forward'])->name('ingresso.encaminhar');

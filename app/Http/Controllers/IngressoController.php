@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Log;
 use App\Models\Uee;
 use App\Models\IngressoDocumento;
+use App\Models\ProvimentosEncaminhado;
 
 class IngressoController extends Controller
 {
@@ -78,7 +79,20 @@ class IngressoController extends Controller
                 // ignore scoping failures and continue with unscoped baseQuery
             }
 
-            // now compute stats from scoped baseQuery using clones to avoid mutating it
+            // Restrict dashboard to candidates that have been encaminhados (exist in provimentos_encaminhados)
+            try {
+                if (Schema::hasTable('provimentos_encaminhados')) {
+                    $encQuery = DB::table('provimentos_encaminhados')
+                        ->select('ingresso_candidato_id')
+                        ->whereNotNull('ingresso_candidato_id')
+                        ->distinct();
+                    $baseQuery->whereIn('id', $encQuery);
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Failed to apply encaminhados filter in ingresso dashboard', ['exception' => $e->getMessage()]);
+            }
+
+            // now compute stats from scoped (and filtered) baseQuery using clones to avoid mutating it
             $total = (clone $baseQuery)->count();
 
             if (in_array('documentos_validados', $available)) {
@@ -91,14 +105,81 @@ class IngressoController extends Controller
                 $ingressados = (clone $baseQuery)->whereRaw("LOWER(status) = 'ingresso validado'")->count();
             }
 
-            if (in_array('documentos_validados', $available)) {
-                $pendencia = (clone $baseQuery)->where(function($q){
-                    $q->whereNull('documentos_validados')->orWhere('documentos_validados', '<>', 1);
-                })->count();
-            } else {
-                if (in_array('status', $available)) {
+            // Compute pendência de documentos.
+            // Prefer explicit `ingresso_documentos` table when present because it provides per-document validation state.
+            $pendencia = 0;
+            try {
+                if (Schema::hasTable('ingresso_documentos')) {
+                    $subPending = DB::table('ingresso_documentos')
+                        ->select('ingresso_candidato_id', DB::raw('SUM(validated) as validated_count'), DB::raw('COUNT(*) as total'))
+                        ->groupBy('ingresso_candidato_id');
+
+                    // Left join so we include candidates that have no documents recorded (treat as pending)
+                    $qbPend = (clone $baseQuery)
+                        ->leftJoinSub($subPending, 'docsum', function($join) {
+                            $join->on('ingresso_candidatos.id', '=', 'docsum.ingresso_candidato_id');
+                        })
+                        ->where(function($q){
+                            $q->whereNull('docsum.total')
+                              ->orWhereRaw('docsum.validated_count < docsum.total');
+                        });
+
+                    $pendencia = $qbPend->distinct('ingresso_candidatos.id')->count('ingresso_candidatos.id');
+                } else {
+                    if (in_array('documentos_validados', $available)) {
+                        $pendencia = (clone $baseQuery)->where(function($q){
+                            $q->whereNull('documentos_validados')->orWhere('documentos_validados', '<>', 1);
+                        })->count();
+                    } else {
+                        if (in_array('status', $available)) {
+                            $pendencia = (clone $baseQuery)->whereRaw("LOWER(status) NOT LIKE '%valid%'")->count();
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Failed to compute pendencia_documentos, falling back', ['exception' => $e->getMessage()]);
+                // fallback to previous logic
+                if (in_array('documentos_validados', $available)) {
+                    $pendencia = (clone $baseQuery)->where(function($q){
+                        $q->whereNull('documentos_validados')->orWhere('documentos_validados', '<>', 1);
+                    })->count();
+                } elseif (in_array('status', $available)) {
                     $pendencia = (clone $baseQuery)->whereRaw("LOWER(status) NOT LIKE '%valid%'")->count();
                 }
+            }
+
+            // Compute pending-for-CPM count. Prefer explicit `status` column when available.
+            $pendenteConfirmacaoCpm = 0;
+            try {
+                if (in_array('status', $available)) {
+                    $pendenteConfirmacaoCpm = (clone $baseQuery)
+                        ->whereRaw("LOWER(status) LIKE '%aguard%'")
+                        ->whereRaw("LOWER(status) LIKE '%cpm%'")
+                        ->count();
+                } elseif (Schema::hasTable('ingresso_documentos')) {
+                    // count candidates where all documents are validated in ingresso_documentos
+                    // but candidate.documentos_validados is not set to 1 yet
+                    $sub = DB::table('ingresso_documentos')
+                        ->select('ingresso_candidato_id', DB::raw('SUM(validated) as validated_count'), DB::raw('COUNT(*) as total'))
+                        ->groupBy('ingresso_candidato_id');
+
+                    $qb = (clone $baseQuery)
+                        ->joinSub($sub, 'ds', function($join) {
+                            $join->on('ingresso_candidatos.id', '=', 'ds.ingresso_candidato_id');
+                        })
+                        ->whereRaw('ds.total > 0 AND ds.validated_count = ds.total');
+
+                    if (in_array('documentos_validados', $available)) {
+                        $qb->where(function($q){
+                            $q->whereNull('ingresso_candidatos.documentos_validados')->orWhere('ingresso_candidatos.documentos_validados', '<>', 1);
+                        });
+                    }
+
+                    $pendenteConfirmacaoCpm = $qb->count();
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Failed to compute pendente_confirmacao_cpm', ['exception' => $e->getMessage()]);
+                $pendenteConfirmacaoCpm = 0;
             }
         }
 
@@ -107,6 +188,7 @@ class IngressoController extends Controller
             'ingressados' => $ingressados,
             'pendencia_documentos' => $pendencia,
             'documentos_validados' => $docsValidated,
+            'pendente_confirmacao_cpm' => $pendenteConfirmacaoCpm ?? 0,
         ];
 
         // Build NTE breakdown by choosing an available grouping column
@@ -120,6 +202,39 @@ class IngressoController extends Controller
             $qb = DB::table($table)
                 ->select($groupCol . ' as nte', DB::raw('COUNT(*) as count'))
                 ->groupBy($groupCol);
+
+            // If current user is an NTE user, restrict the breakdown to their NTE
+            try {
+                $u = Auth::user();
+                if ($u && isset($u->profile_id) && $u->profile_id == 1 && isset($u->sector_id) && $u->sector_id == 7) {
+                    $userNte = $u->nte ?? null;
+                    if ($userNte) {
+                        $cols = Schema::hasTable($table) ? Schema::getColumnListing($table) : [];
+                        if (in_array('nte', $cols)) {
+                            $qb->where('nte', $userNte);
+                        } elseif (in_array('uee_code', $cols)) {
+                            $qb->where('uee_code', $userNte);
+                        } elseif (in_array('uee_name', $cols)) {
+                            $qb->where('uee_name', $userNte);
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Failed to scope NTE breakdown to user NTE', ['exception' => $e->getMessage()]);
+            }
+
+            // Restrict NTE breakdown to candidates that have been encaminhados
+            try {
+                if (Schema::hasTable('provimentos_encaminhados')) {
+                    $encQuery = DB::table('provimentos_encaminhados')
+                        ->select('ingresso_candidato_id')
+                        ->whereNotNull('ingresso_candidato_id')
+                        ->distinct();
+                    $qb->whereIn('id', $encQuery);
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Failed to apply encaminhados filter to NTE breakdown', ['exception' => $e->getMessage()]);
+            }
             // Try numeric order (1,2,3...) when column holds numeric codes, fallback to alphabetical
             $colSafe = str_replace('`', '', $groupCol);
             try {
@@ -130,6 +245,7 @@ class IngressoController extends Controller
             $nte_breakdown = $rows->map(function($r){ return ['nte' => $r->nte ?? '—', 'count' => intval($r->count)]; })->toArray();
         }
 
+        Log::info('ingresso.dashboard stats', $stats);
         return view('ingresso.dashboard', ['stats' => $stats, 'nte_breakdown' => $nte_breakdown]);
     }
 
@@ -164,7 +280,7 @@ class IngressoController extends Controller
 
             // filtered
             // ensure we explicitly select critical columns but only those that exist in the table
-            $desired = ['id','num_inscricao','name','classificacao_ampla','classificacao_quota_pne','classificacao_racial','nota','sei_number','status','documentos_validados'];
+            $desired = ['id','num_inscricao','name','cpf','nte','classificacao_ampla','classificacao_quota_pne','classificacao_racial','nota','sei_number','status','documentos_validados'];
             $available = Schema::hasTable('ingresso_candidatos') ? Schema::getColumnListing('ingresso_candidatos') : [];
             $selectCols = array_values(array_intersect($desired, $available));
             if (empty($selectCols)) {
@@ -233,6 +349,20 @@ class IngressoController extends Controller
                 });
             }
 
+            // Restrict to candidates that have been encaminhados (exist in provimentos_encaminhados)
+            try {
+                if (Schema::hasTable('provimentos_encaminhados')) {
+                    $encQuery = DB::table('provimentos_encaminhados')
+                        ->select('ingresso_candidato_id')
+                        ->whereNotNull('ingresso_candidato_id')
+                        ->distinct();
+                    $filteredQuery->whereIn('id', $encQuery);
+                }
+            } catch (\Throwable $e) {
+                // If something goes wrong, do not break the listing; log and continue
+                Log::warning('Failed to apply encaminhados filter in ingresso data endpoint', ['exception' => $e->getMessage()]);
+            }
+
             $recordsFiltered = $filteredQuery->count();
 
             // ordering
@@ -271,25 +401,44 @@ class IngressoController extends Controller
                         $total = intval($summary->total);
                         $validated = intval($summary->validated_count);
                         if ($total > 0 && $validated === $total) {
-                            // all documents uploaded/checked — prefer explicit candidate.status if set
+                            // all documents uploaded/checked — prefer explicit candidate.status if it indicates final validation
                             if (isset($r->status) && $r->status) {
-                                // Use whatever status text is persisted (e.g., 'Ingresso Validado')
-                                $status = $r->status;
-                            } elseif (isset($r->documentos_validados) && ($r->documentos_validados == 1 || $r->documentos_validados === true)) {
-                                $status = 'Documentos Validados';
+                                $statusTextLower = strtolower($r->status);
+                                // treat explicit 'valid' statuses as final
+                                if (strpos($statusTextLower, 'valid') !== false || strpos($statusTextLower, 'ingresso validado') !== false) {
+                                    $status = $r->status;
+                                } else {
+                                    // documents validated by NTE -> awaiting CPM validation
+                                    $status = 'Aguardando Confirmação pela CPM';
+                                }
                             } else {
-                                // fallback default when everything validated but no candidate-level status
-                                $status = 'Pendente validação pela CPM';
+                                // documents validated by NTE -> awaiting CPM validation
+                                $status = 'Aguardando Confirmação pela CPM';
                             }
                         } else {
-                            $status = 'Documentos Pendentes';
+                            // Not all documents validated. Prefer explicit candidate.status when it signals awaiting CPM.
+                            if (isset($r->status) && is_string($r->status) && stripos($r->status, 'aguard') !== false) {
+                                $status = $r->status;
+                            } else {
+                                $status = 'Documentos Pendentes';
+                            }
                         }
                     } else {
                         // fallback to candidate fields if present
                         if (isset($r->status) && $r->status) {
-                            $status = $r->status;
+                            $statusTextLower = strtolower($r->status);
+                            if (strpos($statusTextLower, 'valid') !== false || strpos($statusTextLower, 'ingresso validado') !== false) {
+                                $status = $r->status;
+                            } else {
+                                // if documentos_validados flag is set (e.g., validated by NTE), mark as pending for CPM
+                                    if (isset($r->documentos_validados) && ($r->documentos_validados == 1 || $r->documentos_validados === true)) {
+                                    $status = 'Aguardando Confirmação pela CPM';
+                                } else {
+                                    $status = 'Documentos Pendentes';
+                                }
+                            }
                         } elseif (isset($r->documentos_validados) && ($r->documentos_validados == 1 || $r->documentos_validados === true)) {
-                            $status = 'Documentos Validados';
+                            $status = 'Aguardando Confirmação pela CPM';
                         } else {
                             $status = 'Documentos Pendentes';
                         }
@@ -321,6 +470,66 @@ class IngressoController extends Controller
             Log::error('IngressoController::data error', ['exception' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return response()->json(['message' => 'Server error'], 500);
         }
+    }
+
+    /**
+     * Search ingresso_candidatos by CPF using partial match (contains).
+     * Returns first matching candidate (most recent) as JSON.
+     */
+    public function searchByCpf(Request $request)
+    {
+        // Allow any authenticated user to perform CPF lookup from the provimento form.
+        if (! Auth::check()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $q = (string) ($request->input('cpf') ?? '');
+        $q = preg_replace('/[^0-9]/', '', $q); // normalize digits only
+        if ($q === '') {
+            return response()->json(['success' => false, 'message' => 'CPF vazio'], 422);
+        }
+
+        $table = 'ingresso_candidatos';
+        if (!Schema::hasTable($table)) {
+            return response()->json(['success' => false, 'message' => 'Tabela não encontrada'], 500);
+        }
+
+        // perform partial match on cpf column (contains)
+        $query = DB::table($table)->where('cpf', 'like', "%{$q}%");
+
+        // If current user is NTE, scope to their NTE when possible (same logic as other methods)
+        try {
+            $u = Auth::user();
+            if ($u && isset($u->profile_id) && $u->profile_id == 1 && isset($u->sector_id) && $u->sector_id == 7) {
+                $userNte = $u->nte ?? null;
+                if ($userNte) {
+                    $cols = Schema::getColumnListing($table);
+                    if (in_array('nte', $cols)) {
+                        $query->where('nte', $userNte);
+                    } elseif (in_array('uee_code', $cols)) {
+                        $query->where('uee_code', $userNte);
+                    } elseif (in_array('uee_name', $cols)) {
+                        $query->where('uee_name', $userNte);
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // ignore
+        }
+
+        $candidate = $query->orderBy('id', 'desc')->first();
+
+        if (! $candidate) {
+            return response()->json(['success' => false, 'message' => 'Não encontrado'], 404);
+        }
+
+        return response()->json(['success' => true, 'candidate' => [
+            'id' => $candidate->id ?? null,
+            'name' => $candidate->name ?? ($candidate->nome ?? ''),
+            'num_inscricao' => $candidate->num_inscricao ?? null,
+            'nte' => $candidate->nte ?? ($candidate->uee_code ?? $candidate->uee_name ?? null),
+            'cpf' => $candidate->cpf ?? null,
+        ]]);
     }
 
     /**
@@ -500,6 +709,19 @@ class IngressoController extends Controller
             }
         } catch (\Throwable $e) {
             // ignore and continue without scoping
+        }
+
+        // Restrict exported rows to candidates that have been encaminhados
+        try {
+            if (Schema::hasTable('provimentos_encaminhados')) {
+                $encQuery = DB::table('provimentos_encaminhados')
+                    ->select('ingresso_candidato_id')
+                    ->whereNotNull('ingresso_candidato_id')
+                    ->distinct();
+                $query->whereIn('id', $encQuery);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to apply encaminhados filter in ingresso exportCsv', ['exception' => $e->getMessage()]);
         }
 
         $rows = $query->orderBy('num_inscricao')->get();
@@ -755,6 +977,54 @@ class IngressoController extends Controller
             $encaminhamentos = collect();
         }
 
+            // If there are no ingresso_encaminhamentos, try to present provimentos_encaminhados
+            // and map commonly used fields so the view can render school, discipline and day counts.
+            try {
+                if ((is_null($encaminhamentos) || $encaminhamentos->isEmpty()) && Schema::hasTable('provimentos_encaminhados')) {
+                    $candidateId = $candidate['id'] ?? null;
+                    if ($candidateId) {
+                        // Join with `uees` to obtain unidade_escolar, nte and municipio when provimentos
+                        $provRows = DB::table('provimentos_encaminhados')
+                            ->leftJoin('uees', 'provimentos_encaminhados.uee_id', '=', 'uees.id')
+                            ->where('provimentos_encaminhados.ingresso_candidato_id', $candidateId)
+                            ->select('provimentos_encaminhados.*',
+                                'uees.unidade_escolar as uee_name',
+                                'uees.nte as uee_nte',
+                                'uees.municipio as uee_municipio')
+                            ->orderBy('provimentos_encaminhados.created_at', 'desc')
+                            ->get();
+
+                        if ($provRows && count($provRows)) {
+                            $mapped = collect();
+                            foreach ($provRows as $p) {
+                                $m = (int) ($p->provimento_matutino ?? $p->matutino ?? 0);
+                                $v = (int) ($p->provimento_vespertino ?? $p->vespertino ?? 0);
+                                $n = (int) ($p->provimento_noturno ?? $p->noturno ?? 0);
+                                $row = new \stdClass();
+                                $row->id = $p->id ?? ($p->provimento_id ?? null);
+                                $row->created_at = $p->created_at ?? ($p->data_encaminhamento ?? null);
+                                $row->uee_name = $p->unidade_escolar ?? ($p->uee_name ?? ($p->unidade ?? null));
+                                $row->motivo = $p->motivo ?? ($p->obs ?? null);
+                                $row->disciplina_name = $p->disciplina ?? ($p->disciplina_name ?? ($p->disciplina_code ?? null));
+                                $row->quant_matutino = $m;
+                                $row->quant_vespertino = $v;
+                                $row->quant_noturno = $n;
+                                $row->total = ($p->total ?? ($m + $v + $n));
+                                $row->created_by_name = $p->usuario ?? ($p->created_by ?? null);
+                                // prefer joined uee values when available
+                                $row->uee_name = $p->uee_name ?? $row->uee_name ?? ($p->unidade_escolar ?? null);
+                                $row->nte = $p->uee_nte ?? ($p->nte ?? null);
+                                $row->municipio = $p->uee_municipio ?? ($p->municipio ?? null);
+                                $mapped->push($row);
+                            }
+                            $encaminhamentos = $mapped;
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning('provimentos_encaminhados read failed', ['exception' => $e->getMessage()]);
+            }
+
         // Example: allow the view to receive an explicit ordered list of columns
         // to display and custom column labels. Controllers can customize this
         // per-request when needed. If not provided, the view falls back to
@@ -926,6 +1196,106 @@ class IngressoController extends Controller
     }
 
     /**
+     * CPM: remove final ingresso validation and revert to 'Documentos Validados'
+     */
+    public function unvalidateIngresso(Request $request, $identifier)
+    {
+        if (! $this->authorizeUser()) {
+            return response()->json(['success' => false, 'message' => 'Ação não autorizada'], 403);
+        }
+
+        // only CPM (sector 2 && profile_id 1) may perform final unvalidation
+        $user = optional(Auth::user());
+        if (!($user && isset($user->sector_id) && isset($user->profile_id) && $user->sector_id == 2 && $user->profile_id == 1)) {
+            return response()->json(['success' => false, 'message' => 'Ação permitida apenas para CPM'], 403);
+        }
+
+        try {
+            $candidateId = DB::table('ingresso_candidatos')->where('id', $identifier)->orWhere('num_inscricao', $identifier)->value('id');
+            if (! $candidateId) {
+                return response()->json(['success' => false, 'message' => 'Candidato não encontrado'], 404);
+            }
+
+            $updates = [];
+            // keep documentos_validados = 1 (documents remain validated)
+            if (Schema::hasColumn('ingresso_candidatos', 'documentos_validados')) {
+                $updates['documentos_validados'] = 1;
+            }
+            if (Schema::hasColumn('ingresso_candidatos', 'status')) {
+                $updates['status'] = 'Documentos Validados';
+            }
+            // clear the final validation metadata
+            if (Schema::hasColumn('ingresso_candidatos', 'status_validated_by')) {
+                $updates['status_validated_by'] = null;
+            }
+            if (Schema::hasColumn('ingresso_candidatos', 'status_validated_at')) {
+                $updates['status_validated_at'] = null;
+            }
+
+            if (!empty($updates)) {
+                DB::table('ingresso_candidatos')->where('id', $candidateId)->update($updates);
+            }
+
+            Log::info('Ingresso unvalidation by CPM', ['user' => optional(Auth::user())->id, 'candidate' => $candidateId]);
+
+            $updated = DB::table('ingresso_candidatos')->where('id', $candidateId)->first();
+            return response()->json(['success' => true, 'message' => 'Validação do ingresso removida.', 'candidate' => $updated]);
+        } catch (\Throwable $e) {
+            Log::error('Failed to unvalidate ingresso', ['exception' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Erro ao remover validação do ingresso'], 500);
+        }
+    }
+
+    /**
+     * CPM confirms documents -> mark candidate as Documentos Validados
+     */
+    public function confirmDocumentosCpm(Request $request, $identifier)
+    {
+        if (! $this->authorizeUser()) {
+            return response()->json(['success' => false, 'message' => 'Ação não autorizada'], 403);
+        }
+
+        // only CPM (sector 2 && profile_id 1) may perform this action
+        $user = optional(Auth::user());
+        if (!($user && isset($user->sector_id) && isset($user->profile_id) && $user->sector_id == 2 && $user->profile_id == 1)) {
+            return response()->json(['success' => false, 'message' => 'Ação permitida apenas para CPM'], 403);
+        }
+
+        try {
+            $candidateId = DB::table('ingresso_candidatos')->where('id', $identifier)->orWhere('num_inscricao', $identifier)->value('id');
+            if (! $candidateId) {
+                return response()->json(['success' => false, 'message' => 'Candidato não encontrado'], 404);
+            }
+
+            $updates = [];
+            if (Schema::hasColumn('ingresso_candidatos', 'documentos_validados')) {
+                $updates['documentos_validados'] = 1;
+            }
+            if (Schema::hasColumn('ingresso_candidatos', 'status')) {
+                $updates['status'] = 'Documentos Validados';
+            }
+            if (Schema::hasColumn('ingresso_candidatos', 'status_validated_by')) {
+                $updates['status_validated_by'] = optional(Auth::user())->id;
+            }
+            if (Schema::hasColumn('ingresso_candidatos', 'status_validated_at')) {
+                $updates['status_validated_at'] = now();
+            }
+
+            if (!empty($updates)) {
+                DB::table('ingresso_candidatos')->where('id', $candidateId)->update($updates);
+            }
+
+            Log::info('CPM confirmed documentos for candidate', ['user' => optional(Auth::user())->id, 'candidate' => $candidateId]);
+
+            $updated = DB::table('ingresso_candidatos')->where('id', $candidateId)->first();
+            return response()->json(['success' => true, 'message' => 'Documentos validados (CPM).', 'candidate' => $updated]);
+        } catch (\Throwable $e) {
+            Log::error('confirmDocumentosCpm error', ['exception' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Erro ao confirmar documentos'], 500);
+        }
+    }
+
+    /**
      * Debug endpoint: return the candidate DB row and recent encaminhamentos.
      * Accessible only to authorized users (NTE/CPM profile in sectors 7 or 2).
      */
@@ -973,8 +1343,18 @@ class IngressoController extends Controller
 
         $encs = collect();
         try {
-            if (Schema::hasTable('ingresso_encaminhamentos') && ($candidate['id'] ?? null)) {
-                $encs = DB::table('ingresso_encaminhamentos')->where('ingresso_candidato_id', $candidate['id'])->orderBy('created_at','desc')->get();
+            // prefer provimentos_encaminhados as source of truth if available
+            if (Schema::hasTable('provimentos_encaminhados') && ($candidate['id'] ?? null)) {
+                // Use Eloquent so relationship `uee` is available in the view
+                $encs = ProvimentosEncaminhado::with('uee')
+                    ->where('ingresso_candidato_id', $candidate['id'])
+                    ->orderBy('created_at','desc')
+                    ->get();
+            } elseif (Schema::hasTable('ingresso_encaminhamentos') && ($candidate['id'] ?? null)) {
+                $encs = DB::table('ingresso_encaminhamentos')
+                    ->where('ingresso_candidato_id', $candidate['id'])
+                    ->orderBy('created_at','desc')
+                    ->get();
             }
         } catch (\Throwable $e) {
             Log::warning('oficio read failed', ['exception' => $e->getMessage()]);
@@ -989,11 +1369,22 @@ class IngressoController extends Controller
             $ueeCode = $candidate['cod_unidade'] ?? $candidate['uee_code'] ?? null;
             if (empty($ueeName) && isset($encs) && is_iterable($encs) && count($encs)) {
                 $first = $encs->first();
-                $ueeName = $first->uee_name ?? $first->uee_code ?? $ueeName;
+                if (is_object($first)) {
+                    // prefer joined/related UEE model if available
+                    if (isset($first->uee) && is_object($first->uee)) {
+                        $ueeName = $ueeName ?? ($first->uee->unidade_escolar ?? $first->uee->uee_name ?? null);
+                    }
+                    $ueeName = $ueeName ?? ($first->uee_name ?? $first->uee ?? null);
+                }
             }
             if (empty($ueeCode) && isset($encs) && is_iterable($encs) && count($encs)) {
                 $first = $encs->first();
-                $ueeCode = $first->uee_code ?? $first->uee_code ?? $ueeCode;
+                if (is_object($first)) {
+                    if (isset($first->uee) && is_object($first->uee)) {
+                        $ueeCode = $ueeCode ?? ($first->uee->cod_unidade ?? $first->uee->uee_code ?? null);
+                    }
+                    $ueeCode = $ueeCode ?? ($first->uee_code ?? $first->cod_unidade ?? null);
+                }
             }
             $candidate['uee_name'] = $ueeName;
             $candidate['uee_code'] = $ueeCode;
@@ -1077,6 +1468,20 @@ class IngressoController extends Controller
                 return response()->json(['success' => false, 'message' => 'Candidato não encontrado'], 404);
             }
 
+            // Debugging: log incoming payload and user/candidate context
+            try {
+                Log::info('ingresso_documentos: storeDocumentChecklist request', [
+                    'candidate_id' => $candidateId,
+                    'payload_count' => is_array($payload) ? count($payload) : 0,
+                    'payload_sample' => is_array($payload) ? array_slice($payload, 0, 5) : null,
+                    'user_id' => optional(Auth::user())->id,
+                    'user_sector' => optional(Auth::user())->sector_id,
+                    'user_profile' => optional(Auth::user())->profile_id,
+                ]);
+            } catch (\Throwable $e) {
+                // ignore logging failures
+            }
+
             // Prevent NTE users from modifying documents if already validated by CPM
             try {
                 $candidateRecord = DB::table('ingresso_candidatos')->where('id', $candidateId)->first();
@@ -1096,6 +1501,21 @@ class IngressoController extends Controller
                 if (!isset($item['key'])) continue;
                 $key = $item['key'];
                 $validated = !empty($item['validated']) ? 1 : 0;
+
+                // If the checkbox was unchecked (validated == 0), remove any existing record.
+                    if ($validated === 0) {
+                    try {
+                        $deleted = IngressoDocumento::where('ingresso_candidato_id', $candidateId)
+                            ->where('documento_key', $key)
+                            ->delete();
+                        try { Log::info('ingresso_documentos: doc deleted', ['candidate_id' => $candidateId, 'key' => $key, 'deleted' => $deleted]); } catch (\Throwable $e) {}
+                    } catch (\Throwable $e) {
+                        try { Log::error('ingresso_documentos: failed to delete doc', ['candidate_id' => $candidateId, 'key' => $key, 'exception' => $e->getMessage()]); } catch (\Throwable $ee) {}
+                    }
+                    continue;
+                }
+
+                // For checked items, create/update the record
                 $doc = IngressoDocumento::firstOrNew([
                     'ingresso_candidato_id' => $candidateId,
                     'documento_key' => $key,
@@ -1110,6 +1530,7 @@ class IngressoController extends Controller
                     $doc->validated_at = null;
                 }
                 $doc->save();
+                try { Log::info('ingresso_documentos: doc saved', ['candidate_id' => $candidateId, 'key' => $key, 'id' => $doc->id]); } catch (\Throwable $e) {}
             }
 
             // Only update the candidate-level status when the request explicitly indicates
@@ -1118,14 +1539,30 @@ class IngressoController extends Controller
             try {
                 $isConfirm = boolval($request->input('confirm', false));
                 $isUnvalidate = boolval($request->input('unvalidate', false));
+                $debugUpdate = null;
+                $debugAffected = null;
 
-                if ($isConfirm && Schema::hasTable('ingresso_documentos')) {
+                if (( $isConfirm || $isUnvalidate ) && Schema::hasTable('ingresso_documentos')) {
                     $total = IngressoDocumento::where('ingresso_candidato_id', $candidateId)->count();
                     $notValidated = IngressoDocumento::where('ingresso_candidato_id', $candidateId)->where('validated', 0)->count();
 
                     // determine if current user is CPM (sector_id=2 && profile_id=1)
                     $user = optional(Auth::user());
                     $isCpmUser = ($user && isset($user->sector_id) && isset($user->profile_id) && $user->sector_id == 2 && $user->profile_id == 1);
+
+                    // Debugging: log totals and detected role and available columns
+                    try {
+                        $availableCols = Schema::hasTable('ingresso_candidatos') ? Schema::getColumnListing('ingresso_candidatos') : [];
+                        Log::info('ingresso_documentos: confirm stats', [
+                            'candidate_id' => $candidateId,
+                            'total_docs' => $total,
+                            'not_validated' => $notValidated,
+                            'is_cpm_user' => $isCpmUser,
+                            'available_columns' => $availableCols,
+                        ]);
+                    } catch (\Throwable $e) {
+                        // ignore logging failures
+                    }
 
                     // Build a single update array to always write status when appropriate
                     $update = [];
@@ -1143,9 +1580,9 @@ class IngressoController extends Controller
                             $update['status_validated_at'] = null;
                         }
                     } else {
-                        if ($total > 0 && $notValidated === 0) {
-                            if ($isCpmUser) {
-                                // CPM confirmation -> mark fully validated
+                        if ($isCpmUser) {
+                            // CPM user: only finalize when all documents validated
+                            if ($total > 0 && $notValidated === 0) {
                                 if (Schema::hasColumn('ingresso_candidatos', 'status')) {
                                     $update['status'] = 'Documentos Validados';
                                 }
@@ -1159,25 +1596,35 @@ class IngressoController extends Controller
                                     $update['status_validated_at'] = now();
                                 }
                             } else {
-                                // Non-CPM (e.g., NTE) confirms -> set pending for CPM
-                                if (Schema::hasColumn('ingresso_candidatos', 'status')) {
-                                    $update['status'] = 'Pendente validação pela CPM';
+                                // CPM attempted confirm but not all docs validated: keep as pending/documentos pendentes
+                                if (Schema::hasColumn('ingresso_candidatos', 'documentos_validados')) {
+                                    $update['documentos_validados'] = 0;
                                 }
-                                // documentos_validados is intentionally left unset until CPM confirms
+                                if (Schema::hasColumn('ingresso_candidatos', 'status')) {
+                                    $update['status'] = 'Documentos Pendentes';
+                                }
                             }
                         } else {
-                            // Not all validated: ensure flag cleared and set pending status
-                            if (Schema::hasColumn('ingresso_candidatos', 'documentos_validados')) {
-                                $update['documentos_validados'] = 0;
-                            }
+                            // Non-CPM (e.g., NTE) confirms selected documents -> mark candidate as awaiting CPM confirmation
                             if (Schema::hasColumn('ingresso_candidatos', 'status')) {
-                                $update['status'] = 'Documentos Pendentes';
+                                $update['status'] = 'Aguardando Confirmação pela CPM';
+                            }
+                            // documentos_validados remains unset until CPM confirms
+                            if (Schema::hasColumn('ingresso_candidatos', 'status_validated_by')) {
+                                $update['status_validated_by'] = optional(Auth::user())->id;
+                            }
+                            if (Schema::hasColumn('ingresso_candidatos', 'status_validated_at')) {
+                                $update['status_validated_at'] = now();
                             }
                         }
                     }
 
                     if (!empty($update)) {
-                        DB::table('ingresso_candidatos')->where('id', $candidateId)->update($update);
+                        Log::info('ingresso_documentos: applying status update', ['candidate_id' => $candidateId, 'update' => $update, 'is_cpm' => $isCpmUser ?? null]);
+                        $affected = DB::table('ingresso_candidatos')->where('id', $candidateId)->update($update);
+                        Log::info('ingresso_documentos: status update applied', ['candidate_id' => $candidateId, 'affected_rows' => $affected]);
+                        $debugUpdate = $update;
+                        $debugAffected = isset($affected) ? $affected : null;
                     }
                 }
             } catch (\Throwable $e) {
@@ -1194,16 +1641,35 @@ class IngressoController extends Controller
                     $user = optional(Auth::user());
                     $isCpmUser = ($user && isset($user->sector_id) && isset($user->profile_id) && $user->sector_id == 2 && $user->profile_id == 1);
 
-                    $responsePayload['finalized'] = ($isCpmUser && $total > 0 && $notValidated === 0) ? true : false;
-                    if ($responsePayload['finalized']) {
-                        $responsePayload['status'] = 'Documentos Validados';
+                    if ($isCpmUser) {
+                        $responsePayload['finalized'] = ($total > 0 && $notValidated === 0) ? true : false;
+                        if ($responsePayload['finalized']) {
+                            $responsePayload['status'] = 'Documentos Validados';
+                        } else {
+                            $responsePayload['status'] = ($total > 0 && $notValidated === 0) ? 'Aguardando Confirmação pela CPM' : 'Documentos Pendentes';
+                        }
                     } else {
-                        $responsePayload['status'] = ($total > 0 && $notValidated === 0) ? 'Pendente validação pela CPM' : 'Documentos Pendentes';
+                        // Non-CPM confirmations result in awaiting CPM regardless of all docs validated
+                        $responsePayload['finalized'] = false;
+                        $responsePayload['status'] = 'Aguardando Confirmação pela CPM';
                     }
                 }
             } catch (\Throwable $e) {
                 // ignore - response will at least contain success
             }
+
+            // include debug info if available (helps diagnose why DB update may not persist)
+            try {
+                if (isset($debugUpdate)) $responsePayload['debug_update'] = $debugUpdate;
+                if (isset($debugAffected)) $responsePayload['debug_affected_rows'] = $debugAffected;
+                // return the current candidate DB row so we can compare persisted state
+                try {
+                    $current = DB::table('ingresso_candidatos')->where('id', $candidateId)->first();
+                    if ($current) $responsePayload['candidate'] = $current;
+                } catch (\Throwable $e) {
+                    // ignore candidate fetch failures
+                }
+            } catch (\Throwable $e) {}
 
             return response()->json($responsePayload);
         } catch (\Throwable $e) {

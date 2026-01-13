@@ -235,7 +235,7 @@ a {
 .select2-container--default
     .select2-selection--single
     .select2-selection__rendered {
-    line-height: 10px !important;
+    line-height: normal !important;
 }
 
 .select2-container--default
@@ -247,7 +247,8 @@ a {
 .select2-selection__rendered {
     display: flex !important;
     align-items: center !important;
-    height: 25px !important;
+    height: auto !important;
+    line-height: normal !important;
     /* margin-top: -9px !important; */
 }
 

@@ -114,6 +114,8 @@
                     <tr>
                         <th scope="col">Nº DA INSCRIÇÃO</th>
                         <th scope="col">NOME</th>
+                        <th scope="col">CPF</th>
+                        <th scope="col">NTE</th>
                         <th scope="col">CLASSIFICAÇÃO (AMPLA)</th>
                         <th scope="col">CLASSIFICAÇÃO (QUOTA PNE)</th>
                         <th scope="col">CLASSIFICAÇÃO RACIAL</th>
@@ -137,7 +139,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize DataTable with server-side processing for two columns only
         if (window.jQuery && $.fn.dataTable) {
-            const dtCols = [
+                const dtCols = [
                 {
                     data: 'num_inscricao', name: 'num_inscricao',
                     render: function(data, type, row) {
@@ -148,6 +150,21 @@
                     data: 'name', name: 'name',
                     render: function(data, type, row) {
                         return (data === null || data === undefined || data === '') ? '-' : data;
+                    }
+                },
+                {
+                    data: 'cpf', name: 'cpf',
+                    render: function(data, type, row) {
+                        return (data === null || data === undefined || data === '') ? '-' : data;
+                    }
+                },
+                {
+                    data: 'nte', name: 'nte',
+                    render: function(data, type, row) {
+                        // render with zero-pad for single-digit NTEs
+                        if (data === null || data === undefined || data === '') return '-';
+                        var n = parseInt(data);
+                        return isNaN(n) ? String(data) : (n > 9 ? String(n) : ('0' + String(n)));
                     }
                 },
                 {
@@ -214,10 +231,12 @@
                     searchable: false,
                     render: function(data, type, row) {
                         var id = row.id || row.num_inscricao || '';
-                        var validated = false;
+                        // Only allow oficio when status is explicitly 'Ingresso Validado' (case-insensitive exact match)
                         var statusText = (row && row.status) ? String(row.status) : '';
-                        if (statusText && statusText.toLowerCase().indexOf('valid') !== -1) validated = true;
-                        if (!validated && (row && (row.documentos_validados === 1 || row.documentos_validados === true || String(row.documentos_validados) === '1'))) validated = true;
+                        var validated = false;
+                        if (statusText && statusText.toLowerCase().trim() === 'ingresso validado') {
+                            validated = true;
+                        }
                         if (!validated) return '-';
                         var url = ingressoBaseUrl + '/' + encodeURIComponent(id) + '/oficio' + '?print=1';
                         return '<a href="'+url+'" target="_blank" title="Abrir Ofício" style="display:inline-flex; align-items:center; justify-content:center;">'

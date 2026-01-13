@@ -326,8 +326,19 @@
     </section>
     <section class="unidade_escolar">
         <p>
-            UNIDADE ESCOLAR: {{ $candidate['unidade_escolar'] ?? $candidate['uee_name'] ?? '-' }}<br>
-            CÓDIGO: {{ $candidate['cod_unidade'] ?? $candidate['uee_code'] ?? '-' }}
+            @php
+                $unidadeName = $candidate['unidade_escolar'] ?? $candidate['uee_name'] ?? null;
+                $unidadeCode = $candidate['cod_unidade'] ?? $candidate['uee_code'] ?? null;
+                if ((empty($unidadeName) || empty($unidadeCode)) && isset($encaminhamentos) && count($encaminhamentos)) {
+                    $firstEnc = is_array($encaminhamentos) ? ($encaminhamentos[0] ?? null) : ($encaminhamentos->first() ?? null);
+                    if ($firstEnc) {
+                        $unidadeName = $unidadeName ?? ($firstEnc->uee_name ?? $firstEnc->uee ?? null);
+                        $unidadeCode = $unidadeCode ?? ($firstEnc->uee_code ?? $firstEnc->cod_unidade ?? null);
+                    }
+                }
+            @endphp
+            UNIDADE ESCOLAR: {{ $unidadeName ?? '-' }}<br>
+            CÓDIGO: {{ $unidadeCode ?? '-' }}
         </p>
     </section>
     <main>
@@ -365,15 +376,16 @@
                         @if (count($encaminhamentos))
                             @foreach ($encaminhamentos as $enc)
                                 @php
-                                    $mat = intval($enc->quant_matutino ?? 0);
-                                    $vesp = intval($enc->quant_vespertino ?? 0);
-                                    $not = intval($enc->quant_noturno ?? 0);
+                                    // provimentos_encaminhados stores disciplina and shift quantities in these fields
+                                    $mat = intval($enc->matutino ?? $enc->quant_matutino ?? 0);
+                                    $vesp = intval($enc->vespertino ?? $enc->quant_vespertino ?? 0);
+                                    $not = intval($enc->noturno ?? $enc->quant_noturno ?? 0);
 
                                     $mat_total += $mat;
                                     $vesp_total += $vesp;
                                     $not_total += $not;
 
-                                    $disc = $enc->disciplina_name ?? $enc->disciplina_code ?? '-';
+                                    $disc = $enc->disciplina ?? ($enc->disciplina_name ?? ($enc->disciplina_code ?? '-'));
                                 @endphp
                                 <tr>
                                     <td class="disciplina" title="{{ $disc }}">{{ \Illuminate\Support\Str::limit($disc, 100) }}</td>
@@ -404,7 +416,21 @@
     <section class="yoursSincerely">
         @php
             $motivos = collect($encaminhamentos ?? [])->map(function($e) {
-                return $e->motivo ?? $e->motivo_name ?? $e->motivo_encaminhamento ?? null;
+                // prefer 'tipo_carencia' column as requested, fallback to older motivo fields
+                $raw = $e->tipo_carencia ?? $e->tipo_carencia_name ?? $e->motivo ?? $e->motivo_name ?? $e->motivo_encaminhamento ?? null;
+                if (empty($raw)) {
+                    return null;
+                }
+                $norm = strtolower(trim((string) $raw));
+                $norm = str_replace([' ', '-'], ['_', '_'], $norm);
+
+                if ($norm === 'vaga_real') {
+                    return 'Vaga Real';
+                }
+                if ($norm === 'vaga_temporaria' || $norm === 'vaga_temporária') {
+                    return 'Vaga Temporária';
+                }
+                return 'Substituição de REDA';
             })->filter()->unique()->values()->all();
         @endphp
         <p>MOTIVO: {{ count($motivos) ? implode('; ', $motivos) : '-' }}</p>

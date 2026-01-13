@@ -133,7 +133,7 @@
     }
 </style>
 <div class="bg-primary card text-white card_title">
-    <h4 class=" title_show_carencias">Encaminhamento de servidores - CONCURSADOS 2025</h4>
+    <h4 class=" title_show_carencias">Encaminhamento de servidores</h4>
 </div>
 <div id="aposentadoria_info" class="d-flex justify-content-between mb-4">
     
@@ -351,101 +351,121 @@
             </tr>
         </thead>
         <tbody>
-            @foreach ($provimentos_encaminhados as $provimentos_encaminhado)
-            <tr>
-                @if ($provimentos_encaminhado->servidorEncaminhado->nte > 9)
-                <td class="text-center">{{ $provimentos_encaminhado->servidorEncaminhado->nte }}</td>
-                @else
-                <td class="text-center">0{{ $provimentos_encaminhado->servidorEncaminhado->nte }}</td>
-                @endif
-                <td class="text-center">{{ $provimentos_encaminhado->servidorEncaminhado->nome }}</td>
-                <td class="text-center">{{ $provimentos_encaminhado->servidorEncaminhado->cpf }}</td>
-                @if ($provimentos_encaminhado->uee->nte > 9)
-                <td class="text-center">{{ $provimentos_encaminhado->uee->nte }}</td>
-                @else
-                <td class="text-center">0{{ $provimentos_encaminhado->uee->nte }}</td>
-                @endif
-                <td class="text-center">{{ $provimentos_encaminhado->uee->municipio }}</td>
-                <td class="text-center">{{ $provimentos_encaminhado->uee->cod_unidade }}</td>
-                <td class="text-center">{{ $provimentos_encaminhado->uee->unidade_escolar }}</td>
-                @if ($provimentos_encaminhado->pch === "OK")
-                @if (($provimentos_encaminhado->server_1_situation != 2) && ($provimentos_encaminhado->server_2_situation != 2))
-                <td class="text-center text-success">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-check">
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                        <path d="M5 12l5 5l10 -10" />
-                    </svg>
-                </td>
-                @else
-                <td class="text-center text-danger">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-alert-hexagon">
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                        <path d="M19.875 6.27c.7 .398 1.13 1.143 1.125 1.948v7.284c0 .809 -.443 1.555 -1.158 1.948l-6.75 4.27a2.269 2.269 0 0 1 -2.184 0l-6.75 -4.27a2.225 2.225 0 0 1 -1.158 -1.948v-7.285c0 -.809 .443 -1.554 1.158 -1.947l6.75 -3.98a2.33 2.33 0 0 1 2.25 0l6.75 3.98h-.033z" />
-                        <path d="M12 8v4" />
-                        <path d="M12 16h.01" />
-                    </svg>
-                </td>
-                @endif
-                @elseif (($provimentos_encaminhado->server_1_situation == 2) || ($provimentos_encaminhado->server_2_situation == 2))
-                @if ($provimentos_encaminhado->inconsistencia === "OK")
-                <td class="text-center text-success">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-alert-hexagon">
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                        <path d="M19.875 6.27c.7 .398 1.13 1.143 1.125 1.948v7.284c0 .809 -.443 1.555 -1.158 1.948l-6.75 4.27a2.269 2.269 0 0 1 -2.184 0l-6.75 -4.27a2.225 2.225 0 0 1 -1.158 -1.948v-7.285c0 -.809 .443 -1.554 1.158 -1.947l6.75 -3.98a2.33 2.33 0 0 1 2.25 0l6.75 3.98h-.033z" />
-                        <path d="M12 8v4" />
-                        <path d="M12 16h.01" />
-                    </svg>
-                </td>
-                @else
-                <td class="text-center text-danger">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-alert-hexagon">
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                        <path d="M19.875 6.27c.7 .398 1.13 1.143 1.125 1.948v7.284c0 .809 -.443 1.555 -1.158 1.948l-6.75 4.27a2.269 2.269 0 0 1 -2.184 0l-6.75 -4.27a2.225 2.225 0 0 1 -1.158 -1.948v-7.285c0 -.809 .443 -1.554 1.158 -1.947l6.75 -3.98a2.33 2.33 0 0 1 2.25 0l6.75 3.98h-.033z" />
-                        <path d="M12 8v4" />
-                        <path d="M12 16h.01" />
-                    </svg>
-                </td>
-                @endif
-                @else
-                <td class="">
-                </td>
-                @endif
+            @php
+                $groups = $provimentos_encaminhados->groupBy('ingresso_candidato_id');
+            @endphp
+            @foreach ($groups as $ingressoId => $group)
                 @php
-                $dataEncaminhamento = \Carbon\Carbon::parse($provimentos_encaminhado->data_encaminhamento);
-                $diferencaDias = $dataEncaminhamento->diffInDays(\Carbon\Carbon::now());
+                    $first = $group->first();
+                    $srv = $first->servidorEncaminhado;
+                    $srvNte = $srv->nte ?? $srv->uee_code ?? $srv->uee_name ?? '';
+                    $srvName = $srv->name ?? $srv->nome ?? '';
+                    $srvCpf = $srv->cpf ?? '';
+                    $disciplines = $group->pluck('disciplina')->flatMap(function($d){ return $d ? explode(', ', $d) : []; })->unique()->values();
+                    $disciplinesList = $disciplines->implode(', ');
+                    $matutino_sum = $group->sum(function($r){ return intval($r->matutino ?? 0); });
+                    $vespertino_sum = $group->sum(function($r){ return intval($r->vespertino ?? 0); });
+                    $noturno_sum = $group->sum(function($r){ return intval($r->noturno ?? 0); });
+                    $has_any_assuncao = $group->contains(function($r){ return !empty($r->data_assuncao) && $r->data_assuncao !== '0000-00-00'; });
+                    $any_without_assuncao = $group->contains(function($r){ return empty($r->data_assuncao) || $r->data_assuncao === '0000-00-00'; });
+                    $any_without_assuncao_overdue = $group->contains(function($r){
+                        if (empty($r->data_assuncao) || $r->data_assuncao === '0000-00-00') {
+                            if (!$r->data_encaminhamento) return false;
+                            try {
+                                $days = \Carbon\Carbon::parse($r->data_encaminhamento)->diffInDays(\Carbon\Carbon::now());
+                                return $days >= 2;
+                            } catch (\Exception $e) {
+                                return false;
+                            }
+                        }
+                        return false;
+                    });
+                    $any_without_assuncao_within = $group->contains(function($r){
+                        if (empty($r->data_assuncao) || $r->data_assuncao === '0000-00-00') {
+                            if (!$r->data_encaminhamento) return false;
+                            try {
+                                $days = \Carbon\Carbon::parse($r->data_encaminhamento)->diffInDays(\Carbon\Carbon::now());
+                                return $days < 2;
+                            } catch (\Exception $e) {
+                                return false;
+                            }
+                        }
+                        return false;
+                    });
+                    $all_pch_ok = $group->every(function($r){ return $r->pch === 'OK'; });
+                    $any_inconsistency = $group->contains(function($r){ return ($r->server_1_situation == 2) || ($r->server_2_situation == 2); });
                 @endphp
 
-                @if($provimentos_encaminhado->data_encaminhamento && $diferencaDias >= 2 && $provimentos_encaminhado->data_assuncao == null)
-                <td class="text-center text-danger">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-alert-hexagon">
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                        <path d="M19.875 6.27c.7 .398 1.13 1.143 1.125 1.948v7.284c0 .809 -.443 1.555 -1.158 1.948l-6.75 4.27a2.269 2.269 0 0 1 -2.184 0l-6.75 -4.27a2.225 2.225 0 0 1 -1.158 -1.948v-7.285c0 -.809 .443 -1.554 1.158 -1.947l6.75 -3.98a2.33 2.33 0 0 1 2.25 0l6.75 3.98h-.033z" />
-                        <path d="M12 8v4" />
-                        <path d="M12 16h.01" />
-                    </svg>
-                </td>
-                @elseif ($provimentos_encaminhado->data_encaminhamento && $diferencaDias < 2 && $provimentos_encaminhado->data_assuncao == null)
-                    <td class="text-center text-warning">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-calendar-stats">
-                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                            <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
-                            <path d="M18 14v4h4" />
-                            <path d="M18 18m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
-                            <path d="M15 3v4" />
-                            <path d="M7 3v4" />
-                            <path d="M3 11h16" />
-                        </svg>
-                    </td>
+                <tr>
+                    @if ($srvNte && intval($srvNte) > 9)
+                        <td class="text-center">{{ $srvNte }}</td>
                     @else
-                    <td class="text-center text-success">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-check">
-                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                            <path d="M5 12l5 5l10 -10" />
-                        </svg>
-                    </td>
+                        <td class="text-center">{{ $srvNte ? sprintf('%02d', intval($srvNte)) : '' }}</td>
                     @endif
+                    <td class="text-center">{{ $srvName }}</td>
+                    <td class="text-center">{{ $srvCpf }}</td>
+                    @if ($first->uee->nte > 9)
+                        <td class="text-center">{{ $first->uee->nte }}</td>
+                    @else
+                        <td class="text-center">0{{ $first->uee->nte }}</td>
+                    @endif
+                    <td class="text-center">{{ $first->uee->municipio }}</td>
+                    <td class="text-center">{{ $first->uee->cod_unidade }}</td>
+                    <td class="text-center">{{ $first->uee->unidade_escolar }}</td>
+                    @if ($all_pch_ok && !$any_inconsistency)
+                        <td class="text-center text-success"> <!-- agrupado OK -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-check">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M5 12l5 5l10 -10" />
+                            </svg>
+                        </td>
+                    @elseif ($any_inconsistency)
+                        <td class="text-center text-danger"> <!-- agrupado inconsistencia -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-alert-hexagon">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M19.875 6.27c.7 .398 1.13 1.143 1.125 1.948v7.284c0 .809 -.443 1.555 -1.158 1.948l-6.75 4.27a2.269 2.269 0 0 1 -2.184 0l-6.75 -4.27a2.225 2.225 0 0 1 -1.158 -1.948v-7.285c0 -.809 .443 -1.554 1.158 -1.947l6.75 -3.98a2.33 2.33 0 0 1 2.25 0l6.75 3.98h-.033z" />
+                                <path d="M12 8v4" />
+                                <path d="M12 16h.01" />
+                            </svg>
+                        </td>
+                    @else
+                        <td class="">&nbsp;</td>
+                    @endif
+
+                    @if($any_without_assuncao_overdue)
+                        <td class="text-center text-danger">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-alert-hexagon">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M19.875 6.27c.7 .398 1.13 1.143 1.125 1.948v7.284c0 .809 -.443 1.555 -1.158 1.948l-6.75 4.27a2.269 2.269 0 0 1 -2.184 0l-6.75 -4.27a2.225 2.225 0 0 1 -1.158 -1.948v-7.285c0 -.809 .443 -1.554 1.158 -1.947l6.75 -3.98a2.33 2.33 0 0 1 2.25 0l6.75 3.98h-.033z" />
+                                <path d="M12 8v4" />
+                                <path d="M12 16h.01" />
+                            </svg>
+                        </td>
+                    @elseif ($any_without_assuncao_within)
+                        <td class="text-center text-warning">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-calendar-stats">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+                                <path d="M18 14v4h4" />
+                                <path d="M18 18m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                                <path d="M15 3v4" />
+                                <path d="M7 3v4" />
+                                <path d="M3 11h16" />
+                            </svg>
+                        </td>
+                    @elseif($has_any_assuncao)
+                        <td class="text-center text-success">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-check">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M5 12l5 5l10 -10" />
+                            </svg>
+                        </td>
+                    @else
+                        <td class="text-center text-muted">—</td>
+                    @endif
+
                     <td class="text-center d-flex align-items-center justify-content-center">
-                        <a href="/provimento/efetivo/detail/{{ $provimentos_encaminhado->id }}" class=""><button id="" type="submit" class="btn btn-primary">
+                        <a href="/provimento/efetivo/detail/{{ $ingressoId }}" class=""><button id="" type="submit" class="btn btn-primary">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-search">
                                     <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                                     <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
@@ -454,21 +474,21 @@
                             </button>
                         </a>
                         @if ( (Auth::user()->profile === "cpm_tecnico") || (Auth::user()->profile === "administrador") || (Auth::user()->profile === "cpm_coordenador"))
-                        @if (($provimentos_encaminhado->pch != "OK") || (Auth::user()->profile === "administrador"))
-                        <a data-toggle="tooltip" data-placement="top" title="Excluir" title="Excluir" id="" onclick="destroyProvimentoEfetivo('{{ $provimentos_encaminhado->id }}')" class="ml-1 btn btn-danger">
+                        @if (($first->pch != "OK") || (Auth::user()->profile === "administrador"))
+                        <a data-toggle="tooltip" data-placement="top" title="Excluir" title="Excluir" id="" onclick="destroyProvimentoEfetivo('{{ $first->id }}')" class="ml-1 btn btn-danger">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-trash">
                                 <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                                 <path d="M4 7l16 0" />
                                 <path d="M10 11l0 6" />
                                 <path d="M14 11l0 6" />
-                                <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                                <path d="M5 7l1 12a2 2 0 0 0 0 1.41l10 -10" />
                                 <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
                             </svg>
                         </a>
                         @endif
                         @endif
                     </td>
-            </tr>
+                </tr>
             @endforeach
         </tbody>
     </table>

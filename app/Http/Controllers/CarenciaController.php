@@ -107,11 +107,21 @@ class CarenciaController extends Controller
     public function searchDeficienciesByTypeAndUnitCode($unitCode, $deficiencyType)
     {
         $anoRef = session()->get('ano_ref');
-        $data = Carencia::where('cod_ue', $unitCode)
+
+        $query = Carencia::where('cod_ue', $unitCode)
             ->where('tipo_carencia', $deficiencyType)
             ->where('ano_ref', $anoRef)
-            ->where('total', '>', '0')
-            ->get();
+            ->where('total', '>', '0');
+
+        $user = auth()->user();
+        if ($user) {
+            $userNte = intval($user->nte ?? 0);
+            if ($userNte > 0 && intval($user->profile_id ?? 0) !== 4) {
+                $query->where('nte', $userNte);
+            }
+        }
+
+        $data = $query->get();
 
         return $data->isNotEmpty() ? response()->json($data) : abort(404);
     }
@@ -124,14 +134,24 @@ class CarenciaController extends Controller
         $anoRef = session()->get('ano_ref');
 
         if ($tipo === "all_carencias") {
-            $filteredCarencias = Carencia::with('vagaReserva', 'uee')->where('total', '>', 0)
-                ->where(function ($query) use ($formattedDate) {
-                    $query->where('fim_vaga', '>=', $formattedDate)
+            $query = Carencia::with('vagaReserva', 'uee')
+                ->where('total', '>', 0)
+                ->where(function ($q) use ($formattedDate) {
+                    $q->where('fim_vaga', '>=', $formattedDate)
                         ->orWhereNull('fim_vaga');
                 })
-                ->where('ano_ref', $anoRef)
-                ->where('nte', 30)
-                ->orderBy('nte', 'asc')
+                ->where('ano_ref', $anoRef);
+
+            // Apply NTE restriction for users that have an NTE and are not administrator
+            $user = auth()->user();
+            if ($user) {
+                $userNte = intval($user->nte ?? 0);
+                if ($userNte > 0 && intval($user->profile_id ?? 0) !== 4) {
+                    $query->where('nte', $userNte);
+                }
+            }
+
+            $filteredCarencias = $query->orderBy('nte', 'asc')
                 ->orderBy('municipio', 'asc')
                 ->orderBy('unidade_escolar', 'asc')
                 ->get();
@@ -189,6 +209,20 @@ class CarenciaController extends Controller
 
 
             $filteredCarencias  = collect($carencias);
+
+            // Apply NTE restriction for non-admin/CPM users when working with the session-stored collection
+            $user = auth()->user();
+            if ($user) {
+                $skipProfiles = ['administrador', 'cpm_tecnico', 'cpm_coordenador', 'cpg_tecnico'];
+                $userNte = intval($user->nte ?? 0);
+                if (!in_array($user->profile, $skipProfiles) && $userNte > 0) {
+                    $filteredCarencias = $filteredCarencias->filter(function ($c) use ($userNte) {
+                        // Carencia may include direct 'nte' field or related 'uee'->nte
+                        $carNte = intval($c->nte ?? ($c->uee->nte ?? 0));
+                        return $carNte === $userNte;
+                    })->values();
+                }
+            }
 
             $disciplinas = Disciplina::orderBy('nome', 'asc')->get();
             $eixo_cursos = Eixo_curso::distinct()->get(['eixo']);
@@ -360,6 +394,22 @@ class CarenciaController extends Controller
                 ->orderBy('unidade_escolar', 'asc')
                 ->orderBy('servidor', 'asc')
                 ->get();
+        }
+
+        // Enforce NTE restriction server-side for users with assigned NTE (and non-admin)
+        $user = auth()->user();
+        if ($user) {
+            $userNte = intval($user->nte ?? 0);
+            if ($userNte > 0 && intval($user->profile_id ?? 0) !== 4) {
+                // If $carencias is a query builder, apply where; otherwise it'll have been applied above
+                if ($carencias instanceof \Illuminate\Database\Eloquent\Builder) {
+                    $carencias = $carencias->where('nte', $userNte);
+                }
+                // Also filter the resulting collection that we just retrieved
+                $filteredCarencias = collect($filteredCarencias)->filter(function($c) use ($userNte) {
+                    return intval($c->nte ?? ($c->uee->nte ?? 0)) === $userNte;
+                })->values();
+            }
         }
 
 

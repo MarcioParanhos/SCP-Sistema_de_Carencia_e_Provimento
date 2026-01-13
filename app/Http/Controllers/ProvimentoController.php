@@ -1024,54 +1024,135 @@ class ProvimentoController extends Controller
 
     public function addNewProvimentoEfetivo(Request $request)
     {
-        $verify_servidor = ProvimentosEncaminhado::where('servidor_encaminhado_id', $request->servidor_id)
-            ->where('uee_id', $request->unidade_id)
-            ->first();
+        $anoRef = session()->get('ano_ref');
 
-        if ($verify_servidor) {
-            return redirect()->to(url()->previous())->with('msg', 'error');
-        } else {
-            $anoRef = session()->get('ano_ref');
+        // Determina o uee_id a partir de possíveis campos do form (mesma lógica usada para salvar)
+        $ueeId = $request->input('unidade_id') ?: $request->input('uee_id');
+        if (!$ueeId && $request->filled('cod_ue')) {
+            // Primeiro tenta encontrar pela coluna 'cod_unidade' na tabela uees
+            $uee = Uee::where('cod_unidade', $request->cod_ue)->first();
+            if (!$uee) {
+                // Se não estiver direto na tabela uees, procura na tabela unidades_organizacionais
+                $codSec = DB::table('unidades_organizacionais')->where('uo', $request->cod_ue)->value('cod_sec');
+                if ($codSec) {
+                    $uee = Uee::where('cod_unidade', $codSec)->first();
+                }
+            }
+            if ($uee) $ueeId = $uee->id;
+        }
 
+        // Verifica se já existe um encaminhamento para esse servidor na mesma unidade (usa o uee_id determinado acima)
+        if ($request->filled('servidor_id')) {
+            $verify_servidor = ProvimentosEncaminhado::where('ingresso_candidato_id', $request->servidor_id)
+                ->where('uee_id', $ueeId)
+                ->first();
 
-            $provimentos_encaminhados = new ProvimentosEncaminhado();
-            $provimentos_encaminhados->servidor_encaminhado_id = $request->servidor_id;
-            $provimentos_encaminhados->uee_id = $request->unidade_id;
-            $provimentos_encaminhados->data_encaminhamento = $request->data_encaminhamento;
-            $provimentos_encaminhados->data_assuncao = $request->data_assuncao;
-            $provimentos_encaminhados->obs = $request->obs;
-            $provimentos_encaminhados->ano_ref = $anoRef;
-            $provimentos_encaminhados->user_id = $request->usuario;
-            $provimentos_encaminhados->servidor_substituido_id = $request->servidor_subistituido;
+            if ($verify_servidor) {
+                return redirect()->to(url()->previous())->with('msg', 'error');
+            }
+        }
 
-            if ($request->id_segundo_servidor_subistituido) {
-                $provimentos_encaminhados->segundo_servidor_subistituido = $request->id_segundo_servidor_subistituido;
+        // Persistência em transação
+        DB::beginTransaction();
+        try {
+            // Recebe as disciplinas e turnos (arrays)
+            $disciplinas = $request->input('disciplinas', []);
+            $matutino = $request->input('matutino', []);
+            $vespertino = $request->input('vespertino', []);
+            $noturno = $request->input('noturno', []);
+
+            // Se os valores de disciplinas vierem como IDs, converte para nomes
+            $discNames = [];
+            foreach ($disciplinas as $d) {
+                if (is_numeric($d)) {
+                    $disc = Disciplina::find($d);
+                    $discNames[] = $disc ? $disc->nome : $d;
+                } else {
+                    $discNames[] = $d;
+                }
             }
 
+            // Salva tipo de carência se enviado (aplicável a todos os registros criados abaixo)
+            $tipoCarencia = $request->filled('carencia_tipo') ? $request->carencia_tipo : null;
+
+            // Atualiza formação no servidor encaminhado quando aplicável (mantém comportamento anterior)
             $servidor_encaminhado = ServidoresEncaminhado::find($request->servidor_id);
-            $servidor_encaminhado->formacao = $request->disciplina_efetivo;
-
-            $disciplinas = $request->input('disciplinas');
-            $matutino = $request->input('matutino');
-            $vespertino = $request->input('vespertino');
-            $noturno = $request->input('noturno');
-
-            // Concatenar as disciplinas e os turnos
-            $disciplinas_str = implode(', ', $disciplinas);
-            $matutino_str = implode(', ', $matutino);
-            $vespertino_str = implode(', ', $vespertino);
-            $noturno_str = implode(', ', $noturno);
-
-            // Salvar os dados no banco de dados
-            $provimentos_encaminhados->disciplina = $disciplinas_str;
-            $provimentos_encaminhados->matutino = $matutino_str;
-            $provimentos_encaminhados->vespertino = $vespertino_str;
-            $provimentos_encaminhados->noturno = $noturno_str;
-
-            if ($servidor_encaminhado->save() && $provimentos_encaminhados->save()) {
-                return redirect()->to(url()->previous())->with('msg', 'success');
+            if ($servidor_encaminhado) {
+                if ($request->filled('disciplina_efetivo')) {
+                    $servidor_encaminhado->formacao = $request->disciplina_efetivo;
+                } elseif (!empty($discNames)) {
+                    $servidor_encaminhado->formacao = implode(', ', $discNames);
+                }
+                $servidor_encaminhado->save();
             }
 
+            // Caso haja mais de uma disciplina, crie um registro por disciplina
+            if (count($discNames) > 1) {
+                foreach ($discNames as $i => $dName) {
+                    $row = new ProvimentosEncaminhado();
+                    $row->ingresso_candidato_id = $request->servidor_id;
+                    $row->uee_id = $ueeId;
+                    $row->data_encaminhamento = $request->data_encaminhamento ?: null;
+                    $row->data_assuncao = $request->data_assuncao ?: null;
+                    $row->obs = $request->obs ?: null;
+                    $row->ano_ref = $anoRef;
+                    $row->user_id = $request->usuario ?: auth()->id();
+                    $row->servidor_substituido_id = $request->servidor_subistituido ?: null;
+                    if ($request->id_segundo_servidor_subistituido) {
+                        $row->segundo_servidor_substituido = $request->id_segundo_servidor_subistituido;
+                    }
+                    $row->disciplina = $dName;
+                    // Use per-discipline turnos when disponíveis, senão repete os totais agregados
+                    $row->matutino = isset($matutino[$i]) ? $matutino[$i] : (is_array($matutino) && count($matutino) ? implode(', ', $matutino) : null);
+                    $row->vespertino = isset($vespertino[$i]) ? $vespertino[$i] : (is_array($vespertino) && count($vespertino) ? implode(', ', $vespertino) : null);
+                    $row->noturno = isset($noturno[$i]) ? $noturno[$i] : (is_array($noturno) && count($noturno) ? implode(', ', $noturno) : null);
+                    if ($tipoCarencia) $row->tipo_carencia = $tipoCarencia;
+                    $row->save();
+
+                    // Log per-row
+                    Log::create([
+                        'user_id' => $request->user_id,
+                        'action' => "Inclusion",
+                        'module' => "Provimento",
+                        'provimento_id' => $row->id,
+                        'ano_ref' => $anoRef,
+                    ]);
+                }
+            } else {
+                // Mantém comportamento anterior: grava tudo em uma linha única quando houver apenas uma disciplina
+                $provimentos_encaminhados = new ProvimentosEncaminhado();
+                $provimentos_encaminhados->ingresso_candidato_id = $request->servidor_id;
+                $provimentos_encaminhados->uee_id = $ueeId;
+                $provimentos_encaminhados->data_encaminhamento = $request->data_encaminhamento ?: null;
+                $provimentos_encaminhados->data_assuncao = $request->data_assuncao ?: null;
+                $provimentos_encaminhados->obs = $request->obs ?: null;
+                $provimentos_encaminhados->ano_ref = $anoRef;
+                $provimentos_encaminhados->user_id = $request->usuario ?: auth()->id();
+                $provimentos_encaminhados->servidor_substituido_id = $request->servidor_subistituido ?: null;
+                if ($request->id_segundo_servidor_subistituido) {
+                    $provimentos_encaminhados->segundo_servidor_substituido = $request->id_segundo_servidor_subistituido;
+                }
+                $provimentos_encaminhados->disciplina = implode(', ', $discNames);
+                $provimentos_encaminhados->matutino = implode(', ', $matutino);
+                $provimentos_encaminhados->vespertino = implode(', ', $vespertino);
+                $provimentos_encaminhados->noturno = implode(', ', $noturno);
+                if ($tipoCarencia) $provimentos_encaminhados->tipo_carencia = $tipoCarencia;
+                $provimentos_encaminhados->save();
+
+                Log::create([
+                    'user_id' => $request->user_id,
+                    'action' => "Inclusion",
+                    'module' => "Provimento",
+                    'provimento_id' => $provimentos_encaminhados->id,
+                    'ano_ref' => $anoRef,
+                ]);
+            }
+
+            DB::commit();
+            return redirect()->to(url()->previous())->with('msg', 'success');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Illuminate\Support\Facades\Log::error('Erro ao salvar Provimento Efetivo: ' . $e->getMessage());
             return redirect()->to(url()->previous())->with('msg', 'error');
         }
     }
@@ -1084,10 +1165,10 @@ class ProvimentoController extends Controller
         $anoRef = session()->get('ano_ref');
 
         $provimentos_encaminhados = ProvimentosEncaminhado::where('ano_ref', $anoRef)->get();
-        $quantidadeRegistros = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('servidor_encaminhado_id')->count('servidor_encaminhado_id');
-        $quantidadeRegistrosPCH = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('servidor_encaminhado_id')->where('pch', 'OK')->count('servidor_encaminhado_id');
-        $quantidadeRegistrosError = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('servidor_encaminhado_id')->where('pch', 'INCONSISTENCIA')->count('servidor_encaminhado_id');
-        $quantidadeRegistrosErrorOK = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('servidor_encaminhado_id')->where('pch', 'INCONSISTENCIA')->where('inconsistencia', 'OK')->count('servidor_encaminhado_id');
+        $quantidadeRegistros = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('ingresso_candidato_id')->count('ingresso_candidato_id');
+        $quantidadeRegistrosPCH = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('ingresso_candidato_id')->where('pch', 'OK')->count('ingresso_candidato_id');
+        $quantidadeRegistrosError = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('ingresso_candidato_id')->where('pch', 'INCONSISTENCIA')->count('ingresso_candidato_id');
+        $quantidadeRegistrosErrorOK = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('ingresso_candidato_id')->where('pch', 'INCONSISTENCIA')->where('inconsistencia', 'OK')->count('ingresso_candidato_id');
 
         $quantidadeRegistrosComAssuncao = ProvimentosEncaminhado::where('ano_ref', $anoRef)->whereNotNull('data_assuncao')->count();
 
@@ -1095,15 +1176,15 @@ class ProvimentoController extends Controller
             ->whereNull('data_assuncao') // Filtra registros onde data_assuncao é nulo
             ->whereNotNull('data_encaminhamento') // Garante que data_encaminhamento não seja nulo
             ->whereRaw("DATEDIFF(?, data_encaminhamento) < 2", [Carbon::now()->format('Y-m-d')]) // Diferença de 2 ou mais dias
-            ->distinct('servidor_encaminhado_id') // Considera apenas registros únicos por servidor_encaminhado_id
-            ->count('servidor_encaminhado_id'); // Conta os registros distintos
+            ->distinct('ingresso_candidato_id') // Considera apenas registros únicos por ingresso_candidato_id
+            ->count('ingresso_candidato_id'); // Conta os registros distintos
 
         $quantidadeRegistrosAtrasados = ProvimentosEncaminhado::where('ano_ref', $anoRef)
             ->whereNull('data_assuncao') // Filtra registros onde data_assuncao é nulo
             ->whereNotNull('data_encaminhamento') // Garante que data_encaminhamento não seja nulo
             ->whereRaw("DATEDIFF(?, data_encaminhamento) >= 2", [Carbon::now()->format('Y-m-d')]) // Diferença de 2 ou mais dias
-            ->distinct('servidor_encaminhado_id') // Considera apenas registros únicos por servidor_encaminhado_id
-            ->count('servidor_encaminhado_id'); // Conta os registros distintos
+            ->distinct('ingresso_candidato_id') // Considera apenas registros únicos por ingresso_candidato_id
+            ->count('ingresso_candidato_id'); // Conta os registros distintos
 
 
         $disciplinas = ServidoresEncaminhado::select('formacao')
@@ -1137,30 +1218,30 @@ class ProvimentoController extends Controller
         $anoRef = session()->get('ano_ref');
 
         $provimentos_encaminhados = ProvimentosEncaminhado::where('ano_ref', $anoRef)->get();
-        $quantidadeRegistros = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('servidor_encaminhado_id')->count('servidor_encaminhado_id');
-        $quantidadeRegistrosPCH = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('servidor_encaminhado_id')->where('pch', 'OK')->count('servidor_encaminhado_id');
-        $quantidadeRegistrosError = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('servidor_encaminhado_id')->where('pch', 'INCONSISTENCIA')->count('servidor_encaminhado_id');
-        $quantidadeRegistrosErrorOK = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('servidor_encaminhado_id')->where('pch', 'INCONSISTENCIA')->where('inconsistencia', 'OK')->count('servidor_encaminhado_id');
+        $quantidadeRegistros = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('ingresso_candidato_id')->count('ingresso_candidato_id');
+        $quantidadeRegistrosPCH = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('ingresso_candidato_id')->where('pch', 'OK')->count('ingresso_candidato_id');
+        $quantidadeRegistrosError = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('ingresso_candidato_id')->where('pch', 'INCONSISTENCIA')->count('ingresso_candidato_id');
+        $quantidadeRegistrosErrorOK = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('ingresso_candidato_id')->where('pch', 'INCONSISTENCIA')->where('inconsistencia', 'OK')->count('ingresso_candidato_id');
 
         $quantidadeRegistrosComAssuncao = ProvimentosEncaminhado::where('ano_ref', $anoRef)
             ->whereNotNull('data_assuncao') // Filtra registros onde data_assuncao é nulo
             ->whereNotNull('data_encaminhamento') // Garante que data_encaminhamento não seja nulo
-            ->distinct('servidor_encaminhado_id') // Considera apenas registros únicos por servidor_encaminhado_id
-            ->count('servidor_encaminhado_id'); // Conta os registros distintos
+            ->distinct('ingresso_candidato_id') // Considera apenas registros únicos por ingresso_candidato_id
+            ->count('ingresso_candidato_id'); // Conta os registros distintos
 
         $quantidadeRegistrosDataNula = ProvimentosEncaminhado::where('ano_ref', $anoRef)
             ->whereNull('data_assuncao') // Filtra registros onde data_assuncao é nulo
             ->whereNotNull('data_encaminhamento') // Garante que data_encaminhamento não seja nulo
             ->whereRaw("DATEDIFF(?, data_encaminhamento) < 2", [Carbon::now()->format('Y-m-d')]) // Diferença de 2 ou mais dias
-            ->distinct('servidor_encaminhado_id') // Considera apenas registros únicos por servidor_encaminhado_id
-            ->count('servidor_encaminhado_id'); // Conta os registros distintos
+            ->distinct('ingresso_candidato_id') // Considera apenas registros únicos por ingresso_candidato_id
+            ->count('ingresso_candidato_id'); // Conta os registros distintos
 
         $quantidadeRegistrosAtrasados = ProvimentosEncaminhado::where('ano_ref', $anoRef)
             ->whereNull('data_assuncao') // Filtra registros onde data_assuncao é nulo
             ->whereNotNull('data_encaminhamento') // Garante que data_encaminhamento não seja nulo
             ->whereRaw("DATEDIFF(?, data_encaminhamento) >= 2", [Carbon::now()->format('Y-m-d')]) // Diferença de 2 ou mais dias
-            ->distinct('servidor_encaminhado_id') // Considera apenas registros únicos por servidor_encaminhado_id
-            ->count('servidor_encaminhado_id'); // Conta os registros distintos
+            ->distinct('ingresso_candidato_id') // Considera apenas registros únicos por ingresso_candidato_id
+            ->count('ingresso_candidato_id'); // Conta os registros distintos
 
         $disciplinas = ServidoresEncaminhado::select('formacao')
             ->distinct()
@@ -1196,30 +1277,30 @@ class ProvimentoController extends Controller
 
         $anoRef = session()->get('ano_ref');
         $provimentos_encaminhados = ProvimentosEncaminhado::query();
-        $quantidadeRegistros = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('servidor_encaminhado_id')->count('servidor_encaminhado_id');
-        $quantidadeRegistrosPCH = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('servidor_encaminhado_id')->where('pch', 'OK')->count('servidor_encaminhado_id');
-        $quantidadeRegistrosError = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('servidor_encaminhado_id')->where('pch', 'INCONSISTENCIA')->count('servidor_encaminhado_id');
-        $quantidadeRegistrosErrorOK = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('servidor_encaminhado_id')->where('pch', 'INCONSISTENCIA')->where('inconsistencia', 'OK')->count('servidor_encaminhado_id');
+        $quantidadeRegistros = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('ingresso_candidato_id')->count('ingresso_candidato_id');
+        $quantidadeRegistrosPCH = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('ingresso_candidato_id')->where('pch', 'OK')->count('ingresso_candidato_id');
+        $quantidadeRegistrosError = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('ingresso_candidato_id')->where('pch', 'INCONSISTENCIA')->count('ingresso_candidato_id');
+        $quantidadeRegistrosErrorOK = ProvimentosEncaminhado::where('ano_ref', $anoRef)->distinct('ingresso_candidato_id')->where('pch', 'INCONSISTENCIA')->where('inconsistencia', 'OK')->count('ingresso_candidato_id');
 
         $quantidadeRegistrosComAssuncao = ProvimentosEncaminhado::where('ano_ref', $anoRef)
             ->whereNotNull('data_assuncao') // Filtra registros onde data_assuncao é nulo
             ->whereNotNull('data_encaminhamento') // Garante que data_encaminhamento não seja nulo
-            ->distinct('servidor_encaminhado_id') // Considera apenas registros únicos por servidor_encaminhado_id
-            ->count('servidor_encaminhado_id'); // Conta os registros distintos
+            ->distinct('ingresso_candidato_id') // Considera apenas registros únicos por ingresso_candidato_id
+            ->count('ingresso_candidato_id'); // Conta os registros distintos
 
         $quantidadeRegistrosDataNula = ProvimentosEncaminhado::where('ano_ref', $anoRef)
             ->whereNull('data_assuncao') // Filtra registros onde data_assuncao é nulo
             ->whereNotNull('data_encaminhamento') // Garante que data_encaminhamento não seja nulo
             ->whereRaw("DATEDIFF(?, data_encaminhamento) < 2", [Carbon::now()->format('Y-m-d')]) // Diferença de 2 ou mais dias
-            ->distinct('servidor_encaminhado_id') // Considera apenas registros únicos por servidor_encaminhado_id
-            ->count('servidor_encaminhado_id'); // Conta os registros distintos
+            ->distinct('ingresso_candidato_id') // Considera apenas registros únicos por ingresso_candidato_id
+            ->count('ingresso_candidato_id'); // Conta os registros distintos
 
         $quantidadeRegistrosAtrasados = ProvimentosEncaminhado::where('ano_ref', $anoRef)
             ->whereNull('data_assuncao') // Filtra registros onde data_assuncao é nulo
             ->whereNotNull('data_encaminhamento') // Garante que data_encaminhamento não seja nulo
             ->whereRaw("DATEDIFF(?, data_encaminhamento) >= 2", [Carbon::now()->format('Y-m-d')]) // Diferença de 2 ou mais dias
-            ->distinct('servidor_encaminhado_id') // Considera apenas registros únicos por servidor_encaminhado_id
-            ->count('servidor_encaminhado_id'); // Conta os registros distintos
+            ->distinct('ingresso_candidato_id') // Considera apenas registros únicos por ingresso_candidato_id
+            ->count('ingresso_candidato_id'); // Conta os registros distintos
 
         if ($request->filled('search_nte_provimento_efetivos')) {
             $provimentos_encaminhados = $provimentos_encaminhados->whereHas('uee', function ($query) use ($request) {
@@ -1326,6 +1407,31 @@ class ProvimentoController extends Controller
     public function detailProvimentoEfetivo($id)
     {
 
+        // Se recebeu um ingresso_candidato_id (vários registros), carregue todos os encaminhamentos desse servidor
+        $group = ProvimentosEncaminhado::with(['servidorEncaminhado', 'uee', 'servidorSubstituido', 'segundoServidorSubstituido'])
+            ->where('ingresso_candidato_id', $id)
+            ->get();
+
+        if ($group->isNotEmpty()) {
+            // Usa o primeiro registro como base para o formulário e também passa o grupo completo
+            $provimento_efetivo = $group->first();
+            // Para compatibilidade com a view, passe instâncias de ProvimentosEncaminhado
+            $servidor_encaminhado = $provimento_efetivo; // possui relacionamento servidorEncaminhado
+            $unidade_encaminhamento = $provimento_efetivo; // possui relacionamento uee
+            $servidor_subistituido = $provimento_efetivo; // possui relacionamento servidorSubstituido
+            $segundo_servidor_subistituido = $provimento_efetivo; // possui relacionamento segundoServidorSubstituido
+
+            return view('provimento.detail_provimento_efetivo', [
+                'servidor_encaminhado' => $servidor_encaminhado,
+                'unidade_encaminhamento' => $unidade_encaminhamento,
+                'servidor_subistituido' => $servidor_subistituido,
+                'segundo_servidor_subistituido' => $segundo_servidor_subistituido,
+                'provimento_efetivo' => $provimento_efetivo,
+                'provimentos_group' => $group,
+            ]);
+        }
+
+        // Caso contrário, tenta carregar por id de provimento (comportamento anterior)
         $servidor_encaminhado = ProvimentosEncaminhado::with('servidorEncaminhado')->where('id', $id)->first();
         $unidade_encaminhamento = ProvimentosEncaminhado::with('uee')->where('id', $id)->first();
         $servidor_subistituido = ProvimentosEncaminhado::with('servidorSubstituido')->where('id', $id)->first();
@@ -1346,6 +1452,16 @@ class ProvimentoController extends Controller
 
         $encaminhamento = ProvimentosEncaminhado::findOrFail($request->id);
         $data = $request->except('user_id');
+
+        // Map carencia_tipo (form field) to tipo_carencia (DB column)
+        if ($request->filled('carencia_tipo')) {
+            $encaminhamento->tipo_carencia = $request->carencia_tipo;
+            // remove from $data to avoid attempting to set a non-existing column
+            if (array_key_exists('carencia_tipo', $data)) {
+                unset($data['carencia_tipo']);
+            }
+        }
+
         $encaminhamento->update($data);
 
 

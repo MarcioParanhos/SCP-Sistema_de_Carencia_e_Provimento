@@ -22,15 +22,45 @@ btn_submit.addEventListener('click', function (event) {
             title: "Atenção!",
             text: "Nenhuma unidade escolar foi selecionada!",
         });
-    } else if ((vinculo.value == "") || (regime.value == "")) {
-        event.preventDefault();
-        Swal.fire({
-            icon: "warning",
-            title: "Atenção!",
-            text: "Nenhum servidor foi selecionado!",
-        });
     } else {
+        // Determine if we should require a servidor selection
+        var requireServidor = true;
 
+        // If there is a select inside the collapse, use it to determine requirement
+        try {
+            var tipoSelect = document.getElementById('tipo_vaga_select');
+            if (tipoSelect) {
+                if (tipoSelect.value === 'substituicao') {
+                    requireServidor = true;
+                } else {
+                    requireServidor = false;
+                }
+            } else {
+                // Fallback to radio inputs (older UI)
+                var tipo = document.querySelector('input[name="tipo_vaga"]:checked');
+                if (tipo && (tipo.value === 'vaga_real' || tipo.value === 'vaga_temporaria')) {
+                    requireServidor = false;
+                }
+            }
+        } catch (e) {}
+
+        // Also skip if servidor block is hidden
+        var servidorRow = document.getElementById('servidor_row');
+        if (servidorRow) {
+            var style = window.getComputedStyle(servidorRow);
+            if (servidorRow.hidden || style.display === 'none' || style.visibility === 'hidden') {
+                requireServidor = false;
+            }
+        }
+
+        if (requireServidor && ((vinculo.value == "") || (regime.value == ""))) {
+            event.preventDefault();
+            Swal.fire({
+                icon: "warning",
+                title: "Atenção!",
+                text: "Nenhum servidor foi selecionado!",
+            });
+        }
     }
 
 });
@@ -163,7 +193,68 @@ function adicionarDisciplina() {
 
     let novaDisciplina = document.createElement('div');
     novaDisciplina.classList.add('form-row', 'disciplina-row');
+    // If discipline options are available from the server, create a select and initialize Select2
+    if (window.disciplinesOptions && window.disciplinesOptions.length) {
+        let options = '<option value="">Selecione uma disciplina...</option>';
+        window.disciplinesOptions.forEach(function(o) {
+            options += '<option value="' + o.id + '">' + o.text + '</option>';
+        });
 
+        novaDisciplina.innerHTML = `
+        <div class="col-md-6">
+            <div class="form-group_disciplina">
+                <label class="control-label">Disciplina</label>
+                <select name="disciplinas[]" class="form-control form-control-sm select2 discipline-select" required>
+                    ${options}
+                </select>
+            </div>
+        </div>
+
+        <div class="col-md-1">
+            <div class="form-group_disciplina">
+                <label for="mat">MAT</label>
+                <input type="text" name="matutino[]" class="form-control form-control-sm">
+            </div>
+        </div>
+
+        <div class="col-md-1">
+            <div class="form-group_disciplina">
+                <label for="vesp">VESP</label>
+                <input type="text" name="vespertino[]" class="form-control form-control-sm">
+            </div>
+        </div>
+
+        <div class="col-md-1">
+            <div class="form-group_disciplina">
+                <label for="not">NOT</label>
+                <input type="text" name="noturno[]" class="form-control form-control-sm">
+            </div>
+        </div>
+
+        <div class="col-md-2 d-flex align-items-center">
+            <button type="button" class="btn btn-danger btn-remove-disciplina" onclick="removerDisciplina(this)">
+                <i class="ti-trash"></i>
+            </button>
+        </div>
+    `;
+
+        container.appendChild(novaDisciplina);
+
+        // initialize select2 on the newly added select
+        try {
+            if (window.jQuery) {
+                $(novaDisciplina).find('select.discipline-select').select2({
+                    placeholder: 'Busque a disciplina...',
+                    dropdownParent: $(document.body),
+                    width: 'resolve'
+                });
+            }
+        } catch (e) { /* ignore */ }
+
+        return;
+    }
+
+    // Fallback: plain input when no discipline list is available
     novaDisciplina.innerHTML = `
         <div class="col-md-6">
             <div class="form-group_disciplina">

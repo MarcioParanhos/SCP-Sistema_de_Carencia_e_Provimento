@@ -222,6 +222,23 @@ $(document).ready(function () {
     });
   });
 
+  // If NTE is preselected (user NTE), load municipalities automatically
+  $(function() {
+      try {
+          let preNte = $('#nte_seacrh').val();
+          if (preNte && preNte !== '') {
+              // ensure select2 shows selected value
+              $('#nte_seacrh').val(preNte).trigger('change');
+              // call the same function used on select to populate municipalities
+              if (typeof searchMunicipio === 'function') {
+                  searchMunicipio();
+              }
+          }
+      } catch (e) {
+          // silent
+      }
+  });
+
   $('#carencia').on('change', function () {
 
     var valorSelecionado = $(this).val(); // Obtém o valor selecionado

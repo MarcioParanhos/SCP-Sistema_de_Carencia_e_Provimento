@@ -40,7 +40,7 @@
                 </button>
             </a> -->
             <div class="print-none  d-flex justify-content-center align-items-center">
-                <a data-toggle="tooltip" data-placement="top" title="Voltar" class="m-1 btn bg-white text-primary" href="/provimento/efetivo/filter">
+                <a data-toggle="tooltip" data-placement="top" title="Voltar" class="m-1 btn bg-white text-primary" href="/encaminhamento/efetivo/show">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-back-up">
                         <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                         <path d="M9 14l-4 -4l4 -4" />
@@ -83,33 +83,55 @@
                 @method ('PUT')
                 <input value="{{ Auth::user()->id }}" id="usuario" name="user_id" type="number" class="form-control form-control-sm" hidden>
                 <div id="servidor_row">
+                @php
+                    $srv = $servidor_encaminhado->servidorEncaminhado ?? $servidor_encaminhado->ingressoCandidato ?? null;
+                    $srvNte = $srv->nte ?? $srv->uee_code ?? $srv->uee_name ?? '';
+                    $srvName = $srv->name ?? $srv->nome ?? '';
+                    $srvCpf = $srv->cpf ?? '';
+                    $srvCargo = $srv->cargo ?? $srv->funcao ?? '';
+                    $srvId = $srv->id ?? ($servidor_encaminhado->servidorEncaminhado->id ?? '');
+
+                    $sSub = $servidor_subistituido->servidorSubstituido ?? $servidor_subistituido->ingressoCandidato ?? null;
+                    $sSubCadastro = $sSub->cadastro ?? $sSub->matricula ?? '';
+                    $sSubName = $sSub->nome ?? $sSub->name ?? '';
+                    $sSubId = $sSub->id ?? ($servidor_subistituido->servidorSubstituido->id ?? '');
+                    $sSubVinculo = $sSub->vinculo ?? '';
+                    $sSubRegime = $sSub->regime ?? '';
+
+                    $seg = $segundo_servidor_subistituido->segundoServidorSubstituido ?? $segundo_servidor_subistituido->ingressoCandidato ?? null;
+                    $segCadastro = $seg->cadastro ?? $seg->matricula ?? '';
+                    $segName = $seg->nome ?? $seg->name ?? '';
+                    $segId = $seg->id ?? ($segundo_servidor_subistituido->segundoServidorSubstituido->id ?? '');
+                    $segVinculo = $seg->vinculo ?? '';
+                    $segRegime = $seg->regime ?? '';
+                @endphp
                     <div class="form-row">
                         <div class=" col-md-2">
                             <div class=" position-relative form-group">
                                 <div>
                                     <label for="cpf_cervidor" class="">CPF / MATRÍCULA</label>
-                                    <input value="{{ $servidor_encaminhado->servidorEncaminhado->cpf }}" minlength="8" maxlength="11" name="" id="cpf_cervidor" type="number" class="form-control form-control-sm" readonly>
+                                    <input value="{{ $srvCpf }}" minlength="8" maxlength="11" name="" id="cpf_cervidor" type="number" class="form-control form-control-sm" readonly>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-1">
                             <div class="form-group">
                                 <label for="nte_efetivo" class="">NTE</label>
-                                <input value="{{ $servidor_encaminhado->servidorEncaminhado->nte }}" id="nte_efetivo" name="" type="text" class="form-control form-control-sm" readonly>
+                                <input value="{{ $srvNte }}" id="nte_efetivo" name="" type="text" class="form-control form-control-sm" readonly>
                                 <input value="{{ $provimento_efetivo->id }}" id="provimento_id" type="number" class="form-control form-control-sm" hidden>
-                                <input value="{{ $servidor_encaminhado->servidorEncaminhado->id }}" id="servidor_id" name="servidor_encaminhado_id" type="number" class="form-control form-control-sm" hidden>
+                                <input value="{{ $srvId }}" id="servidor_id" name="ingresso_candidato_id" type="number" class="form-control form-control-sm" hidden>
                             </div>
                         </div>
                         <div class="col-md-5">
                             <div class="form-group">
                                 <label for="servidor_efetivo" class="">nome do servidor</label>
-                                <input value="{{ $servidor_encaminhado->servidorEncaminhado->nome }}" id="servidor_efetivo" name="" type="text" class="form-control form-control-sm" readonly>
+                                <input value="{{ $srvName }}" id="servidor_efetivo" name="" type="text" class="form-control form-control-sm" readonly>
                             </div>
                         </div>
                         <div class="col-md-1">
                             <div class="position-relative form-group">
                                 <label for="regime" class="">regime</label>
-                                @if ($servidor_encaminhado->servidorEncaminhado->cargo === "REDA SELETIVO")
+                                @if ($srvCargo === "REDA SELETIVO")
                                 <input value="20h" name="" required id="" type="text" class="form-control form-control-sm" readonly>
                                 @else
                                 <input value="40h" name="" required id="" type="text" class="form-control form-control-sm" readonly>
@@ -119,7 +141,7 @@
                         <div class="col-md-2">
                             <div class="form-group">
                                 <label for="servidor_efetivo" class="">FUNÇÃO</label>
-                                <input value="{{ $servidor_encaminhado->servidorEncaminhado->cargo }}" id="servidor_efetivo" name="" type="text" class="form-control form-control-sm" readonly>
+                                <input value="{{ $srvCargo }}" id="servidor_efetivo" name="" type="text" class="form-control form-control-sm" readonly>
                             </div>
                         </div>
                     </div>
@@ -186,7 +208,7 @@
                             <div class=" col-md-1">
                                 <div class="form-group">
                                     <label for="cadastro" class="">Matrícula</label>
-                                    <input value="{{ $servidor_subistituido->servidorSubstituido->cadastro }}" minlength="8" maxlength="11" name="" id="cadastro" type="cadastro" class="form-control form-control-sm" readonly>
+                                    <input value="{{ $sSubCadastro }}" minlength="8" maxlength="11" name="" id="cadastro" type="cadastro" class="form-control form-control-sm" readonly>
                                 </div>
                             </div>
                             @else
@@ -194,7 +216,7 @@
                                 <div class="display_btn position-relative form-group">
                                     <div>
                                         <label for="cadastro" class="">Matrícula</label>
-                                        <input value="{{ $servidor_subistituido->servidorSubstituido->cadastro }}" minlength="8" maxlength="11" name="" id="cadastro" type="cadastro" class="form-control form-control-sm" required>
+                                        <input value="{{ $sSubCadastro }}" minlength="8" maxlength="11" name="" id="cadastro" type="cadastro" class="form-control form-control-sm" required>
                                     </div>
                                     <div class="btn_carencia_seacrh">
                                         <button id="cadastro_btn" class="position-relative btn_search_carencia btn btn-sm btn-primary" type="button" onclick="searchServidor()">
@@ -208,20 +230,20 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="servidor" class="">Nome do servidor subistituido</label>
-                                    <input value="{{ $servidor_subistituido->servidorSubstituido->nome }}" id="servidor" name="" type="text" class="form-control form-control-sm" readonly>
-                                    <input value="{{ $servidor_subistituido->servidorSubstituido->id }}" id="servidor_subistituido" name="servidor_substituido_id" type="number" class="form-control form-control-sm" hidden>
+                                    <input value="{{ $sSubName }}" id="servidor" name="" type="text" class="form-control form-control-sm" readonly>
+                                    <input value="{{ $sSubId }}" id="servidor_subistituido" name="servidor_substituido_id" type="number" class="form-control form-control-sm" hidden>
                                 </div>
                             </div>
                             <div class="col-md-1">
                                 <div class="form-group">
                                     <label for="vinculo" class="">Vinculo</label>
-                                    <input value="{{ $servidor_subistituido->servidorSubstituido->vinculo }}" id="vinculo" name="" type="text" class="form-control form-control-sm" readonly>
+                                    <input value="{{ $sSubVinculo }}" id="vinculo" name="" type="text" class="form-control form-control-sm" readonly>
                                 </div>
                             </div>
                             <div class="col-md-1">
                                 <div class="position-relative form-group">
                                     <label for="regime" class="">Regime</label>
-                                    <input value="{{ $servidor_subistituido->servidorSubstituido->regime }}" name="" required id="regime" type="text" class="form-control form-control-sm" readonly>
+                                    <input value="{{ $sSubRegime }}" name="" required id="regime" type="text" class="form-control form-control-sm" readonly>
                                 </div>
                             </div>
                             @if ( (Auth::user()->profile === "cpg_tecnico") || (Auth::user()->profile === "administrador"))
@@ -397,13 +419,13 @@
                             </div>
                             @endif
                         </div>
-                        @if ($segundo_servidor_subistituido->segundoServidorSubstituido)
+                        @if ($seg)
                         <div id="segundo_servidor" class="form-row">
                             @if (Auth::user()->profile != "cpm_tecnico")
                             <div class=" col-md-1">
                                 <div class="form-group">
                                     <label for="cadastro_segundo_servidor" class="">Matrícula 2</label>
-                                    <input value="{{ $segundo_servidor_subistituido->segundoServidorSubstituido->cadastro }}" minlength="8" maxlength="11" name="" id="cadastro_segundo_servidor" type="number" class="form-control form-control-sm" readonly>
+                                    <input value="{{ $segCadastro }}" minlength="8" maxlength="11" name="" id="cadastro_segundo_servidor" type="number" class="form-control form-control-sm" readonly>
                                 </div>
                             </div>
                             @else
@@ -411,7 +433,7 @@
                                 <div class="display_btn position-relative form-group">
                                     <div>
                                         <label for="cadastro_segundo_servidor" class="">Matrícula 2º SERVIDOR</label>
-                                        <input value="{{ $segundo_servidor_subistituido->segundoServidorSubstituido->cadastro }}" minlength="8" maxlength="11" name="" id="cadastro_segundo_servidor" type="number" class="form-control form-control-sm">
+                                        <input value="{{ $segCadastro }}" minlength="8" maxlength="11" name="" id="cadastro_segundo_servidor" type="number" class="form-control form-control-sm">
                                     </div>
                                     <div class="btn_carencia_seacrh">
                                         <button id="cadastro_btn" class="position-relative btn_search_carencia btn btn-sm btn-primary" type="button" onclick="searchSegundoServidor()">
@@ -424,20 +446,20 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="segundo_servidor_name" class="">Nome do segundo servidor subistituido</label>
-                                    <input value="{{ $segundo_servidor_subistituido->segundoServidorSubstituido->nome }}" id="segundo_servidor_name" name="" type="text" class="form-control form-control-sm" readonly>
-                                    <input value="{{ $segundo_servidor_subistituido->segundoServidorSubstituido->id }}" id="id_segundo_servidor_subistituido" name="segundo_servidor_subistituido" type="number" class="form-control form-control-sm" hidden readonly>
+                                    <input value="{{ $segName }}" id="segundo_servidor_name" name="" type="text" class="form-control form-control-sm" readonly>
+                                    <input value="{{ $segId }}" id="id_segundo_servidor_subistituido" name="segundo_servidor_subistituido" type="number" class="form-control form-control-sm" hidden readonly>
                                 </div>
                             </div>
                             <div class="col-md-1">
                                 <div class="form-group">
                                     <label for="vinculo_segundo_servidor" class="">Vinculo</label>
-                                    <input value="{{ $segundo_servidor_subistituido->segundoServidorSubstituido->vinculo }}" id="vinculo_segundo_servidor" name="" type="text" class="form-control form-control-sm" readonly>
+                                    <input value="{{ $segVinculo }}" id="vinculo_segundo_servidor" name="" type="text" class="form-control form-control-sm" readonly>
                                 </div>
                             </div>
                             <div class="col-md-1">
                                 <div class="position-relative form-group">
                                     <label for="regime_segundo_servidor" class="">Regime</label>
-                                    <input value="{{ $segundo_servidor_subistituido->segundoServidorSubstituido->regime }}" name="" required id="regime_segundo_servidor" type="text" class="form-control form-control-sm" readonly>
+                                    <input value="{{ $segRegime }}" name="" required id="regime_segundo_servidor" type="text" class="form-control form-control-sm" readonly>
                                 </div>
                             </div>
                             @if ( (Auth::user()->profile === "cpg_tecnico") || (Auth::user()->profile === "administrador"))
@@ -671,47 +693,81 @@
                             </div>
                             @endif
                         </div>
-                        <div class="form-row">
-                            <div id="disciplinas-container">
-                                @php
-                                // Convertendo as strings do banco de dados em arrays
-                                $disciplinas = explode(', ', $provimento_efetivo->disciplina);
-                                $matutino = explode(', ', $provimento_efetivo->matutino);
-                                $vespertino = explode(', ', $provimento_efetivo->vespertino);
-                                $noturno = explode(', ', $provimento_efetivo->noturno);
-                                @endphp
+                            <div class="form-row">
+                            <div class="col-12 d-flex justify-content-end mb-2">
+                                <button type="button" class="btn btn-primary subheader" onclick="adicionarDisciplinaReda()"><i class="ti-plus"></i> Adicionar Disciplina</button>
+                            </div>
+                            <div class="form-row">
+                                <div id="disciplinas-container">
+                                    @php
+                                        // Quando a action passou um grupo, usamos todos os registros do grupo.
+                                        $group = isset($provimentos_group) ? $provimentos_group : collect([$provimento_efetivo]);
+                                    @endphp
 
-                                @foreach ($disciplinas as $index => $disciplina)
-                                <div class="form-row disciplina-row">
-                                    <div class="col-md-6">
-                                        <div class="form-group_disciplina">
-                                            <label class="control-label">Disciplina</label>
-                                            <input value="{{ $disciplina }}" name="" type="text" class="form-control form-control-sm" readonly>
+                                    @if ($group && $group->count())
+                                        @foreach ($group as $index => $row)
+                                            <div class="form-row disciplina-row mb-2">
+                                                <div class="col-md-6">
+                                                    <div class="form-group_disciplina">
+                                                        <label class="control-label">Disciplina</label>
+                                                        <input value="{{ $row->disciplina }}" name="disciplinas[]" type="text" class="form-control form-control-sm">
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <div class="form-group_disciplina">
+                                                        <label for="mat">MAT</label>
+                                                        <input type="text" name="matutino[]" value="{{ $row->matutino ?? '' }}" class="form-control form-control-sm">
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <div class="form-group_disciplina">
+                                                        <label for="vesp">VESP</label>
+                                                        <input type="text" name="vespertino[]" value="{{ $row->vespertino ?? '' }}" class="form-control form-control-sm">
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <div class="form-group_disciplina">
+                                                        <label for="not">NOT</label>
+                                                        <input type="text" name="noturno[]" value="{{ $row->noturno ?? '' }}" class="form-control form-control-sm">
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-1 d-flex align-items-center">
+                                                    <button type="button" class="btn btn-danger btn-sm ml-2" onclick="this.closest('.disciplina-row').remove()">Remover</button>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    @else
+                                        <div class="form-row disciplina-row mb-2">
+                                            <div class="col-md-6">
+                                                <div class="form-group_disciplina">
+                                                    <label class="control-label">Disciplina</label>
+                                                    <input value="" name="disciplinas[]" type="text" class="form-control form-control-sm">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-1">
+                                                <div class="form-group_disciplina">
+                                                    <label for="mat">MAT</label>
+                                                    <input type="text" name="matutino[]" class="form-control form-control-sm">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-1">
+                                                <div class="form-group_disciplina">
+                                                    <label for="vesp">VESP</label>
+                                                    <input type="text" name="vespertino[]" class="form-control form-control-sm">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-1">
+                                                <div class="form-group_disciplina">
+                                                    <label for="not">NOT</label>
+                                                    <input type="text" name="noturno[]" class="form-control form-control-sm">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-1 d-flex align-items-center">
+                                                <button type="button" class="btn btn-danger btn-sm ml-2" onclick="this.closest('.disciplina-row').remove()">Remover</button>
+                                            </div>
                                         </div>
-                                    </div>
-
-                                    <div class="col-md-1">
-                                        <div class="form-group_disciplina">
-                                            <label for="mat">MAT</label>
-                                            <input type="text" name="" value="{{ $matutino[$index] ?? '' }}" class="form-control form-control-sm" readonly>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-md-1">
-                                        <div class="form-group_disciplina">
-                                            <label for="vesp">VESP</label>
-                                            <input type="text" name="" value="{{ $vespertino[$index] ?? '' }}" class="form-control form-control-sm" readonly>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-md-1">
-                                        <div class="form-group_disciplina">
-                                            <label for="not">NOT</label>
-                                            <input type="text" name="" value="{{ $noturno[$index] ?? '' }}" class="form-control form-control-sm" readonly>
-                                        </div>
-                                    </div>
+                                    @endif
                                 </div>
-                                @endforeach
                             </div>
                         </div>
 

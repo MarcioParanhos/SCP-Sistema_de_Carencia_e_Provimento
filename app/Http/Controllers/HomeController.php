@@ -21,17 +21,88 @@ class HomeController extends Controller
         $formattedDate = $actualDate->format('Y-m-d');
         $anoRef = session()->get('ano_ref');
 
-        $carenciasBasicaReal = Carencia::where('tipo_carencia', 'Real')->where('tipo_vaga', 'Basica')->where('ano_ref', $anoRef)->sum('total');
-        $carenciasProfiReal = Carencia::where('tipo_carencia', 'Real')->where('tipo_vaga', 'Profissionalizante')->where('ano_ref', $anoRef)->sum('total');
-        $carenciasBasicaTemp = Carencia::where('tipo_carencia', 'temp')->where('tipo_vaga', 'Basica')->where('fim_vaga', '>', $formattedDate)->where('ano_ref', $anoRef)->sum('total');
-        $carenciasProfiTemp = Carencia::where('tipo_carencia', 'temp')->where('tipo_vaga', 'Profissionalizante')->where('fim_vaga', '>', $formattedDate)->where('ano_ref', $anoRef)->sum('total');
-        $carenciasRealEdEspecial = Carencia::where('tipo_carencia', 'Real')->where('tipo_vaga', 'Especial')->where('ano_ref', $anoRef)->sum('total');
-        $carenciasTempEdEspecial = Carencia::where('tipo_carencia', 'temp')->where('tipo_vaga', 'Especial')->where('fim_vaga', '>', $formattedDate)->where('ano_ref', $anoRef)->sum('total');
-        $provimentosReal = Provimento::where('situacao_provimento', 'provida')->where('ano_ref', $anoRef)->where('tipo_carencia_provida', 'Real')->sum('total');
-        $provimentosTemp = Provimento::where('situacao_provimento', 'provida')->where('ano_ref', $anoRef)->where('tipo_carencia_provida', 'Temp')->sum('total');
-        $provimentosTramiteReal = Provimento::where('situacao_provimento', 'tramite')->where('ano_ref', $anoRef)->where('tipo_carencia_provida', 'real')->sum('total');
-        $provimentosTramiteTemp = Provimento::where('situacao_provimento', 'tramite')->where('ano_ref', $anoRef)->where('tipo_carencia_provida', 'temp')->sum('total');
-        $provimentosPCH = Provimento::where('pch', 'OK')->where('ano_ref', $anoRef)->sum('total');
+        $user = auth()->user();
+        $userNte = intval($user->nte ?? 0);
+        $isRestrictedNteUser = $user && $userNte > 0 && intval($user->profile_id ?? 0) !== 4;
+
+        $carenciasBasicaReal = Carencia::where('tipo_carencia', 'Real')
+            ->where('tipo_vaga', 'Basica')
+            ->where('ano_ref', $anoRef)
+            ->when($isRestrictedNteUser, function ($q) use ($userNte) {
+                $q->where('nte', $userNte);
+            })->sum('total');
+
+        $carenciasProfiReal = Carencia::where('tipo_carencia', 'Real')
+            ->where('tipo_vaga', 'Profissionalizante')
+            ->where('ano_ref', $anoRef)
+            ->when($isRestrictedNteUser, function ($q) use ($userNte) {
+                $q->where('nte', $userNte);
+            })->sum('total');
+
+        $carenciasBasicaTemp = Carencia::where('tipo_carencia', 'temp')
+            ->where('tipo_vaga', 'Basica')
+            ->where('fim_vaga', '>', $formattedDate)
+            ->where('ano_ref', $anoRef)
+            ->when($isRestrictedNteUser, function ($q) use ($userNte) {
+                $q->where('nte', $userNte);
+            })->sum('total');
+
+        $carenciasProfiTemp = Carencia::where('tipo_carencia', 'temp')
+            ->where('tipo_vaga', 'Profissionalizante')
+            ->where('fim_vaga', '>', $formattedDate)
+            ->where('ano_ref', $anoRef)
+            ->when($isRestrictedNteUser, function ($q) use ($userNte) {
+                $q->where('nte', $userNte);
+            })->sum('total');
+
+        $carenciasRealEdEspecial = Carencia::where('tipo_carencia', 'Real')
+            ->where('tipo_vaga', 'Especial')
+            ->where('ano_ref', $anoRef)
+            ->when($isRestrictedNteUser, function ($q) use ($userNte) {
+                $q->where('nte', $userNte);
+            })->sum('total');
+
+        $carenciasTempEdEspecial = Carencia::where('tipo_carencia', 'temp')
+            ->where('tipo_vaga', 'Especial')
+            ->where('fim_vaga', '>', $formattedDate)
+            ->where('ano_ref', $anoRef)
+            ->when($isRestrictedNteUser, function ($q) use ($userNte) {
+                $q->where('nte', $userNte);
+            })->sum('total');
+
+        $provimentosReal = Provimento::where('situacao_provimento', 'provida')
+            ->where('ano_ref', $anoRef)
+            ->where('tipo_carencia_provida', 'Real')
+            ->when($isRestrictedNteUser, function ($q) use ($userNte) {
+                $q->where('nte', $userNte);
+            })->sum('total');
+
+        $provimentosTemp = Provimento::where('situacao_provimento', 'provida')
+            ->where('ano_ref', $anoRef)
+            ->where('tipo_carencia_provida', 'Temp')
+            ->when($isRestrictedNteUser, function ($q) use ($userNte) {
+                $q->where('nte', $userNte);
+            })->sum('total');
+
+        $provimentosTramiteReal = Provimento::where('situacao_provimento', 'tramite')
+            ->where('ano_ref', $anoRef)
+            ->where('tipo_carencia_provida', 'real')
+            ->when($isRestrictedNteUser, function ($q) use ($userNte) {
+                $q->where('nte', $userNte);
+            })->sum('total');
+
+        $provimentosTramiteTemp = Provimento::where('situacao_provimento', 'tramite')
+            ->where('ano_ref', $anoRef)
+            ->where('tipo_carencia_provida', 'temp')
+            ->when($isRestrictedNteUser, function ($q) use ($userNte) {
+                $q->where('nte', $userNte);
+            })->sum('total');
+
+        $provimentosPCH = Provimento::where('pch', 'OK')
+            ->where('ano_ref', $anoRef)
+            ->when($isRestrictedNteUser, function ($q) use ($userNte) {
+                $q->where('nte', $userNte);
+            })->sum('total');
 
         $totalUnitsAnexos = DB::table('uees')
             ->where('tipo', 'ANEXO')
@@ -40,7 +111,10 @@ class HomeController extends Controller
                 $query->whereNull('desativation_situation')
                     ->orWhere('desativation_situation', '!=', 'Desativada');
             })
-            ->count();
+            ->when($isRestrictedNteUser, function ($q) use ($userNte) {
+                $q->where('nte', $userNte);
+            })->count();
+
         $totalUnitsSedes = DB::table('uees')
             ->where('tipo', 'SEDE')
             ->where('situacao', 'HOMOLOGADA')
@@ -48,7 +122,10 @@ class HomeController extends Controller
                 $query->whereNull('desativation_situation')
                     ->orWhere('desativation_situation', '!=', 'Desativada');
             })
-            ->count();
+            ->when($isRestrictedNteUser, function ($q) use ($userNte) {
+                $q->where('nte', $userNte);
+            })->count();
+
         $totalUnitsCemits = DB::table('uees')
             ->where('tipo', 'CEMIT')
             ->where('situacao', 'HOMOLOGADA')
@@ -56,8 +133,13 @@ class HomeController extends Controller
                 $query->whereNull('desativation_situation')
                     ->orWhere('desativation_situation', '!=', 'Desativada');
             })
-            ->count();
-        $totalCarencia = Carencia::where('ano_ref', $anoRef)->sum('total');
+            ->when($isRestrictedNteUser, function ($q) use ($userNte) {
+                $q->where('nte', $userNte);
+            })->count();
+        $totalCarencia = Carencia::where('ano_ref', $anoRef)
+            ->when($isRestrictedNteUser, function ($q) use ($userNte) {
+                $q->where('nte', $userNte);
+            })->sum('total');
 
         $disciplinas = DB::table('carencias')
             ->select('disciplina', DB::raw('sum(total) as total'))
@@ -66,6 +148,9 @@ class HomeController extends Controller
                     ->orWhereNull('fim_vaga');
             })
             ->where('ano_ref', $anoRef)
+            ->when($isRestrictedNteUser, function ($q) use ($userNte) {
+                $q->where('nte', $userNte);
+            })
             ->groupBy('disciplina')
             ->orderBy('total', 'desc')
             ->take(5)
@@ -77,6 +162,9 @@ class HomeController extends Controller
                 $query->where('ano_ref', $anoRef)
                     ->orWhereNull('ano_ref');
             })
+            ->when($isRestrictedNteUser, function ($q) use ($userNte) {
+                $q->where('nte', $userNte);
+            })
             ->groupBy('unidade_escolar', 'cod_ue', 'nte', 'municipio')
             ->orderBy('total', 'desc')
             ->take(5)
@@ -86,17 +174,92 @@ class HomeController extends Controller
         $actualDate = Carbon::now()->format('Y-m-d'); // Formata a data para incluir apenas ano, mês e dia
         $existingStatus = Status_diario::where('data', $actualDate)->first();
         $anoRef = session()->get('ano_ref');
-        $carenciasBasicaReal = Carencia::where('tipo_carencia', 'Real')->where('tipo_vaga', 'Basica')->where('ano_ref', $anoRef)->where('motivo_vaga', '!=', "MEDIADOR EMITEC")->sum('total');
-        $carenciasProfiReal = Carencia::where('tipo_carencia', 'Real')->where('tipo_vaga', 'Profissionalizante')->where('ano_ref', $anoRef)->where('motivo_vaga', '!=', "MEDIADOR EMITEC")->sum('total');
-        $carenciasBasicaTemp = Carencia::where('tipo_carencia', 'temp')->where('tipo_vaga', 'Basica')->where('fim_vaga', '>', $actualDate)->where('ano_ref', $anoRef)->where('motivo_vaga', '!=', "MEDIADOR EMITEC")->sum('total');
-        $carenciasProfiTemp = Carencia::where('tipo_carencia', 'temp')->where('tipo_vaga', 'Profissionalizante')->where('fim_vaga', '>', $actualDate)->where('ano_ref', $anoRef)->where('motivo_vaga', '!=', "MEDIADOR EMITEC")->sum('total');
-        $carenciasRealEdEspecial = Carencia::where('tipo_carencia', 'Real')->where('tipo_vaga', 'Especial')->where('ano_ref', $anoRef)->where('motivo_vaga', '!=', "MEDIADOR EMITEC")->sum('total');
-        $carenciasTempEdEspecial = Carencia::where('tipo_carencia', 'temp')->where('tipo_vaga', 'Especial')->where('fim_vaga', '>', $actualDate)->where('ano_ref', $anoRef)->where('motivo_vaga', '!=', "MEDIADOR EMITEC")->sum('total');
-        $provimentosReal = Provimento::where('situacao_provimento', 'provida')->where('ano_ref', $anoRef)->where('tipo_carencia_provida', 'Real')->sum('total');
-        $provimentosTemp = Provimento::where('situacao_provimento', 'provida')->where('ano_ref', $anoRef)->where('tipo_carencia_provida', 'Temp')->sum('total');
-        $provimentosTramiteReal = Provimento::where('situacao_provimento', 'tramite')->where('ano_ref', $anoRef)->where('tipo_carencia_provida', 'real')->sum('total');
-        $provimentosTramiteTemp = Provimento::where('situacao_provimento', 'tramite')->where('ano_ref', $anoRef)->where('tipo_carencia_provida', 'temp')->sum('total');
-        $vagaEmitec = Carencia::where('tipo_carencia', 'Real')->where('ano_ref', $anoRef)->where('tipo_vaga', 'Emitec')->where('motivo_vaga', "MEDIADOR EMITEC")->sum('total');
+        $carenciasBasicaReal = Carencia::where('tipo_carencia', 'Real')
+            ->where('tipo_vaga', 'Basica')
+            ->where('ano_ref', $anoRef)
+            ->where('motivo_vaga', '!=', "MEDIADOR EMITEC")
+            ->when($isRestrictedNteUser, function ($q) use ($userNte) {
+                $q->where('nte', $userNte);
+            })->sum('total');
+
+        $carenciasProfiReal = Carencia::where('tipo_carencia', 'Real')
+            ->where('tipo_vaga', 'Profissionalizante')
+            ->where('ano_ref', $anoRef)
+            ->where('motivo_vaga', '!=', "MEDIADOR EMITEC")
+            ->when($isRestrictedNteUser, function ($q) use ($userNte) {
+                $q->where('nte', $userNte);
+            })->sum('total');
+
+        $carenciasBasicaTemp = Carencia::where('tipo_carencia', 'temp')
+            ->where('tipo_vaga', 'Basica')
+            ->where('fim_vaga', '>', $actualDate)
+            ->where('ano_ref', $anoRef)
+            ->where('motivo_vaga', '!=', "MEDIADOR EMITEC")
+            ->when($isRestrictedNteUser, function ($q) use ($userNte) {
+                $q->where('nte', $userNte);
+            })->sum('total');
+
+        $carenciasProfiTemp = Carencia::where('tipo_carencia', 'temp')
+            ->where('tipo_vaga', 'Profissionalizante')
+            ->where('fim_vaga', '>', $actualDate)
+            ->where('ano_ref', $anoRef)
+            ->where('motivo_vaga', '!=', "MEDIADOR EMITEC")
+            ->when($isRestrictedNteUser, function ($q) use ($userNte) {
+                $q->where('nte', $userNte);
+            })->sum('total');
+
+        $carenciasRealEdEspecial = Carencia::where('tipo_carencia', 'Real')
+            ->where('tipo_vaga', 'Especial')
+            ->where('ano_ref', $anoRef)
+            ->where('motivo_vaga', '!=', "MEDIADOR EMITEC")
+            ->when($isRestrictedNteUser, function ($q) use ($userNte) {
+                $q->where('nte', $userNte);
+            })->sum('total');
+
+        $carenciasTempEdEspecial = Carencia::where('tipo_carencia', 'temp')
+            ->where('tipo_vaga', 'Especial')
+            ->where('fim_vaga', '>', $actualDate)
+            ->where('ano_ref', $anoRef)
+            ->where('motivo_vaga', '!=', "MEDIADOR EMITEC")
+            ->when($isRestrictedNteUser, function ($q) use ($userNte) {
+                $q->where('nte', $userNte);
+            })->sum('total');
+
+        $provimentosReal = Provimento::where('situacao_provimento', 'provida')
+            ->where('ano_ref', $anoRef)
+            ->where('tipo_carencia_provida', 'Real')
+            ->when($isRestrictedNteUser, function ($q) use ($userNte) {
+                $q->where('nte', $userNte);
+            })->sum('total');
+
+        $provimentosTemp = Provimento::where('situacao_provimento', 'provida')
+            ->where('ano_ref', $anoRef)
+            ->where('tipo_carencia_provida', 'Temp')
+            ->when($isRestrictedNteUser, function ($q) use ($userNte) {
+                $q->where('nte', $userNte);
+            })->sum('total');
+
+        $provimentosTramiteReal = Provimento::where('situacao_provimento', 'tramite')
+            ->where('ano_ref', $anoRef)
+            ->where('tipo_carencia_provida', 'real')
+            ->when($isRestrictedNteUser, function ($q) use ($userNte) {
+                $q->where('nte', $userNte);
+            })->sum('total');
+
+        $provimentosTramiteTemp = Provimento::where('situacao_provimento', 'tramite')
+            ->where('ano_ref', $anoRef)
+            ->where('tipo_carencia_provida', 'temp')
+            ->when($isRestrictedNteUser, function ($q) use ($userNte) {
+                $q->where('nte', $userNte);
+            })->sum('total');
+
+        $vagaEmitec = Carencia::where('tipo_carencia', 'Real')
+            ->where('ano_ref', $anoRef)
+            ->where('tipo_vaga', 'Emitec')
+            ->where('motivo_vaga', "MEDIADOR EMITEC")
+            ->when($isRestrictedNteUser, function ($q) use ($userNte) {
+                $q->where('nte', $userNte);
+            })->sum('total');
 
         if (!$existingStatus) {
             $actualDate = Carbon::now();
@@ -119,25 +282,36 @@ class HomeController extends Controller
 
         $totalUnitsSedesAll = DB::table('uees')
             ->where('tipo', 'SEDE')
+            ->where('situacao', 'HOMOLOGADA')
             ->where(function ($query) {
                 $query->whereNull('desativation_situation')
                     ->orWhere('desativation_situation', '!=', 'Desativada');
             })
-            ->count();
+            ->when($isRestrictedNteUser, function ($q) use ($userNte) {
+                $q->where('nte', $userNte);
+            })->count();
+
         $totalUnitsAnexosAll = DB::table('uees')
             ->where('tipo', 'ANEXO')
+            ->where('situacao', 'HOMOLOGADA')
             ->where(function ($query) {
                 $query->whereNull('desativation_situation')
                     ->orWhere('desativation_situation', '!=', 'Desativada');
             })
-            ->count();
+            ->when($isRestrictedNteUser, function ($q) use ($userNte) {
+                $q->where('nte', $userNte);
+            })->count();
+
         $totalUnitsCemitAll = DB::table('uees')
             ->where('tipo', 'CEMIT')
+            ->where('situacao', 'HOMOLOGADA')
             ->where(function ($query) {
                 $query->whereNull('desativation_situation')
                     ->orWhere('desativation_situation', '!=', 'Desativada');
             })
-            ->count();
+            ->when($isRestrictedNteUser, function ($q) use ($userNte) {
+                $q->where('nte', $userNte);
+            })->count();
 
 
         $percentSedes = $totalUnitsSedesAll > 0 ? ($totalUnitsSedes / $totalUnitsSedesAll) * 100 : 0;

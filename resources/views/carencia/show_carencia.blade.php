@@ -87,35 +87,21 @@
                 <div class="col-md-1">
                     <div class="form-group_disciplina">
                         <label class="control-label" for="nte_seacrh">NTE</label>
+                        @php
+                            $user = Auth::user();
+                            $userNte = trim((string) ($user->nte ?? ''));
+                            $isAdmin = $user && intval($user->profile_id ?? 0) === 4;
+                            $isNteUser = ($user && intval($user->sector_id ?? 0) === 7 && intval($user->profile_id ?? 0) === 1) || ($user && $userNte !== '' && !$isAdmin);
+                        @endphp
                         <select name="nte_seacrh" id="nte_seacrh" class="form-control form-control-sm select2">
                             <option></option>
-                            <option>1</option>
-                            <option>2</option>
-                            <option>3</option>
-                            <option>4</option>
-                            <option>5</option>
-                            <option>6</option>
-                            <option>7</option>
-                            <option>8</option>
-                            <option>9</option>
-                            <option>10</option>
-                            <option>11</option>
-                            <option>12</option>
-                            <option>13</option>
-                            <option>14</option>
-                            <option>15</option>
-                            <option>16</option>
-                            <option>17</option>
-                            <option>18</option>
-                            <option>19</option>
-                            <option>20</option>
-                            <option>21</option>
-                            <option>22</option>
-                            <option>23</option>
-                            <option>24</option>
-                            <option>25</option>
-                            <option>26</option>
-                            <option>27</option>
+                            @if ($isNteUser && $userNte !== '')
+                                <option value="{{ $userNte }}">{{ $userNte }}</option>
+                            @else
+                                @for ($i = 1; $i <= 27; $i++)
+                                    <option value="{{ $i }}">{{ $i }}</option>
+                                @endfor
+                            @endif
                         </select>
                     </div>
                 </div>
@@ -320,6 +306,32 @@
     </div>
 
     <div class="table-responsive">
+        @php
+            // If the logged user has an NTE value (and is not an admin/cpm), show only carências for their NTE
+            $displayCarencias = collect($filteredCarencias ?? [])->filter(function($carencia) {
+                $user = Auth::user();
+                if (!$user) return true;
+                // don't restrict admins or CPM roles
+                if (in_array($user->profile, ['administrador','cpm_tecnico','cpm_coordenador','cpg_tecnico'])) {
+                    return true;
+                }
+
+                $userNte = trim((string) ($user->nte ?? ''));
+                if ($userNte === '') {
+                    // no NTE associated with user => don't filter
+                    return true;
+                }
+
+                // compare numeric values to avoid padding/format issues
+                return intval($userNte) === intval($carencia->uee->nte ?? 0);
+            })->values()->all();
+
+            // Recalculate totals based on the filtered set
+            $carenciasMat = collect($displayCarencias)->sum(function($c) { return intval($c->matutino ?? 0); });
+            $carenciasVesp = collect($displayCarencias)->sum(function($c) { return intval($c->vespertino ?? 0); });
+            $carenciasNot = collect($displayCarencias)->sum(function($c) { return intval($c->noturno ?? 0); });
+            $carenciasTotal = collect($displayCarencias)->sum(function($c) { return intval($c->total ?? ($c->matutino + $c->vespertino + $c->noturno) ); });
+        @endphp
         @if (Auth::user()->profile === 'administrador' || Auth::user()->profile === 'cpm_tecnico' || Auth::user()->profile === 'cpm_coordenador')
             <div id="buttons" class="buttons mb-4">
                 <button class="ml-2 button" type="button" id="reservarBtn">
@@ -363,7 +375,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach ($filteredCarencias as $carencia)
+                @foreach ($displayCarencias as $carencia)
                     <tr @if (!empty($carencia->vagaReserva)) class="table-warning" @endif>
                         @if (!$carencia->vagaReserva)
                             <td class="text-center">
@@ -423,9 +435,8 @@
                                     </svg>
                                 </button>
                             </a>
-                            @if (Auth::user()->profile === 'cpg_tecnico' || Auth::user()->profile === 'administrador')
+                            @if ((Auth::user()->profile === 'cpg_tecnico' || Auth::user()->profile === 'administrador') && (Auth::user()->nte == null || Auth::user()->nte == ''))
                                 @if (!$carencia->vagaReserva)
-                                    @if (Auth::user()->profile === 'cpg_tecnico' || Auth::user()->profile === 'administrador')
                                         @if ($carencia->uee->situacao === 'HOMOLOGADA')
                                             <a data-toggle="tooltip" data-placement="top" title="Excluir"
                                                 title="Excluir" id="" onclick="destroy('{{ $carencia->id }}')"
@@ -461,7 +472,6 @@
                                         @endif
                                     @endif
                                 @endif
-                            @endif
                             @if (session('ano_ref') == $ano_atual || Auth::user()->profile === 'administrador')
                                 @if (Auth::user()->profile === 'cpm_tecnico' || Auth::user()->profile === 'administrador')
                                     @if ($carencia->hml === 'SIM')
