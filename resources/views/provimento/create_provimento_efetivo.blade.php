@@ -193,7 +193,7 @@
                                 </div>
                             </div>
                             <hr>
-                            <h5><strong>INFORMAÇÕES DE SUBSTITUIÇÃO</strong></h5>
+                            <h5><strong>INFORMAÇÕES DA VAGA</strong></h5>
                             <br>
 
                             <button class="btn btn-primary mb-4" type="button" data-toggle="collapse"
@@ -267,7 +267,8 @@
                                         <div class="form-group">
                                             <label for="tipo_vaga_select" class="">Tipo de Vaga</label>
                                             <select id="tipo_vaga_select" name="carencia_tipo" class="form-control form-control-sm">
-                                                <option value="substituicao" selected>Substituição</option>
+                                                <option selected disabled>Selecione...</option>
+                                                <option value="substituicao">Substituição REDA</option>
                                                 <option value="vaga_real">Vaga Real</option>
                                                 <option value="vaga_temporaria">Vaga Temporária</option>
                                             </select>
@@ -278,7 +279,6 @@
                                 <!-- Disciplinas de Substituição -->
                                 <div id="disciplinas-substituicao" class="form-row mt-3">
                                     <div class="col-md-12">
-                                        <h6>Disciplinas do servidor</h6>
                                         <div id="disciplinas-container">
                                             <div class="form-row disciplina-row">
                                                 <div class="col-md-6">
@@ -474,6 +474,7 @@
                                 <path d="M12 14m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
                                 <path d="M14 4l0 4l-6 0l0 -4" />
                             </svg>
+                            Salvar Encaminhamento
                         </button>
                     </div>
                 </form>
