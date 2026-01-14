@@ -456,14 +456,18 @@
                                             mb_stripos($lbl, 'hist', 0, 'UTF-8') !== false ||
                                             mb_stripos($lbl, 'cpf', 0, 'UTF-8') !== false ||
                                             mb_stripos($lbl, 'rg', 0, 'UTF-8') !== false ||
+                                            mb_stripos($lbl, 'certid', 0, 'UTF-8') !== false ||
                                             mb_stripos((string)$k, 'diploma', 0, 'UTF-8') !== false ||
                                             mb_stripos((string)$k, 'historico', 0, 'UTF-8') !== false ||
                                             mb_stripos((string)$k, 'cpf', 0, 'UTF-8') !== false ||
                                             mb_stripos((string)$k, 'rg', 0, 'UTF-8') !== false ||
+                                            mb_stripos((string)$k, 'certidao', 0, 'UTF-8') !== false ||
                                             // specifically require Banco do Brasil comprovante
                                             mb_stripos($lbl, 'banco do brasil', 0, 'UTF-8') !== false ||
                                             (mb_stripos($lbl, 'comprovante', 0, 'UTF-8') !== false && mb_stripos($lbl, 'banco', 0, 'UTF-8') !== false && mb_stripos($lbl, 'brasil', 0, 'UTF-8') !== false) ||
                                             (mb_stripos((string)$k, 'banco', 0, 'UTF-8') !== false && mb_stripos((string)$k, 'brasil', 0, 'UTF-8') !== false) ||
+                                            // require Comprovante de Residência explicitly
+                                            mb_stripos($lbl, 'comprovante de resid', 0, 'UTF-8') !== false || mb_stripos((string)$k, 'comprovante_residencia', 0, 'UTF-8') !== false ||
                                             // require comprovante de votação dos dois últimos pleitos
                                             mb_stripos($lbl, 'vot', 0, 'UTF-8') !== false ||
                                             mb_stripos($lbl, 'pleit', 0, 'UTF-8') !== false ||
@@ -473,6 +477,8 @@
                                             || ((mb_stripos($lbl, 'pis', 0, 'UTF-8') !== false || mb_stripos($lbl, 'pasep', 0, 'UTF-8') !== false || mb_stripos((string)$k, 'pis', 0, 'UTF-8') !== false || mb_stripos((string)$k, 'pasep', 0, 'UTF-8') !== false) && $hasPis)
                                             // require Carteira de Trabalho (original + copy)
                                             || mb_stripos($lbl, 'carteira', 0, 'UTF-8') !== false || mb_stripos($lbl, 'carteira de trabalho', 0, 'UTF-8') !== false || mb_stripos((string)$k, 'carteira', 0, 'UTF-8') !== false || mb_stripos((string)$k, 'ctps', 0, 'UTF-8') !== false
+                                            // require Ficha de Cadastro (original)
+                                            || mb_stripos($lbl, 'ficha de cadastro', 0, 'UTF-8') !== false || mb_stripos((string)$k, 'ficha_cadastro', 0, 'UTF-8') !== false || mb_stripos($lbl, 'etnia', 0, 'UTF-8') !== false || mb_stripos((string)$k, 'declaracao_etnia', 0, 'UTF-8') !== false || mb_stripos($lbl, 'benefic', 0, 'UTF-8') !== false || mb_stripos($lbl, 'inss', 0, 'UTF-8') !== false || mb_stripos((string)$k, 'declaracao_beneficio', 0, 'UTF-8') !== false || mb_stripos((string)$k, 'declaracao_beneficio_inss', 0, 'UTF-8') !== false || mb_stripos($lbl, 'bens', 0, 'UTF-8') !== false || mb_stripos((string)$k, 'declaracao_bens', 0, 'UTF-8') !== false || mb_stripos($lbl, 'acumul', 0, 'UTF-8') !== false || mb_stripos((string)$k, 'declaracao_acumulacao', 0, 'UTF-8') !== false || mb_stripos($lbl, 'aso', 0, 'UTF-8') !== false || mb_stripos($lbl, 'atestado', 0, 'UTF-8') !== false || mb_stripos($lbl, 'saude ocup', 0, 'UTF-8') !== false || mb_stripos((string)$k, 'aso', 0, 'UTF-8') !== false || mb_stripos((string)$k, 'atestado', 0, 'UTF-8') !== false || mb_stripos((string)$k, 'atestado_saude', 0, 'UTF-8') !== false
                                         ) {
                                             $isRequired = true;
                                             // but exclude documents clearly about dependents (e.g., 'dependente', 'filho')
@@ -480,7 +486,80 @@
                                                 $isRequired = false;
                                             }
                                         }
+
+                                        // Additional required document check: Certidão Negativa do Cadastro Nacional de Condenações Civeis
+                                        if (! $isRequired) {
+                                            if (
+                                                mb_stripos($lbl, 'negativa', 0, 'UTF-8') !== false ||
+                                                mb_stripos($lbl, 'condena', 0, 'UTF-8') !== false ||
+                                                mb_stripos((string)$k, 'certidao_negativa', 0, 'UTF-8') !== false ||
+                                                mb_stripos((string)$k, 'condenacoes', 0, 'UTF-8') !== false ||
+                                                mb_stripos((string)$k, 'certidao_negativa_condenacoes', 0, 'UTF-8') !== false ||
+                                                mb_stripos($lbl, 'eleitoral', 0, 'UTF-8') !== false ||
+                                                mb_stripos((string)$k, 'justica_eleitoral', 0, 'UTF-8') !== false ||
+                                                mb_stripos((string)$k, 'certidao_negativa_justica_eleitoral', 0, 'UTF-8') !== false ||
+                                                mb_stripos($lbl, 'militar', 0, 'UTF-8') !== false ||
+                                                mb_stripos($lbl, 'militar federal', 0, 'UTF-8') !== false ||
+                                                mb_stripos((string)$k, 'justica_militar', 0, 'UTF-8') !== false ||
+                                                mb_stripos((string)$k, 'justica_militar_federal', 0, 'UTF-8') !== false ||
+                                                mb_stripos((string)$k, 'certidao_negativa_justica_militar_federal', 0, 'UTF-8') !== false
+                                            ) {
+                                                $isRequired = true;
+                                            }
+                                        }
+                                            // Additional required document check: Título de Eleitor (original e cópia) e Quitação Eleitoral
+                                            if (! $isRequired) {
+                                                if (
+                                                    mb_stripos($lbl, 'titulo', 0, 'UTF-8') !== false ||
+                                                    mb_stripos((string)$k, 'titulo_eleitor', 0, 'UTF-8') !== false ||
+                                                    mb_stripos($lbl, 'quit', 0, 'UTF-8') !== false ||
+                                                    mb_stripos($lbl, 'quitação', 0, 'UTF-8') !== false ||
+                                                    mb_stripos((string)$k, 'quitacao', 0, 'UTF-8') !== false ||
+                                                    mb_stripos((string)$k, 'quitacao_eleitoral', 0, 'UTF-8') !== false
+                                                ) {
+                                                    $isRequired = true;
+                                                }
+                                            }
+
+
+                                        // Additional required document check: Antecedentes Polícia Federal (estados últimos 8 anos)
+                                        if (! $isRequired) {
+                                            if (
+                                                (mb_stripos($lbl, 'antecedentes', 0, 'UTF-8') !== false && (mb_stripos($lbl, 'polic', 0, 'UTF-8') !== false || mb_stripos($lbl, 'federal', 0, 'UTF-8') !== false)) ||
+                                                mb_stripos((string)$k, 'antecedentes_pf', 0, 'UTF-8') !== false ||
+                                                mb_stripos((string)$k, 'policia_federal', 0, 'UTF-8') !== false ||
+                                                mb_stripos((string)$k, 'antecedentes_policia_federal', 0, 'UTF-8') !== false ||
+                                                mb_stripos((string)$k, 'antecedentes_pf_estados_8_anos', 0, 'UTF-8') !== false
+                                            ) {
+                                                $isRequired = true;
+                                            }
+                                        }
                                     @endphp
+
+                                    @php
+                                        // Additional required document check: Certidões de Foros Criminais (Federal / Estadual)
+                                        if (! $isRequired) {
+                                            if (
+                                                (
+                                                    mb_stripos($lbl, 'foro', 0, 'UTF-8') !== false ||
+                                                    mb_stripos($lbl, 'foros', 0, 'UTF-8') !== false ||
+                                                    mb_stripos($lbl, 'foro criminal', 0, 'UTF-8') !== false ||
+                                                    mb_stripos($lbl, 'foros criminais', 0, 'UTF-8') !== false ||
+                                                    mb_stripos($lbl, 'distribu', 0, 'UTF-8') !== false ||
+                                                    mb_stripos($lbl, 'criminal', 0, 'UTF-8') !== false
+                                                ) && (
+                                                    mb_stripos($lbl, 'federal', 0, 'UTF-8') !== false ||
+                                                    mb_stripos($lbl, 'estadual', 0, 'UTF-8') !== false ||
+                                                    mb_stripos((string)$k, 'foros_federal', 0, 'UTF-8') !== false ||
+                                                    mb_stripos((string)$k, 'foros_estadual', 0, 'UTF-8') !== false ||
+                                                    mb_stripos((string)$k, 'certidao_negativa_foros', 0, 'UTF-8') !== false
+                                                )
+                                            ) {
+                                                $isRequired = true;
+                                            }
+                                        }
+                                    @endphp
+
                                     <div class="form-check mb-1">
                                         <input class="form-check-input" type="checkbox" value=""
                                             id="doc_{{ $k }}" data-key="{{ $k }}" data-required="{{ $isRequired ? '1' : '0' }}"

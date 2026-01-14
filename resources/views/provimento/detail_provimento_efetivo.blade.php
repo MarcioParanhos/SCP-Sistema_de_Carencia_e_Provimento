@@ -1026,3 +1026,5 @@
 </script>
 
 @endsection
+
+<script src="{{ asset('dist/js/encaminhamento.js') }}"></script>

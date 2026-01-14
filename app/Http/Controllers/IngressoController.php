@@ -927,15 +927,31 @@ class IngressoController extends Controller
             ['key' => 'comprovante_residencia', 'label' => 'Comprovante de Residência'],
             ['key' => 'diploma', 'label' => 'Diploma / Histórico'],
             ['key' => 'dependente_doc', 'label' => 'Certidão de Nascimento ou RG do(s) dependente(s)'],
-            ['key' => 'titulo_eleitor', 'label' => 'Título de Eleitor'],
-            ['key' => 'comprovante_votacao_ultimos_2_pleitos', 'label' => 'Comprovante de votação dos dois últimos pleitos'],
+            
+            
             ['key' => 'comprovante_bb', 'label' => 'Comprovante (extrato ou cartão) - Banco do Brasil'],
             ['key' => 'pis_pasep', 'label' => 'Original e cópia do PIS/PASEP (se inscrito)'],
             ['key' => 'carteira_trabalho', 'label' => 'Carteira de Trabalho (original e cópia)'],
             ['key' => 'certificado_reservista', 'label' => 'Certificado de Reservista (para homens)'],
             ['key' => 'ficha_cadastro', 'label' => 'Ficha de Cadastro (original)'],
             ['key' => 'email_confirmacao', 'label' => 'E-mail (confirmação/comprovante)'],
-            ['key' => 'foto', 'label' => 'Foto 3x4'],
+            ['key' => 'declaracao_etnia', 'label' => 'Declaração de Etnia'],
+            ['key' => 'declaracao_bens', 'label' => 'Declaração de Bens'],
+            ['key' => 'quitacao_eleitoral', 'label' => 'Quitação Eleitoral (fornecida pelo cartório eleitoral)'],
+            ['key' => 'declaracao_acumulacao', 'label' => 'Declaração de Acumulação'],
+            ['key' => 'declaracao_dependentes', 'label' => 'Declaração de Dependentes'],
+            ['key' => 'aso', 'label' => 'Atestado de Saúde Ocupacional - ASO'],
+            ['key' => 'certidao_negativa_condenacoes', 'label' => 'Certidão Negativa do Cadastro Nacional de Condenações Civeis'],
+            ['key' => 'certidao_negativa_justica_eleitoral', 'label' => 'Certidão Negativa da Justiça Eleitoral'],
+            ['key' => 'certidao_negativa_justica_militar_federal', 'label' => 'Certidão Negativa da Justiça Militar Federal'],
+            ['key' => 'certidao_negativa_foros_federal_8_anos', 'label' => 'Certidão Negativa - Foros Criminais (Justiça Federal) - estados residiu nos últimos 8 anos'],
+            ['key' => 'certidao_negativa_foros_estadual_8_anos', 'label' => 'Certidão Negativa - Foros Criminais (Justiça Estadual) - estados residiu nos últimos 8 anos'],
+            ['key' => 'cref13_ba', 'label' => 'Conselho Regional de Educação Fisica da 13º Reagial - CREF13/BA'],
+            ['key' => 'antecedentes_pf_estados_8_anos', 'label' => 'Antecedentes da Polícia Federal (Estados onde residiu nos últimos 8 anos)'],
+            ['key' => 'declaracao_beneficio_inss', 'label' => 'Declaração de Benefício do INSS'],
+            ['key' => 'comprovante_situacao_cadastral_rf', 'label' => 'Comprovante de Situação Cadastral por CPF - RECEITA FEDERAL'],
+            
+            
         ];
 
         // fetch existing checklist if table exists
@@ -1417,15 +1433,27 @@ class IngressoController extends Controller
             ['key' => 'comprovante_residencia', 'label' => 'Comprovante de Residência'],
             ['key' => 'diploma', 'label' => 'Diploma / Histórico'],
             ['key' => 'dependente_doc', 'label' => 'Certidão de Nascimento ou RG do(s) dependente(s)'],
-            ['key' => 'titulo_eleitor', 'label' => 'Título de Eleitor'],
-            ['key' => 'comprovante_votacao_ultimos_2_pleitos', 'label' => 'Comprovante de votação dos dois últimos pleitos'],
+            ['key' => 'titulo_eleitor', 'label' => 'Título de Eleitor (original e cópia)'],
+            
             ['key' => 'comprovante_bb', 'label' => 'Comprovante (extrato ou cartão) - Banco do Brasil'],
             ['key' => 'pis_pasep', 'label' => 'Original e cópia do PIS/PASEP (se inscrito)'],
             ['key' => 'carteira_trabalho', 'label' => 'Carteira de Trabalho (original e cópia)'],
             ['key' => 'certificado_reservista', 'label' => 'Certificado de Reservista (para homens)'],
             ['key' => 'ficha_cadastro', 'label' => 'Ficha de Cadastro (original)'],
             ['key' => 'email_confirmacao', 'label' => 'E-mail (confirmação/comprovante)'],
-            ['key' => 'foto', 'label' => 'Foto 3x4'],
+            
+            ['key' => 'declaracao_etnia', 'label' => 'Declaração de Etnia'],
+            ['key' => 'quitacao_eleitoral', 'label' => 'Quitação Eleitoral (fornecida pelo cartório eleitoral)'],
+            ['key' => 'declaracao_bens', 'label' => 'Declaração de Bens'],
+            ['key' => 'declaracao_acumulacao', 'label' => 'Declaração de Acumulação'],
+            ['key' => 'declaracao_dependentes', 'label' => 'Declaração de Dependentes'],
+            ['key' => 'aso', 'label' => 'Atestado de Saúde Ocupacional - ASO'],
+            ['key' => 'certidao_negativa_condenacoes', 'label' => 'Certidão Negativa do Cadastro Nacional de Condenações Civeis'],
+            ['key' => 'certidao_negativa_justica_eleitoral', 'label' => 'Certidão Negativa da Justiça Eleitoral'],
+            ['key' => 'certidao_negativa_justica_militar_federal', 'label' => 'Certidão Negativa da Justiça Militar Federal'],
+            ['key' => 'certidao_negativa_foros_federal_8_anos', 'label' => 'Certidão Negativa - Foros Criminais (Justiça Federal) - estados residiu nos últimos 8 anos'],
+            ['key' => 'certidao_negativa_foros_estadual_8_anos', 'label' => 'Certidão Negativa - Foros Criminais (Justiça Estadual) - estados residiu nos últimos 8 anos'],
+            ['key' => 'antecedentes_pf_estados_8_anos', 'label' => 'Antecedentes da Polícia Federal (Estados onde residiu nos últimos 8 anos)'],
         ];
 
         $existing = [];

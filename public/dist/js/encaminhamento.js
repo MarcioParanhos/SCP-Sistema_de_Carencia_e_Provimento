@@ -297,3 +297,12 @@ function adicionarDisciplina() {
 function removerDisciplina(botao) {
     botao.closest('.disciplina-row').remove();
 }
+
+// Backwards-compatible alias used by detail view for REDA flows
+function adicionarDisciplinaReda() {
+    try {
+        adicionarDisciplina();
+    } catch (e) {
+        console.error('Failed to add disciplina (Reda):', e);
+    }
+}

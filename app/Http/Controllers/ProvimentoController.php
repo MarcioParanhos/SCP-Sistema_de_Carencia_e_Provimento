@@ -1449,23 +1449,73 @@ class ProvimentoController extends Controller
 
     public function updateProvimentoEfetivo(Request $request)
     {
-
         $encaminhamento = ProvimentosEncaminhado::findOrFail($request->id);
-        $data = $request->except('user_id');
+
+        // Prevent accidental mass-assignment of array fields that don't exist in DB
+        $data = $request->except(['user_id', 'disciplinas', 'matutino', 'vespertino', 'noturno']);
 
         // Map carencia_tipo (form field) to tipo_carencia (DB column)
         if ($request->filled('carencia_tipo')) {
             $encaminhamento->tipo_carencia = $request->carencia_tipo;
-            // remove from $data to avoid attempting to set a non-existing column
             if (array_key_exists('carencia_tipo', $data)) {
                 unset($data['carencia_tipo']);
             }
         }
 
-        $encaminhamento->update($data);
+        // Handle disciplines array: if multiple disciplines submitted, keep first on current row
+        // and create additional ProvimentosEncaminhado rows for the remaining disciplines.
+        $disciplines = $request->input('disciplinas', []);
+        $matutino = $request->input('matutino', []);
+        $vespertino = $request->input('vespertino', []);
+        $noturno = $request->input('noturno', []);
 
+        DB::beginTransaction();
+        try {
+            if (is_array($disciplines) && count($disciplines) > 0) {
+                // set first discipline on existing record
+                $firstDisc = $disciplines[0];
+                $encaminhamento->disciplina = $firstDisc;
 
-        return  redirect()->to(url()->previous())->with('msg', 'success');
+                // map shift values for first row
+                if (is_array($matutino)) {
+                    $encaminhamento->matutino = $matutino[0] ?? (count($matutino) ? implode(', ', $matutino) : null);
+                }
+                if (is_array($vespertino)) {
+                    $encaminhamento->vespertino = $vespertino[0] ?? (count($vespertino) ? implode(', ', $vespertino) : null);
+                }
+                if (is_array($noturno)) {
+                    $encaminhamento->noturno = $noturno[0] ?? (count($noturno) ? implode(', ', $noturno) : null);
+                }
+
+                // Apply scalar updates to the current row
+                $encaminhamento->fill($data);
+                $encaminhamento->save();
+
+                // For any additional disciplines, replicate the current row and set the discipline/turnos
+                for ($i = 1; $i < count($disciplines); $i++) {
+                    $dName = $disciplines[$i];
+                    $new = $encaminhamento->replicate();
+                    $new->disciplina = $dName;
+                    $new->matutino = is_array($matutino) ? ($matutino[$i] ?? ($matutino[0] ?? null)) : $matutino;
+                    $new->vespertino = is_array($vespertino) ? ($vespertino[$i] ?? ($vespertino[0] ?? null)) : $vespertino;
+                    $new->noturno = is_array($noturno) ? ($noturno[$i] ?? ($noturno[0] ?? null)) : $noturno;
+                    // Ensure timestamps are fresh
+                    $new->created_at = now();
+                    $new->updated_at = now();
+                    $new->save();
+                }
+            } else {
+                // No disciplines array — perform a normal update
+                $encaminhamento->update($data);
+            }
+
+            DB::commit();
+            return redirect()->to(url()->previous())->with('msg', 'success');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Illuminate\Support\Facades\Log::error('Erro ao atualizar Provimento Efetivo: ' . $e->getMessage());
+            return redirect()->to(url()->previous())->with('msg', 'error');
+        }
     }
 
     public function destroyProvimentoEfetivo(ProvimentosEncaminhado $provimentosEncaminhado)
