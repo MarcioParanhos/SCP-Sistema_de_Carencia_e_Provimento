@@ -80,25 +80,56 @@ class IngressoController extends Controller
             }
 
             // Restrict dashboard to candidates that have been encaminhados (exist in provimentos_encaminhados)
-            try {
-                if (Schema::hasTable('provimentos_encaminhados')) {
-                    $encQuery = DB::table('provimentos_encaminhados')
-                        ->select('ingresso_candidato_id')
-                        ->whereNotNull('ingresso_candidato_id')
-                        ->distinct();
-                    $baseQuery->whereIn('id', $encQuery);
+                // NOTE: previously results were restricted to candidates that have been
+                // encaminhados (exist in provimentos_encaminhados). That filter was
+                // removed to allow listing all candidates while still scoping results
+                // to the current user's NTE above.
+                // The following code is commented out to remove the restriction.
+                /*
+                try {
+                    if (Schema::hasTable('provimentos_encaminhados')) {
+                        $encQuery = DB::table('provimentos_encaminhados')
+                            ->select('ingresso_candidato_id')
+                            ->whereNotNull('ingresso_candidato_id')
+                            ->distinct();
+                        $baseQuery->whereIn('id', $encQuery);
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to apply encaminhados filter in ingresso dashboard', ['exception' => $e->getMessage()]);
                 }
-            } catch (\Throwable $e) {
-                Log::warning('Failed to apply encaminhados filter in ingresso dashboard', ['exception' => $e->getMessage()]);
-            }
+                */
 
             // now compute stats from scoped (and filtered) baseQuery using clones to avoid mutating it
             $total = (clone $baseQuery)->count();
 
-            if (in_array('documentos_validados', $available)) {
-                $docsValidated = (clone $baseQuery)->where('documentos_validados', 1)->count();
-            } elseif (in_array('status', $available)) {
-                $docsValidated = (clone $baseQuery)->whereRaw("LOWER(status) LIKE '%valid%'")->count();
+            // Prefer authoritative calculation from ingresso_documentos when available
+            try {
+                if (Schema::hasTable('ingresso_documentos')) {
+                    $sub = DB::table('ingresso_documentos')
+                        ->select('ingresso_candidato_id', DB::raw('SUM(validated) as validated_count'), DB::raw('COUNT(*) as total'))
+                        ->groupBy('ingresso_candidato_id');
+
+                    $qbValid = (clone $baseQuery)
+                        ->joinSub($sub, 'ds', function($join) {
+                            $join->on('ingresso_candidatos.id', '=', 'ds.ingresso_candidato_id');
+                        })
+                        ->whereRaw('ds.total > 0 AND ds.validated_count = ds.total');
+
+                    $docsValidated = $qbValid->count();
+                } else {
+                    if (in_array('documentos_validados', $available)) {
+                        $docsValidated = (clone $baseQuery)->where('documentos_validados', 1)->count();
+                    } elseif (in_array('status', $available)) {
+                        $docsValidated = (clone $baseQuery)->whereRaw("LOWER(status) LIKE '%valid%'")->count();
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Failed to compute documentos_validados from ingresso_documentos, falling back', ['exception' => $e->getMessage()]);
+                if (in_array('documentos_validados', $available)) {
+                    $docsValidated = (clone $baseQuery)->where('documentos_validados', 1)->count();
+                } elseif (in_array('status', $available)) {
+                    $docsValidated = (clone $baseQuery)->whereRaw("LOWER(status) LIKE '%valid%'")->count();
+                }
             }
 
             if (in_array('status', $available)) {
@@ -349,7 +380,10 @@ class IngressoController extends Controller
                 });
             }
 
-            // Restrict to candidates that have been encaminhados (exist in provimentos_encaminhados)
+            // NOTE: removed the restriction that limited results to candidates
+            // present in `provimentos_encaminhados`. We want to list all
+            // candidates (still scoped to the user's NTE above).
+            /*
             try {
                 if (Schema::hasTable('provimentos_encaminhados')) {
                     $encQuery = DB::table('provimentos_encaminhados')
@@ -359,9 +393,9 @@ class IngressoController extends Controller
                     $filteredQuery->whereIn('id', $encQuery);
                 }
             } catch (\Throwable $e) {
-                // If something goes wrong, do not break the listing; log and continue
                 Log::warning('Failed to apply encaminhados filter in ingresso data endpoint', ['exception' => $e->getMessage()]);
             }
+            */
 
             $recordsFiltered = $filteredQuery->count();
 
@@ -395,54 +429,33 @@ class IngressoController extends Controller
                 $data = $rows->map(function($r) use ($docSummary) {
                     $row = (array) $r;
                     $status = null;
-                    // if we have document summary for this candidate, derive status
-                    $summary = $docSummary->get($r->id);
-                    if ($summary) {
-                        $total = intval($summary->total);
-                        $validated = intval($summary->validated_count);
-                        if ($total > 0 && $validated === $total) {
-                            // all documents uploaded/checked — prefer explicit candidate.status if it indicates final validation
-                            if (isset($r->status) && $r->status) {
-                                $statusTextLower = strtolower($r->status);
-                                // treat explicit 'valid' statuses as final
-                                if (strpos($statusTextLower, 'valid') !== false || strpos($statusTextLower, 'ingresso validado') !== false) {
-                                    $status = $r->status;
-                                } else {
-                                    // documents validated by NTE -> awaiting CPM validation
-                                    $status = 'Aguardando Confirmação pela CPM';
-                                }
-                            } else {
-                                // documents validated by NTE -> awaiting CPM validation
+
+                    // Prefer explicit DB status when present
+                    if (isset($row['status']) && $row['status']) {
+                        $status = $row['status'];
+                    } else {
+                        // if we have document summary for this candidate, derive status from documents
+                        $summary = $docSummary->get($row['id']);
+                        if ($summary) {
+                            $total = intval($summary->total);
+                            $validated = intval($summary->validated_count);
+                            if ($total > 0 && $validated === $total) {
+                                // all documents uploaded/checked -> awaiting CPM confirmation
                                 $status = 'Aguardando Confirmação pela CPM';
+                            } else {
+                                // Not all documents validated
+                                $status = 'Documentos Pendentes';
                             }
                         } else {
-                            // Not all documents validated. Prefer explicit candidate.status when it signals awaiting CPM.
-                            if (isset($r->status) && is_string($r->status) && stripos($r->status, 'aguard') !== false) {
-                                $status = $r->status;
+                            // no per-document summary; fall back to documentos_validados flag or default pending
+                            if (isset($row['documentos_validados']) && ($row['documentos_validados'] == 1 || $row['documentos_validados'] === true)) {
+                                $status = 'Aguardando Confirmação pela CPM';
                             } else {
                                 $status = 'Documentos Pendentes';
                             }
                         }
-                    } else {
-                        // fallback to candidate fields if present
-                        if (isset($r->status) && $r->status) {
-                            $statusTextLower = strtolower($r->status);
-                            if (strpos($statusTextLower, 'valid') !== false || strpos($statusTextLower, 'ingresso validado') !== false) {
-                                $status = $r->status;
-                            } else {
-                                // if documentos_validados flag is set (e.g., validated by NTE), mark as pending for CPM
-                                    if (isset($r->documentos_validados) && ($r->documentos_validados == 1 || $r->documentos_validados === true)) {
-                                    $status = 'Aguardando Confirmação pela CPM';
-                                } else {
-                                    $status = 'Documentos Pendentes';
-                                }
-                            }
-                        } elseif (isset($r->documentos_validados) && ($r->documentos_validados == 1 || $r->documentos_validados === true)) {
-                            $status = 'Aguardando Confirmação pela CPM';
-                        } else {
-                            $status = 'Documentos Pendentes';
-                        }
                     }
+
                     $row['status'] = $status;
                     return (object) $row;
                 })->values();
@@ -946,7 +959,7 @@ class IngressoController extends Controller
             ['key' => 'certidao_negativa_justica_militar_federal', 'label' => 'Certidão Negativa da Justiça Militar Federal'],
             ['key' => 'certidao_negativa_foros_federal_8_anos', 'label' => 'Certidão Negativa - Foros Criminais (Justiça Federal) - estados residiu nos últimos 8 anos'],
             ['key' => 'certidao_negativa_foros_estadual_8_anos', 'label' => 'Certidão Negativa - Foros Criminais (Justiça Estadual) - estados residiu nos últimos 8 anos'],
-            ['key' => 'cref13_ba', 'label' => 'Conselho Regional de Educação Fisica da 13º Reagial - CREF13/BA'],
+            ['key' => 'cref13_ba', 'label' => 'Conselho Regional de Educação Fisica da 13º Região - CREF13/BA'],
             ['key' => 'antecedentes_pf_estados_8_anos', 'label' => 'Antecedentes da Polícia Federal (Estados onde residiu nos últimos 8 anos)'],
             ['key' => 'declaracao_beneficio_inss', 'label' => 'Declaração de Benefício do INSS'],
             ['key' => 'comprovante_situacao_cadastral_rf', 'label' => 'Comprovante de Situação Cadastral por CPF - RECEITA FEDERAL'],
@@ -962,11 +975,35 @@ class IngressoController extends Controller
                 if ($candidateId) {
                     $rows = IngressoDocumento::where('ingresso_candidato_id', $candidateId)->get();
                     foreach ($rows as $r) {
-                        $existing[$r->documento_key] = [
+                        $item = [
                             'validated' => (bool) $r->validated,
                             'validated_at' => $r->validated_at,
                             'id' => $r->id,
                         ];
+                        // include report metadata when columns exist
+                        try {
+                            if (Schema::hasColumn('ingresso_documentos', 'report')) {
+                                $item['report'] = $r->report !== null ? (int) $r->report : 0;
+                            } else {
+                                $item['report'] = 0;
+                            }
+                            if (Schema::hasColumn('ingresso_documentos', 'report_description')) {
+                                $item['report_description'] = $r->report_description;
+                            } else {
+                                $item['report_description'] = null;
+                            }
+                            if (Schema::hasColumn('ingresso_documentos', 'reported_by')) {
+                                $item['reported_by'] = $r->reported_by;
+                            }
+                            if (Schema::hasColumn('ingresso_documentos', 'reported_at')) {
+                                $item['reported_at'] = $r->reported_at;
+                            }
+                        } catch (\Throwable $e) {
+                            $item['report'] = 0;
+                            $item['report_description'] = null;
+                        }
+
+                        $existing[$r->documento_key] = $item;
                     }
                 }
             }
@@ -1433,7 +1470,7 @@ class IngressoController extends Controller
             ['key' => 'comprovante_residencia', 'label' => 'Comprovante de Residência'],
             ['key' => 'diploma', 'label' => 'Diploma / Histórico'],
             ['key' => 'dependente_doc', 'label' => 'Certidão de Nascimento ou RG do(s) dependente(s)'],
-            ['key' => 'titulo_eleitor', 'label' => 'Título de Eleitor (original e cópia)'],
+            // 'titulo_eleitor' removed: not required/validated by default
             
             ['key' => 'comprovante_bb', 'label' => 'Comprovante (extrato ou cartão) - Banco do Brasil'],
             ['key' => 'pis_pasep', 'label' => 'Original e cópia do PIS/PASEP (se inscrito)'],
@@ -1463,8 +1500,19 @@ class IngressoController extends Controller
                 $candidateId = DB::table('ingresso_candidatos')->where('id', $id)->orWhere('num_inscricao', $id)->value('id');
                 if ($candidateId) {
                     $rows = IngressoDocumento::where('ingresso_candidato_id', $candidateId)->get();
+                    // Build existing map and also append any custom documents to the returned list
+                    $presentKeys = array_map(function($it){ return (string)($it['key'] ?? $it['label'] ?? ''); }, $list);
+                    $presentNorm = array_map(function($k){ return strtolower(preg_replace('/[^a-z0-9]/','',$k)); }, $presentKeys);
                     foreach ($rows as $r) {
-                        $existing[$r->documento_key] = (bool) $r->validated;
+                        $k = (string) ($r->documento_key ?? '');
+                        $existing[$k] = (bool) $r->validated;
+                        // if this document key/label isn't already in the static list, add it so the UI can show it
+                        $label = (string) ($r->documento_label ?? $k ?: 'Documento não identificado');
+                        $norm = strtolower(preg_replace('/[^a-z0-9]/','',$k ?: $label));
+                        if ($norm !== '' && !in_array($norm, $presentNorm, true)) {
+                            $list[] = ['key' => $k ?: $label, 'label' => $label];
+                            $presentNorm[] = $norm;
+                        }
                     }
                 }
             }
@@ -1490,6 +1538,100 @@ class IngressoController extends Controller
         }
 
         try {
+            // Support CPM 'issue report' action: { issue: true, key, reason }
+            if (boolval($request->input('issue', false))) {
+                $candidateId = DB::table('ingresso_candidatos')->where('id', $id)->orWhere('num_inscricao', $id)->value('id');
+                if (! $candidateId) {
+                    return response()->json(['success' => false, 'message' => 'Candidato não encontrado'], 404);
+                }
+                $key = $request->input('key');
+                $reason = trim((string) $request->input('reason', ''));
+                if (! $key || $reason === '') {
+                    return response()->json(['success' => false, 'message' => 'Chave ou motivo ausente'], 422);
+                }
+
+                try {
+                    $doc = IngressoDocumento::firstOrNew([
+                        'ingresso_candidato_id' => $candidateId,
+                        'documento_key' => $key,
+                    ]);
+                    $rawLabel = $doc->documento_label ?? $request->input('label') ?? $key;
+                    $doc->documento_label = is_string($rawLabel) ? \Illuminate\Support\Str::limit(trim(preg_replace('/\s+\s+/',' ', strip_tags($rawLabel))), 255) : $rawLabel;
+                    // mark there is a report and store its description
+                    if (Schema::hasColumn('ingresso_documentos', 'report')) {
+                        $doc->report = 1;
+                    }
+                    if (Schema::hasColumn('ingresso_documentos', 'report_description')) {
+                        $doc->report_description = $reason;
+                    }
+                    // optional reporter info if columns exist
+                    if (Schema::hasColumn('ingresso_documentos', 'reported_by')) {
+                        $doc->reported_by = optional(Auth::user())->id;
+                    }
+                    if (Schema::hasColumn('ingresso_documentos', 'reported_at')) {
+                        $doc->reported_at = now();
+                    }
+                    $doc->save();
+                    try { Log::info('ingresso_documentos: issue reported', ['candidate_id' => $candidateId, 'key' => $key, 'user' => optional(Auth::user())->id]); } catch (\Throwable $e) {}
+                    return response()->json(['success' => true, 'message' => 'Problema reportado com sucesso']);
+                } catch (\Throwable $e) {
+                    Log::error('ingresso_documentos: failed to save issue', ['exception' => $e->getMessage(), 'candidate' => $candidateId, 'key' => $key]);
+                    return response()->json(['success' => false, 'message' => 'Erro ao salvar report'], 500);
+                }
+            }
+
+            // Support CPM returning candidate to NTE for corrections: { return_to_nte: true }
+            if (boolval($request->input('return_to_nte', false))) {
+                $candidateId = DB::table('ingresso_candidatos')->where('id', $id)->orWhere('num_inscricao', $id)->value('id');
+                if (! $candidateId) {
+                    return response()->json(['success' => false, 'message' => 'Candidato não encontrado'], 404);
+                }
+                // Only CPM users should perform this action
+                $user = optional(Auth::user());
+                $isCpmUser = ($user && isset($user->sector_id) && isset($user->profile_id) && $user->sector_id == 2 && $user->profile_id == 1);
+                if (! $isCpmUser) {
+                    return response()->json(['success' => false, 'message' => 'Ação não autorizada'], 403);
+                }
+
+                $update = [];
+                if (Schema::hasColumn('ingresso_candidatos', 'documentos_validados')) {
+                    $update['documentos_validados'] = 0;
+                }
+                if (Schema::hasColumn('ingresso_candidatos', 'status')) {
+                    $update['status'] = 'Corrigir documentação';
+                }
+                if (Schema::hasColumn('ingresso_candidatos', 'status_validated_by')) {
+                    $update['status_validated_by'] = null;
+                }
+                if (Schema::hasColumn('ingresso_candidatos', 'status_validated_at')) {
+                    $update['status_validated_at'] = null;
+                }
+
+                try {
+                    $affected = 0;
+                    if (!empty($update)) {
+                        $affected = DB::table('ingresso_candidatos')->where('id', $candidateId)->update($update);
+                    }
+                    $cleared = 0;
+                    // For any documents that were reported, clear their validated flag so NTE must re-validate
+                    try {
+                        if (Schema::hasTable('ingresso_documentos') && Schema::hasColumn('ingresso_documentos', 'report')) {
+                            $upd = ['validated' => 0];
+                            if (Schema::hasColumn('ingresso_documentos', 'validated_by')) $upd['validated_by'] = null;
+                            if (Schema::hasColumn('ingresso_documentos', 'validated_at')) $upd['validated_at'] = null;
+                            $cleared = DB::table('ingresso_documentos')->where('ingresso_candidato_id', $candidateId)->where('report', 1)->update($upd);
+                        }
+                    } catch (\Throwable $e) {
+                        Log::warning('ingresso_documentos: failed to clear validated flags for reported docs', ['exception' => $e->getMessage(), 'candidate' => $candidateId]);
+                    }
+                    try { Log::info('ingresso_documentos: returned to NTE', ['candidate_id' => $candidateId, 'user' => optional(Auth::user())->id, 'affected_candidates' => $affected, 'cleared_docs' => $cleared]); } catch (\Throwable $e) {}
+                    return response()->json(['success' => true, 'message' => 'Ingressos retornado para correção pelo NTE.', 'debug' => ['affected_candidates' => $affected, 'cleared_docs' => $cleared]]);
+                } catch (\Throwable $e) {
+                    Log::error('ingresso_documentos: failed to return to NTE', ['exception' => $e->getMessage(), 'candidate' => $candidateId]);
+                    return response()->json(['success' => false, 'message' => 'Erro ao processar ação'], 500);
+                }
+            }
+
             // resolve candidate id in case caller passed num_inscricao
             $candidateId = DB::table('ingresso_candidatos')->where('id', $id)->orWhere('num_inscricao', $id)->value('id');
             if (! $candidateId) {
@@ -1530,15 +1672,29 @@ class IngressoController extends Controller
                 $key = $item['key'];
                 $validated = !empty($item['validated']) ? 1 : 0;
 
-                // If the checkbox was unchecked (validated == 0), remove any existing record.
-                    if ($validated === 0) {
+                // If the checkbox was unchecked (validated == 0), remove or update existing record.
+                if ($validated === 0) {
                     try {
-                        $deleted = IngressoDocumento::where('ingresso_candidato_id', $candidateId)
+                        $existingDoc = IngressoDocumento::where('ingresso_candidato_id', $candidateId)
                             ->where('documento_key', $key)
-                            ->delete();
-                        try { Log::info('ingresso_documentos: doc deleted', ['candidate_id' => $candidateId, 'key' => $key, 'deleted' => $deleted]); } catch (\Throwable $e) {}
+                            ->first();
+                        if ($existingDoc) {
+                            // If this document was previously reported, keep the row but mark as not validated
+                            if (Schema::hasColumn('ingresso_documentos', 'report') && !empty($existingDoc->report)) {
+                                $existingDoc->validated = 0;
+                                if (Schema::hasColumn('ingresso_documentos', 'validated_by')) $existingDoc->validated_by = null;
+                                if (Schema::hasColumn('ingresso_documentos', 'validated_at')) $existingDoc->validated_at = null;
+                                $existingDoc->save();
+                                try { Log::info('ingresso_documentos: doc updated (kept due to report)', ['candidate_id' => $candidateId, 'key' => $key, 'id' => $existingDoc->id]); } catch (\Throwable $e) {}
+                            } else {
+                                $deleted = IngressoDocumento::where('ingresso_candidato_id', $candidateId)
+                                    ->where('documento_key', $key)
+                                    ->delete();
+                                try { Log::info('ingresso_documentos: doc deleted', ['candidate_id' => $candidateId, 'key' => $key, 'deleted' => $deleted]); } catch (\Throwable $e) {}
+                            }
+                        }
                     } catch (\Throwable $e) {
-                        try { Log::error('ingresso_documentos: failed to delete doc', ['candidate_id' => $candidateId, 'key' => $key, 'exception' => $e->getMessage()]); } catch (\Throwable $ee) {}
+                        try { Log::error('ingresso_documentos: failed to delete/update doc', ['candidate_id' => $candidateId, 'key' => $key, 'exception' => $e->getMessage()]); } catch (\Throwable $ee) {}
                     }
                     continue;
                 }
@@ -1548,11 +1704,26 @@ class IngressoController extends Controller
                     'ingresso_candidato_id' => $candidateId,
                     'documento_key' => $key,
                 ]);
-                $doc->documento_label = $item['label'] ?? $doc->documento_label ?? $key;
+                $rawLabel = $item['label'] ?? $doc->documento_label ?? $key;
+                $doc->documento_label = is_string($rawLabel) ? \Illuminate\Support\Str::limit(trim(preg_replace('/\s+\s+/',' ', strip_tags($rawLabel))), 255) : $rawLabel;
                 $doc->validated = $validated;
                 if ($validated) {
                     $doc->validated_by = optional(Auth::user())->id;
                     $doc->validated_at = now();
+                    // If this document had an open report, mark it as resolved by NTE (status 2)
+                    try {
+                        if (Schema::hasColumn('ingresso_documentos', 'report') && !empty($doc->report)) {
+                            $doc->report = 2;
+                            if (Schema::hasColumn('ingresso_documentos', 'report_resolved_by')) {
+                                $doc->report_resolved_by = optional(Auth::user())->id;
+                            }
+                            if (Schema::hasColumn('ingresso_documentos', 'report_resolved_at')) {
+                                $doc->report_resolved_at = now();
+                            }
+                        }
+                    } catch (\Throwable $e) {
+                        // ignore schema/read failures
+                    }
                 } else {
                     $doc->validated_by = null;
                     $doc->validated_at = null;

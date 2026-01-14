@@ -116,13 +116,14 @@
                         <th scope="col">NOME</th>
                         <th scope="col">CPF</th>
                         <th scope="col">NTE</th>
-                        <th scope="col">CLASSIFICAÇÃO (AMPLA)</th>
-                        <th scope="col">CLASSIFICAÇÃO (QUOTA PNE)</th>
-                        <th scope="col">CLASSIFICAÇÃO RACIAL</th>
+                        <th scope="col">Class. Ampla</th>
+                        <th scope="col">Class. PNE</th>
+                        <th scope="col">Class. Racial</th>
                         <th scope="col">NOTA</th>
                         <th scope="col">Nº PROCESSO SEI</th>
                         <th scope="col">STATUS</th>
                         <th scope="col">OFÍCIO</th>
+                        <th scope="col">DOCS.</th>
                         <th scope="col">AÇÃO</th>
                     </tr>
                 </thead>
@@ -170,19 +171,32 @@
                 {
                     data: 'classificacao_ampla', name: 'classificacao_ampla',
                     render: function(data, type, row) {
-                        return (data === null || data === undefined || data === '') ? '-' : data;
+                        if (data === null || data === undefined || data === '') return '-';
+                        var s = String(data).trim();
+                        if (s === '' || s === '-') return '-';
+                        // only append degree symbol when string contains a digit
+                        if (/\d/.test(s) && s.indexOf('º') === -1) s = s + 'º';
+                        return s;
                     }
                 },
                 {
                     data: 'classificacao_quota_pne', name: 'classificacao_quota_pne',
                     render: function(data, type, row) {
-                        return (data === null || data === undefined || data === '') ? '-' : data;
+                        if (data === null || data === undefined || data === '') return '-';
+                        var s = String(data).trim();
+                        if (s === '' || s === '-') return '-';
+                        if (/\d/.test(s) && s.indexOf('º') === -1) s = s + 'º';
+                        return s;
                     }
                 },
                 {
                     data: 'classificacao_racial', name: 'classificacao_racial',
                     render: function(data, type, row) {
-                        return (data === null || data === undefined || data === '') ? '-' : data;
+                        if (data === null || data === undefined || data === '') return '-';
+                        var s = String(data).trim();
+                        if (s === '' || s === '-') return '-';
+                        if (/\d/.test(s) && s.indexOf('º') === -1) s = s + 'º';
+                        return s;
                     }
                 },
                 {
@@ -247,6 +261,35 @@
                             + '<path d="M9 17h6" />'
                             + '<path d="M9 13h6" />'
                             + '</svg></a>';
+                    }
+                },{
+                    data: null,
+                    name: 'pending_validate',
+                    orderable: false,
+                    searchable: false,
+                    render: function(data, type, row) {
+                        var id = row.id || row.num_inscricao || '';
+                        if (!id) return '-';
+
+                        // Determine status text similarly to the status column renderer
+                        var statusText = (row && row.status) ? String(row.status) : (data ? String(data) : '');
+                        if (!statusText || statusText.trim() === '') {
+                            if (row && (row.documentos_validados === 1 || String(row.documentos_validados) === '1' || row.documentos_validados === true)) {
+                                statusText = 'Documentos Validados';
+                            } else {
+                                statusText = 'Documentos Pendentes';
+                            }
+                        }
+                        var st = String(statusText || '').toLowerCase();
+                        var isPending = (st.indexOf('pendente') !== -1 || st.indexOf('aguardando') !== -1);
+
+                        if (!isPending) return '-';
+
+                        return ''
+                            + '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" data-id="'+id+'" title="Ver pendências" class="btn-pending-docs text-warning" style="vertical-align:middle;width:24px;height:24px;cursor:pointer;">'
+                            + '<path stroke="none" d="M0 0h24v24H0z" fill="none"/>'
+                            + '<path d="M12 1.67c.955 0 1.845 .467 2.39 1.247l.105 .16l8.114 13.548a2.914 2.914 0 0 1 -2.307 4.363l-.195 .008h-16.225a2.914 2.914 0 0 1 -2.582 -4.2l.099 -.185l8.11 -13.538a2.914 2.914 0 0 1 2.491 -1.403zm.01 13.33l-.127 .007a1 1 0 0 0 0 1.986l.117 .007l.127 -.007a1 1 0 0 0 0 -1.986l-.117 -.007zm-.01 -7a1 1 0 0 0 -.993 .883l-.007 .117v4l.007 .117a1 1 0 0 0 1.986 0l.007 -.117v-4l-.007 -.117a1 1 0 0 0 -.993 -.883z" />'
+                            + '</svg>';
                     }
                 },{
                     data: null,
@@ -433,6 +476,126 @@
                         ensureSwal().then(function(swal){ swal.fire({ icon: 'error', title: 'Erro', text: 'Erro ao conectar-se ao servidor.' }); }).catch(function(){ console.warn('Swal load failed'); });
                     })();
                 });
+            });
+
+            // Delegate pending-docs click -> fetch documents and show modal listing pending items
+            $(document).on('click', '.btn-pending-docs', function(e){
+                e.preventDefault();
+                var id = $(this).data('id');
+                if (!id) return;
+
+                function ensureSwal(){
+                    return new Promise(function(resolve,reject){
+                        if (typeof Swal !== 'undefined') return resolve(window.Swal);
+                        var s = document.createElement('script');
+                        s.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11';
+                        s.onload = function(){ resolve(window.Swal); };
+                        s.onerror = function(){ reject(); };
+                        document.head.appendChild(s);
+                    });
+                }
+
+                ensureSwal().then(function(swal){
+                    swal.fire({ title: 'Carregando...', didOpen: () => { swal.showLoading(); } });
+
+                    fetch(ingressoBaseUrl + '/' + encodeURIComponent(id) + '/documentos', {
+                        method: 'GET',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+                        credentials: 'same-origin'
+                    }).then(function(response){
+                        return response.text();
+                    }).then(function(text){
+                        var list = [];
+                        // try parse json
+                        try {
+                            var json = JSON.parse(text);
+                            // New format: { list: [{key,label},...], existing: { key: true/false } }
+                            if (json && Array.isArray(json.list)) {
+                                var existing = json.existing || {};
+                                function normalizeKey(k){ return (''+(k||'')).toLowerCase().replace(/[^a-z0-9]/g,'').trim(); }
+                                var existingNorm = {};
+                                Object.keys(existing).forEach(function(k){ existingNorm[normalizeKey(k)] = existing[k]; });
+
+                                // Map static list keys for presence check
+                                var presentNorm = {};
+                                json.list.forEach(function(d){
+                                    var key = d.key || d.documento_key || d.k || '';
+                                    var label = d.label || d.documento_label || d.l || key || 'Documento não identificado';
+                                    var nk = normalizeKey(key || label);
+                                    presentNorm[nk] = label;
+                                    var validated = existingNorm[nk] === true || existingNorm[nk] === 1 || existingNorm[nk] === '1';
+                                    // include item when not validated (either missing in DB or present but validated==false)
+                                    if (!validated) list.push(label);
+                                });
+
+                                // Also include any documents present in DB (existing) that are not in the static list
+                                Object.keys(existing).forEach(function(k){
+                                    var nk = normalizeKey(k);
+                                    if (!presentNorm[nk]) {
+                                        var validated = existing[k] === true || existing[k] === 1 || existing[k] === '1';
+                                        if (!validated) {
+                                            // use the raw key as label if no better label is provided
+                                            list.push(k || 'Documento não identificado');
+                                        }
+                                    }
+                                });
+
+                                // dedupe
+                                list = list.filter(function(v,i,a){ return a.indexOf(v) === i; });
+                            } else if (Array.isArray(json)) {
+                                // older format: array of docs
+                                json.forEach(function(d){ if (!d.validated || d.validated == 0) list.push(d.documento_label || d.documento_key || d.label || 'Documento não identificado'); });
+                            } else if (json && Array.isArray(json.documents)) {
+                                json.documents.forEach(function(d){ if (!d.validated || d.validated == 0) list.push(d.documento_label || d.documento_key || d.label || 'Documento não identificado'); });
+                            }
+                        } catch(err) {
+                            // not json -> parse HTML
+                            var tmp = document.createElement('div'); tmp.innerHTML = text;
+                            var inputs = tmp.querySelectorAll('input[type="checkbox"], input[type="radio"]');
+                            if (inputs && inputs.length) {
+                                inputs.forEach(function(inp){
+                                    try{
+                                        var checked = inp.checked || inp.getAttribute('checked') !== null;
+                                    }catch(e){ var checked = false; }
+                                    if (!checked) {
+                                        // try find label
+                                        var label = '';
+                                        if (inp.id) {
+                                            var lab = tmp.querySelector('label[for="'+inp.id+'"]');
+                                            if (lab) label = lab.textContent.trim();
+                                        }
+                                        if (!label) {
+                                            var p = inp.closest('label');
+                                            if (p) label = p.textContent.trim();
+                                        }
+                                        if (!label) {
+                                            // fallback to parent text
+                                            label = inp.parentElement ? inp.parentElement.textContent.trim() : 'Documento não identificado';
+                                        }
+                                        if (label) list.push(label.replace(/\s{2,}/g,' ').trim());
+                                    }
+                                });
+                            }
+                        }
+
+                        if (!list || !list.length) {
+                            swal.fire({ icon: 'info', title: 'Nenhum documento pendente', text: 'Não foram encontrados documentos pendentes para este candidato.' });
+                            try {
+                                var $td = $(e.currentTarget).closest('td');
+                                if (typeof ingressoTable !== 'undefined' && ingressoTable && $td.length) {
+                                    ingressoTable.cell($td).data('-').draw(false);
+                                } else if ($td.length) {
+                                    $td.text('-');
+                                }
+                            } catch(err) { console.warn('Failed to update cell after empty pending list', err); }
+                        } else {
+                            var html = '<ul style="text-align:left; margin:0; padding-left:1.2rem;">' + list.map(function(it){ return '<li>'+it+'</li>'; }).join('') + '</ul>';
+                            swal.fire({ title: 'Documentos pendentes', html: html, width: 600 });
+                        }
+                    }).catch(function(){
+                        swal.fire({ icon: 'error', title: 'Erro', text: 'Não foi possível obter a lista de documentos.' });
+                    });
+                }).catch(function(){ console.warn('Swal load failed'); alert('Erro ao abrir modal'); });
             });
         } else {
             console.warn('jQuery or DataTables not loaded');

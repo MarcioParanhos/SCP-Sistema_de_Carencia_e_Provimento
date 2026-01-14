@@ -116,7 +116,7 @@
 
             /* Checklist container limit to avoid overflowing the card */
             #document-list {
-                max-height: 180px;
+                max-height: 300px; /* increased from 180px */
                 overflow-y: auto;
                 padding-right: 0.25rem;
             }
@@ -211,6 +211,39 @@
             }
 
             /* Toast removed in favor of SweetAlert2 */
+            /* SweetAlert2 custom styles for report modal */
+            .swal2-custom-popup {
+                max-width: 900px !important;
+                width: 92% !important;
+                padding: 1.25rem !important;
+                border-radius: 12px !important;
+                box-shadow: 0 10px 40px rgba(2,6,23,0.12) !important;
+            }
+            .swal2-custom-title {
+                font-size: 1.05rem !important;
+                font-weight: 700 !important;
+                color: #0f172a !important;
+                margin-bottom: 0.25rem !important;
+            }
+            .swal2-custom-text {
+                color: #475569 !important;
+                margin-bottom: 0.6rem !important;
+            }
+            .swal2-custom-textarea,
+            .swal2-custom-textarea textarea,
+            .swal2-textarea {
+                width: 100% !important;
+                box-sizing: border-box !important;
+                min-height: 140px !important;
+                max-height: 400px !important;
+                resize: vertical !important;
+                padding: 0.6rem !important;
+                font-size: 0.95rem !important;
+                border-radius: 8px !important;
+                border: 1px solid #e6e9ef !important;
+                box-shadow: none !important;
+            }
+            .swal2-footer { font-size: 0.85rem !important; color: #64748b !important; }
         </style>
 
         <div class="candidate-header">
@@ -507,19 +540,7 @@
                                                 $isRequired = true;
                                             }
                                         }
-                                            // Additional required document check: Título de Eleitor (original e cópia) e Quitação Eleitoral
-                                            if (! $isRequired) {
-                                                if (
-                                                    mb_stripos($lbl, 'titulo', 0, 'UTF-8') !== false ||
-                                                    mb_stripos((string)$k, 'titulo_eleitor', 0, 'UTF-8') !== false ||
-                                                    mb_stripos($lbl, 'quit', 0, 'UTF-8') !== false ||
-                                                    mb_stripos($lbl, 'quitação', 0, 'UTF-8') !== false ||
-                                                    mb_stripos((string)$k, 'quitacao', 0, 'UTF-8') !== false ||
-                                                    mb_stripos((string)$k, 'quitacao_eleitoral', 0, 'UTF-8') !== false
-                                                ) {
-                                                    $isRequired = true;
-                                                }
-                                            }
+                                            // Título de Eleitor / Quitação Eleitoral intentionally ignored for required-check
 
 
                                         // Additional required document check: Antecedentes Polícia Federal (estados últimos 8 anos)
@@ -560,11 +581,39 @@
                                         }
                                     @endphp
 
-                                    <div class="form-check mb-1">
-                                        <input class="form-check-input" type="checkbox" value=""
-                                            id="doc_{{ $k }}" data-key="{{ $k }}" data-required="{{ $isRequired ? '1' : '0' }}"
-                                            {{ $isChecked ? 'checked' : '' }} {{ $docsValidated ? 'disabled' : '' }}>
-                                        <label class="form-check-label ms-2" for="doc_{{ $k }}">{{ $lbl }}@if($isRequired) <span class="text-danger">*</span>@endif</label>
+                                    <div class="form-check mb-1 d-flex align-items-center justify-content-between">
+                                        <div class="d-flex align-items-center">
+                                            <input class="form-check-input" type="checkbox" value=""
+                                                id="doc_{{ $k }}" data-key="{{ $k }}" data-required="{{ $isRequired ? '1' : '0' }}"
+                                                {{ $isChecked ? 'checked' : '' }} {{ $docsValidated ? 'disabled' : '' }}>
+                                            <label class="form-check-label ms-2" for="doc_{{ $k }}">{{ $lbl }}@if($isRequired) <span class="text-danger">*</span>@endif
+                                                @php $rep = $existingDocs[$k] ?? null; @endphp
+                                                @if(is_array($rep) && !empty($rep['report']))
+                                                    @php $rstatus = intval($rep['report']); @endphp
+                                                    @if($rstatus === 2)
+                                                        <span class="text-success issue-badge ms-2 small" title="{{ $rep['report_description'] ?? 'Problema resolvido pelo NTE' }}">Problema resolvido pelo NTE</span>
+                                                    @else
+                                                        <span class="text-danger issue-badge ms-2 small" title="{{ $rep['report_description'] ?? 'Problema reportado' }}">Problema reportado</span>
+                                                    @endif
+                                                @endif
+                                            </label>
+                                        </div>
+                                        @php
+                                            $isCpmLocal = (optional(Auth::user())->sector_id == 2 && optional(Auth::user())->profile_id == 1);
+                                            $isNteLocal = (optional(Auth::user())->sector_id == 7 && optional(Auth::user())->profile_id == 1);
+                                            $rep = $existingDocs[$k] ?? null;
+                                            $candidateDocsValidatedLocal = (isset($candidate['documentos_validados']) && ($candidate['documentos_validados'] == 1 || $candidate['documentos_validados'] === true)) || (isset($candidate['status']) && mb_stripos($candidate['status'], 'valid', 0, 'UTF-8') !== false);
+                                        @endphp
+                                        @if ($isCpmLocal && ! $candidateDocsValidatedLocal)
+                                            <button type="button" class="btn btn-sm btn-outline-danger btn-report-issue" style="border-radius:5px;" data-key="{{ $k }}" data-label="{{ e($lbl) }}" title="Reportar problema">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                                            </button>
+                                        @endif
+                                        @if ($isNteLocal && is_array($rep) && isset($rep['report']) && intval($rep['report']) === 1)
+                                            <button type="button" class="btn btn-sm btn-outline-info btn-view-report" style="border-radius:5px;" data-key="{{ $k }}" data-label="{{ e($lbl) }}" data-desc="{{ e($rep['report_description'] ?? '') }}" title="Ver descrição do report">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                                            </button>
+                                        @endif
                                     </div>
                                 @endforeach
                             @endif
@@ -572,6 +621,13 @@
                         @php
                             $isNte = (optional(Auth::user())->sector_id == 7 && optional(Auth::user())->profile_id == 1);
                             $isCpm = (optional(Auth::user())->sector_id == 2 && optional(Auth::user())->profile_id == 1);
+                            // detect if any existing document has a report
+                            $hasReports = false;
+                            if (is_array($existingDocs) && count($existingDocs)) {
+                                foreach ($existingDocs as $_ed) {
+                                    if (is_array($_ed) && !empty($_ed['report'])) { $hasReports = true; break; }
+                                }
+                            }
                         @endphp
                         @if ($isNte)
                             <div class="d-grid mb-2">
@@ -583,28 +639,30 @@
                                 $docsValidated = (isset($candidate['documentos_validados']) && ($candidate['documentos_validados'] == 1 || $candidate['documentos_validados'] === true)) || (isset($candidate['status']) && mb_stripos($candidate['status'], 'valid', 0, 'UTF-8') !== false);
                                 $isIngressadoForButtons = isset($candidate['status']) && mb_strtolower(trim($candidate['status']), 'UTF-8') === 'ingresso validado';
                             @endphp
-                            <div class="d-grid mb-2">
+                            <div class="d-flex gap-2 mb-2">
                                 @if ($docsValidated)
-                                    <button id="btn-validar-documentos-cpm" data-validated="1" class="btn btn-danger btn-action" {{ $isIngressadoForButtons ? 'disabled' : '' }}>Retirar Validação dos Documentos</button>
+                                    <button type="button" id="btn-validar-documentos-cpm" data-validated="1" class="btn btn-danger btn-action me-2 mr-2" {{ $isIngressadoForButtons ? 'disabled' : '' }}>Retirar Validação dos Documentos</button>
+                                    <button type="button" id="btn-return-to-nte" class="btn btn-outline-warning btn-action" style="border-radius:5px;" {{ $hasReports ? '' : 'disabled' }}>Retornar para o NTE</button>
                                 @else
-                                    <button id="btn-validar-documentos-cpm" class="btn btn-success btn-action" {{ $isIngressadoForButtons ? 'disabled' : '' }}>Validar documentação</button>
+                                    <button type="button" id="btn-validar-documentos-cpm" class="btn btn-success btn-action me-2 mr-2" {{ $isIngressadoForButtons ? 'disabled' : '' }}>Validar documentação</button>
+                                    <button type="button" id="btn-return-to-nte" class="btn btn-outline-warning btn-action" style="border-radius:5px;" {{ $hasReports ? '' : 'disabled' }}>Retornar para o NTE</button>
                                 @endif
                             </div>
                             <script>
                                 document.addEventListener('DOMContentLoaded', function() {
-                                    try {
+                                        try {
                                         const cpmBtn = document.getElementById('btn-validar-documentos-cpm');
                                         if (!cpmBtn) return;
                                         const requiredChecks = Array.from(document.querySelectorAll('#document-list .form-check-input[data-required="1"]'));
-                                        if (!requiredChecks.length) return;
 
                                         function updateCpmBtn() {
-                                            const anyMissing = requiredChecks.some(chk => !chk.checked);
+                                            const anyMissing = requiredChecks.length ? requiredChecks.some(chk => !chk.checked) : false;
                                             if (cpmBtn.dataset.validated === '1') {
                                                 cpmBtn.disabled = false;
                                             } else {
                                                 cpmBtn.disabled = anyMissing;
                                             }
+                                            try { console.log('CPM update:', { requiredCount: requiredChecks.length, anyMissing: anyMissing, validatedFlag: cpmBtn.dataset.validated, disabled: cpmBtn.disabled }); } catch(e) {}
                                         }
 
                                         requiredChecks.forEach(chk => chk.addEventListener('change', updateCpmBtn));
@@ -613,6 +671,50 @@
                                     } catch (e) {
                                         console.error('Validation guard error', e);
                                     }
+                                    // Return to NTE handler (CPM)
+                                    try {
+                                        const btnReturn = document.getElementById('btn-return-to-nte');
+                                        const candidateId = '{{ $candidate['id'] ?? ($candidate['num_inscricao'] ?? '') }}';
+                                        const csrf = (document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '{{ csrf_token() }}');
+                                        if (btnReturn) {
+                                            btnReturn.addEventListener('click', async function(){
+                                                if (btnReturn.disabled) return;
+                                                const confirmed = await Swal.fire({
+                                                    title: 'Retornar documentação ao NTE?',
+                                                    text: 'Enviar este ingresso ao NTE para correção dos documentos reportados?',
+                                                    icon: 'question',
+                                                    showCancelButton: true,
+                                                    confirmButtonText: 'Sim, retornar',
+                                                    cancelButtonText: 'Cancelar'
+                                                });
+                                                if (!confirmed.isConfirmed) return;
+                                                try {
+                                                    const res = await fetch(`/ingresso/${candidateId}/documentos`, {
+                                                        method: 'POST',
+                                                        credentials: 'same-origin',
+                                                        headers: {
+                                                            'Content-Type': 'application/json',
+                                                            'X-CSRF-TOKEN': csrf,
+                                                            'X-Requested-With': 'XMLHttpRequest',
+                                                            'Accept': 'application/json'
+                                                        },
+                                                        body: JSON.stringify({ return_to_nte: true })
+                                                    });
+                                                    let j = null;
+                                                    try { j = await res.json(); } catch(e) { console.warn('Non-JSON response', e); }
+                                                    console.log('return_to_nte response', res.status, j);
+                                                    if (res.ok && j && j.success) {
+                                                        await Swal.fire({ icon: 'success', title: 'Enviado', text: j.message || 'Ingressos retornado para correção pelo NTE.' });
+                                                        try { location.reload(); } catch(e) {}
+                                                    } else {
+                                                        const msg = (j && j.message) || ('HTTP ' + res.status + ' - ' + (j && JSON.stringify(j) || res.statusText));
+                                                        console.error('Failed return_to_nte', msg);
+                                                        Swal.fire({ icon: 'error', title: 'Erro', text: msg });
+                                                    }
+                                                } catch(e) { console.error('fetch error', e); Swal.fire({ icon: 'error', title: 'Erro', text: 'Erro de comunicação' }); }
+                                            });
+                                        }
+                                    } catch(e) { console.error('return-to-nte init failed', e); }
                                 });
                             </script>
                         @endif
@@ -1519,6 +1621,7 @@
                                             btnCpm.textContent = 'Validar documentação';
                                         }
                                     }
+                                        try { console.log('debug-status set CPM:', { low: low, btnDisabled: btnCpm ? btnCpm.disabled : null, text: btnCpm ? btnCpm.textContent : null }); } catch(e) {}
                                     // If the candidate status is 'Ingresso Validado', replace the validate-ingresso button with a danger 'Retirar Validação' UI-only button
                                     try {
                                         const btnValNow = document.getElementById('btn-validar-ingresso');
@@ -1544,6 +1647,40 @@
     </script>
             <script>
                 document.addEventListener('DOMContentLoaded', function(){
+                    // NTE: view report description handler
+                    try {
+                        // helper to escape HTML
+                        function _escHtml(s) {
+                            if (!s && s !== '') return '';
+                            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+                        }
+                        document.addEventListener('click', function(ev){
+                            const btn = ev.target.closest('.btn-view-report');
+                            if (!btn) return;
+                            ev.preventDefault();
+                            const label = btn.dataset.label || 'Descrição do relatório';
+                            const desc = btn.dataset.desc || '';
+                            try {
+                                if (typeof Swal !== 'undefined') {
+                                    Swal.fire({
+                                        title: label,
+                                        html: '<div style="white-space:pre-wrap; text-align:left; margin-top:0.15rem;">' + _escHtml(desc || 'Sem descrição') + '</div>',
+                                        icon: 'info',
+                                        customClass: {
+                                            popup: 'swal2-custom-popup',
+                                            title: 'swal2-custom-title',
+                                            htmlContainer: 'swal2-custom-text'
+                                        },
+                                        showCloseButton: true,
+                                        confirmButtonText: 'Fechar',
+                                        allowOutsideClick: true,
+                                    });
+                                } else {
+                                    alert(label + '\n\n' + (desc || 'Sem descrição'));
+                                }
+                            } catch(e) { console.error('show report failed', e); }
+                        });
+                    } catch(e) { console.error('view-report init failed', e); }
                     const btn = document.getElementById('nte-none-selected');
                     if (!btn) return; // not an NTE user or button removed
                     const candidateId = '{{ $candidate['id'] ?? ($candidate['num_inscricao'] ?? '') }}';
@@ -1597,6 +1734,8 @@
                                 try { checkboxes.forEach(cb => cb.disabled = true); } catch(e) {}
                                 return;
                             }
+                            // If server explicitly requested corrections to NTE, do not bypass required-docs check;
+                            // leave enforcement to the required-docs logic below so reported/unchecked docs keep button disabled.
                             if (s.indexOf('aguardando confirma') !== -1 || s.indexOf('aguard') !== -1) {
                                 btn.disabled = true;
                                 btn.className = 'btn btn-secondary btn-action';
@@ -1712,6 +1851,101 @@
                             try { Swal.fire({ icon: 'error', title: 'Erro', text: 'Erro de comunicação' }); } catch(err){}
                         }
                     });
+                });
+            </script>
+            <script>
+                document.addEventListener('DOMContentLoaded', function(){
+                    try {
+                        const candidateId = '{{ $candidate['id'] ?? ($candidate['num_inscricao'] ?? '') }}';
+                        const postUrl = '{{ url('/ingresso') }}' + '/' + encodeURIComponent(candidateId) + '/documentos';
+                        const csrf = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '';
+                        const buttons = Array.from(document.querySelectorAll('.btn-report-issue'));
+                        if (!buttons.length) return;
+
+                        buttons.forEach(function(btn){
+                            btn.addEventListener('click', async function(){
+                                const key = btn.dataset.key;
+                                const label = btn.dataset.label || key;
+                                if (!key) return;
+                                    try {
+                                    const { value: reason } = await Swal.fire({
+                                        title: 'Reportar problema em: ' + label,
+                                        input: 'textarea',
+                                        inputPlaceholder: 'Descreva o problema (ex: documento ilegível, dados inconsistentes)',
+                                        inputAttributes: { 'aria-label': 'Motivo do problema', rows: 6, maxlength: 1000, autocapitalize: 'sentences', style: 'min-height:140px;'},
+                                        showCancelButton: true,
+                                        confirmButtonText: 'Enviar',
+                                        cancelButtonText: 'Cancelar',
+                                        allowOutsideClick: false,
+                                        showLoaderOnConfirm: true,
+                                        backdrop: true,
+                                        customClass: {
+                                            popup: 'swal2-custom-popup',
+                                            title: 'swal2-custom-title',
+                                            htmlContainer: 'swal2-custom-text',
+                                            input: 'swal2-custom-textarea'
+                                        },
+                                        footer: '<small>Por favor descreva claramente o problema. Máx. 1000 caracteres.</small>',
+                                        preConfirm: (val) => {
+                                            if (!val || !val.trim()) {
+                                                Swal.showValidationMessage('O motivo é obrigatório');
+                                                return false;
+                                            }
+                                            return val.trim();
+                                        }
+                                    });
+                                    if (!reason) return;
+
+                                    const res = await fetch(postUrl, {
+                                        method: 'POST',
+                                        credentials: 'same-origin',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRF-TOKEN': csrf,
+                                            'X-Requested-With': 'XMLHttpRequest',
+                                            'Accept': 'application/json'
+                                        },
+                                        body: JSON.stringify({ issue: true, key: key, reason: reason })
+                                    });
+                                    const j = await res.json().catch(()=>null);
+                                        if (j && j.success) {
+                                        await Swal.fire({ icon: 'success', title: 'Reportado', text: j.message || 'Problema reportado ao NTE.' });
+                                        // append or update small badge to label; if already marked as resolved change to reported
+                                        try {
+                                            const labelEl = document.querySelector('#doc_' + CSS.escape(key) + ' + label') || document.querySelector('label[for="doc_' + key + '"]');
+                                            if (labelEl) {
+                                                const existing = labelEl.querySelector('.issue-badge');
+                                                const badgeText = 'Problema reportado';
+                                                if (existing) {
+                                                    existing.className = 'text-danger issue-badge ms-2 small';
+                                                    existing.textContent = badgeText;
+                                                    existing.title = j.message || reason || badgeText;
+                                                } else {
+                                                    const span = document.createElement('span');
+                                                    span.className = 'text-danger issue-badge ms-2 small';
+                                                    span.textContent = badgeText;
+                                                    span.title = j.message || reason || badgeText;
+                                                    labelEl.appendChild(span);
+                                                }
+                                            }
+                                            // ensure 'Retornar para o NTE' button is enabled for CPM when reports exist
+                                            try {
+                                                const btnReturn = document.getElementById('btn-return-to-nte');
+                                                if (btnReturn) {
+                                                    btnReturn.disabled = false;
+                                                    btnReturn.className = 'btn btn-outline-warning btn-action';
+                                                }
+                                            } catch(e) {}
+                                        } catch(e) { /* ignore UI badge errors */ }
+                                    } else {
+                                        Swal.fire({ icon: 'error', title: 'Erro', text: (j && j.message) || 'Falha ao reportar' });
+                                    }
+                                } catch (e) {
+                                    Swal.fire({ icon: 'error', title: 'Erro', text: 'Erro de comunicação' });
+                                }
+                            });
+                        });
+                    } catch (e) { console.error('Report issue setup failed', e); }
                 });
             </script>
 @endpush
