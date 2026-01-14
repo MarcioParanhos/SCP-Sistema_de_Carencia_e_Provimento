@@ -254,18 +254,10 @@ class IngressoController extends Controller
                 Log::warning('Failed to scope NTE breakdown to user NTE', ['exception' => $e->getMessage()]);
             }
 
-            // Restrict NTE breakdown to candidates that have been encaminhados
-            try {
-                if (Schema::hasTable('provimentos_encaminhados')) {
-                    $encQuery = DB::table('provimentos_encaminhados')
-                        ->select('ingresso_candidato_id')
-                        ->whereNotNull('ingresso_candidato_id')
-                        ->distinct();
-                    $qb->whereIn('id', $encQuery);
-                }
-            } catch (\Throwable $e) {
-                Log::warning('Failed to apply encaminhados filter to NTE breakdown', ['exception' => $e->getMessage()]);
-            }
+            // NOTE: previously the NTE breakdown was restricted to candidates
+            // that have entries in `provimentos_encaminhados`. That filter
+            // prevented some NTEs from appearing. We remove it to show all
+            // NTEs (the per-user NTE scoping above still applies for NTE users).
             // Try numeric order (1,2,3...) when column holds numeric codes, fallback to alphabetical
             $colSafe = str_replace('`', '', $groupCol);
             try {
