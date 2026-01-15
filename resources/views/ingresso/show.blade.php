@@ -642,10 +642,10 @@
                             <div class="d-flex gap-2 mb-2">
                                 @if ($docsValidated)
                                     <button type="button" id="btn-validar-documentos-cpm" data-validated="1" class="btn btn-danger btn-action me-2 mr-2" {{ $isIngressadoForButtons ? 'disabled' : '' }}>Retirar Validação dos Documentos</button>
-                                    <button type="button" id="btn-return-to-nte" class="btn btn-outline-warning btn-action" style="border-radius:5px;" {{ $hasReports ? '' : 'disabled' }}>Retornar para o NTE</button>
+                                    <button type="button" id="btn-return-to-nte" class="btn btn-outline-warning btn-action" style="border-radius:5px;" {{ ($hasReports && ! $isIngressadoForButtons) ? '' : 'disabled' }}>Retornar para o NTE</button>
                                 @else
                                     <button type="button" id="btn-validar-documentos-cpm" class="btn btn-success btn-action me-2 mr-2" {{ $isIngressadoForButtons ? 'disabled' : '' }}>Validar documentação</button>
-                                    <button type="button" id="btn-return-to-nte" class="btn btn-outline-warning btn-action" style="border-radius:5px;" {{ $hasReports ? '' : 'disabled' }}>Retornar para o NTE</button>
+                                    <button type="button" id="btn-return-to-nte" class="btn btn-outline-warning btn-action" style="border-radius:5px;" {{ ($hasReports && ! $isIngressadoForButtons) ? '' : 'disabled' }}>Retornar para o NTE</button>
                                 @endif
                             </div>
                             <script>
@@ -745,113 +745,7 @@
                         @endif
 
                         
-                        <hr />
-                        <div class="section-title">Encaminhamentos Registrados</div>
-                        @if (isset($encaminhamentos) && count($encaminhamentos))
-                            @php $isCpmEnc = (optional(Auth::user())->sector_id == 2 && optional(Auth::user())->profile_id == 1); @endphp
-                            <div class="table-responsive">
-                                <table class="table table-sm table-striped">
-                                    <thead>
-                                        <tr>
-                                            <th>Data</th>
-                                            <th>Unidade Escolar</th>
-                                            <th>NTE</th>
-                                            <th>Município</th>
-                                            <th>Motivo</th>
-                                            <th>Disciplina</th>
-                                            <th class="text-center">Mat.</th>
-                                            <th class="text-center">Vesp.</th>
-                                            <th class="text-center">Not.</th>
-                                            <th class="text-center">Total</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @php
-                                            $sum_mat = 0;
-                                            $sum_vesp = 0;
-                                            $sum_not = 0;
-                                            $sum_total = 0;
-                                        @endphp
-                                        @foreach ($encaminhamentos as $e)
-                                            @php
-                                                $m = (int) ($e->quant_matutino ?? 0);
-                                                $v = (int) ($e->quant_vespertino ?? 0);
-                                                $n = (int) ($e->quant_noturno ?? 0);
-                                                $rowTotal = $m + $v + $n;
-                                                $sum_mat += $m; $sum_vesp += $v; $sum_not += $n; $sum_total += $rowTotal;
-                                            @endphp
-                                            @php
-                                                $discText = $e->disciplina_name ?? $e->disciplina_code ?? $e->disciplina ?? null;
-                                                $disciplines = $discText ? array_map('trim', explode(',', $discText)) : [];
-
-                                                // Try to get per-discipline quantities from raw fields if present
-                                                $matRaw = $e->matutino ?? $e->provimento_matutino ?? null;
-                                                $vespRaw = $e->vespertino ?? $e->provimento_vespertino ?? null;
-                                                $notRaw = $e->noturno ?? $e->provimento_noturno ?? null;
-
-                                                $matArr = $matRaw ? array_map('trim', explode(',', $matRaw)) : null;
-                                                $vespArr = $vespRaw ? array_map('trim', explode(',', $vespRaw)) : null;
-                                                $notArr = $notRaw ? array_map('trim', explode(',', $notRaw)) : null;
-
-                                                // If there are multiple disciplines, always render one row per discipline.
-                                                $useSplit = count($disciplines) > 1;
-                                            @endphp
-
-                                            @if($useSplit)
-                                                @foreach($disciplines as $i => $discItem)
-                                                    @php
-                                                        // If per-discipline arrays exist, use them; otherwise repeat the total counts for each discipline
-                                                        $mi = ($matArr && isset($matArr[$i])) ? (int) $matArr[$i] : $m;
-                                                        $vi = ($vespArr && isset($vespArr[$i])) ? (int) $vespArr[$i] : $v;
-                                                        $ni = ($notArr && isset($notArr[$i])) ? (int) $notArr[$i] : $n;
-                                                        $totali = $mi + $vi + $ni;
-                                                    @endphp
-                                                    <tr data-enc-id="{{ $e->id ?? $e->encaminhamento_id }}">
-                                                        <td>{{ \Carbon\Carbon::parse($e->created_at)->setTimezone('America/Sao_Paulo')->format('d/m/Y H:i') }}</td>
-                                                        <td>{{ $e->uee_name ?? $e->uee_code ?? '-' }}</td>
-                                                        <td>{{ $e->nte ?? ($e->uee_nte ?? '-') }}</td>
-                                                        <td>{{ $e->municipio ?? ($e->uee_municipio ?? '-') }}</td>
-                                                        <td>{{ $e->motivo ?? '-' }}</td>
-                                                        <td>{{ $discItem }}</td>
-                                                        <td class="text-center">{{ $mi }}</td>
-                                                        <td class="text-center">{{ $vi }}</td>
-                                                        <td class="text-center">{{ $ni }}</td>
-                                                        <td class="text-center">{{ $totali }}</td>
-                                                    </tr>
-                                                @endforeach
-                                            @else
-                                                <tr data-enc-id="{{ $e->id ?? $e->encaminhamento_id }}">
-                                                    <td>{{ \Carbon\Carbon::parse($e->created_at)->setTimezone('America/Sao_Paulo')->format('d/m/Y H:i') }}</td>
-                                                    <td>{{ $e->uee_name ?? $e->uee_code ?? '-' }}</td>
-                                                    <td>{{ $e->nte ?? ($e->uee_nte ?? '-') }}</td>
-                                                    <td>{{ $e->municipio ?? ($e->uee_municipio ?? '-') }}</td>
-                                                    <td>{{ $e->motivo ?? '-' }}</td>
-                                                    <td>{{ $discText ?? '-' }}</td>
-                                                    <td class="text-center">{{ $m }}</td>
-                                                    <td class="text-center">{{ $v }}</td>
-                                                    <td class="text-center">{{ $n }}</td>
-                                                    <td class="text-center">{{ $rowTotal }}</td>
-                                                </tr>
-                                            @endif
-                                        @endforeach
-                                    </tbody>
-                                    <tfoot>
-                                        <tr>
-                                            <th colspan="6" class="text-right">Total Geral</th>
-                                            <th class="text-center">{{ $sum_mat }}</th>
-                                            <th class="text-center">{{ $sum_vesp }}</th>
-                                            <th class="text-center">{{ $sum_not }}</th>
-                                            <th class="text-center">{{ $sum_total }}</th>
-                                            @if($isCpmEnc)
-                                                <th></th>
-                                            @endif
-                                        </tr>
-                                    </tfoot>
-                                </table>
-                            </div>
-                        @else
-                            <div class="text-muted">Nenhum encaminhamento registrado para este candidato.</div>
-                        @endif
+                        {{-- Encaminhamentos Registrados removido --}}
                         
                         {{-- Ações CPM: Validar ingresso e Imprimir Ofício --}}
                         <div class="mt-3">
@@ -877,15 +771,9 @@
                                         @endif
                                     @endif
                                 {{-- CPM document validation button is rendered below the document checklist; removed duplicate here --}}
-                                    <button id="btn-imprimir-oficio" class="btn btn-outline-primary btn-sm" style="border-radius:5px; {{ $showPrintFromStatus ? 'display:inline-block;' : 'display:none;' }}">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icon-tabler-file-description" style="margin-right:6px;vertical-align:middle;width:16px;height:16px;"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 17h6" /><path d="M9 13h6" /></svg>
-                                        Imprimir Ofício
-                                    </button>
+                                    {{-- botão Imprimir Ofício removido --}}
                             @elseif ($showPrintFromStatus && $hasSei)
-                                <button id="btn-imprimir-oficio" class="btn btn-outline-primary btn-sm" style="border-radius:5px;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icon-tabler-file-description" style="margin-right:6px;vertical-align:middle;width:16px;height:16px;"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 17h6" /><path d="M9 13h6" /></svg>
-                                    Imprimir Ofício
-                                </button>
+                                {{-- botão Imprimir Ofício removido --}}
                             @endif
                         </div>
                     </div>
@@ -978,7 +866,7 @@
                     if (!shouldLock) return;
                     // scope to candidate area (prefer .candidate-body, fallback to .card)
                     const container = document.querySelector('.candidate-body') || document.querySelector('.card');
-                    const except = ['btn-imprimir-oficio'];
+                    const except = [];
                     if (container) {
                         container.querySelectorAll('button').forEach(b => {
                             // keep collapse toggles and 'Ver mais informações' interactive
@@ -1006,9 +894,7 @@
                         const encBtn = document.getElementById('btnEncaminhar'); if (encBtn) encBtn.style.display = 'none';
                         const seiFormBtn = document.querySelector('#sei-form button[type=submit]'); if (seiFormBtn) seiFormBtn.disabled = true;
                     }
-                    // Ensure print button visible and enabled (print button may be outside container)
-                    const printBtn = document.getElementById('btn-imprimir-oficio');
-                    if (printBtn) { printBtn.style.display = 'inline-block'; printBtn.disabled = false; }
+                    // print button removed; no-op
                 } catch(e){}
             })();
 
@@ -1282,7 +1168,6 @@
     <script>
         document.addEventListener('DOMContentLoaded', function(){
             const btnVal = document.getElementById('btn-validar-ingresso');
-            const btnPrint = document.getElementById('btn-imprimir-oficio');
             const candidateId = '{{ $candidate['id'] ?? ($candidate['num_inscricao'] ?? '') }}';
             const btnConfirmDocsCpm = document.getElementById('btn-validar-documentos-cpm');
             const serverCandidateStatus = @json($candidate['status'] ?? null);
@@ -1632,14 +1517,7 @@
                                 } catch(e) {}
                             } catch(e) {}
                             // CPM document-confirmation handler removed — will re-implement server-backed flow.
-                            const btn = document.getElementById('btn-imprimir-oficio');
-                            if (btn) {
-                                if (status.toLowerCase().trim() === 'ingresso validado') {
-                                    btn.style.display = 'inline-block';
-                                } else {
-                                    btn.style.display = 'none';
-                                }
-                            }
+                            // print button removed; no-op
                         }
                     }).catch(()=>{});
             } catch(e){}

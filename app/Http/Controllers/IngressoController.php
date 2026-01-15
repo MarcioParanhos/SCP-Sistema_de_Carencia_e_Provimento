@@ -57,6 +57,7 @@ class IngressoController extends Controller
         $docsValidated = 0;
         $ingressados = 0;
         $pendencia = 0;
+        $corrigirDocumentacao = 0;
 
         if (Schema::hasTable($table)) {
             $baseQuery = DB::table($table);
@@ -134,6 +135,14 @@ class IngressoController extends Controller
 
             if (in_array('status', $available)) {
                 $ingressados = (clone $baseQuery)->whereRaw("LOWER(status) = 'ingresso validado'")->count();
+
+                // Count candidates whose status indicates they need document correction
+                try {
+                    $corrigirDocumentacao = (clone $baseQuery)->whereRaw("LOWER(status) LIKE '%corrig%'")->count();
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to compute corrigir_documentacao count', ['exception' => $e->getMessage()]);
+                    $corrigirDocumentacao = 0;
+                }
             }
 
             // Compute pendência de documentos.
@@ -217,6 +226,7 @@ class IngressoController extends Controller
         $stats = [
             'total_candidates' => $total,
             'ingressados' => $ingressados,
+            'corrigir_documentacao' => $corrigirDocumentacao,
             'pendencia_documentos' => $pendencia,
             'documentos_validados' => $docsValidated,
             'pendente_confirmacao_cpm' => $pendenteConfirmacaoCpm ?? 0,

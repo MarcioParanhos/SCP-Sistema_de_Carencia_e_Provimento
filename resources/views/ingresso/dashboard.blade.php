@@ -78,12 +78,12 @@
             </div>
         </div>
         <div class="metric-col mb-3">
-            <div class="position-relative metric-card" style="background: linear-gradient(90deg,#28a745,#20c997);">
+            <div class="position-relative metric-card" style="background: linear-gradient(90deg,#e74a3b,#ff6b6b);">
                 <div>
-                    <div class="metric-title">Já Ingressados</div>
-                    <div class="metric-value">{{ $stats['ingressados'] }}</div>
+                    <div class="metric-title">Corrigir documentação</div>
+                    <div class="metric-value">{{ $stats['corrigir_documentacao'] ?? '-' }}</div>
                 </div>
-                <div class="metric-icon">&#10004;</div>
+                <div class="metric-icon">&#9888;</div>
             </div>
         </div>
         <div class="metric-col mb-3">
