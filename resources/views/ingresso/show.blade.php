@@ -393,6 +393,7 @@
                 @endphp
                         <span class="badge-status {{ $badgeClass }}">{{ $displayStatus }}</span>
                 @php $user = optional(Auth::user()); @endphp
+                @php $isIngressadoTop = isset($candidate['status']) && mb_strtolower(trim($candidate['status']), 'UTF-8') === 'apto para ingresso'; @endphp
                 @if($user && isset($user->profile_id) && $user->profile_id == 1 && optional($user)->sector_id == 2)
                     @if($isNaoAssumiu)
                         <button id="btn-reativar-candidato" class="btn btn-warning btn-sm d-flex align-items-center" style="border-radius:6px;padding:6px 10px;" title="Reativar Candidato" aria-label="Reativar Candidato">
@@ -405,6 +406,7 @@
                             <span style="margin-left:8px;font-weight:700;">Reativar Candidato</span>
                         </button>
                     @else
+                        @if (!($isIngressadoTop ?? false))
                         <button id="btn-nao-assumiu" class="btn btn-danger btn-sm d-flex align-items-center btn-nao-assumiu" style="border-radius:6px;padding:6px 10px;" title="Marcar como Não Assumiu" aria-label="Não Assumiu">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-off" aria-hidden="true">
                                 <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
@@ -414,6 +416,7 @@
                             </svg>
                             <span style="margin-left:8px;font-weight:700;">Não Assumiu</span>
                         </button>
+                        @endif
                     @endif
                 @endif
                 
