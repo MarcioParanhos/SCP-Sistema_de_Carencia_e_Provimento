@@ -211,6 +211,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/ingresso/{id}/documentos', [IngressoController::class, 'getDocumentChecklist'])->name('ingresso.documentos.get');
     Route::post('/ingresso/{id}/documentos', [IngressoController::class, 'storeDocumentChecklist'])->name('ingresso.documentos.store');
     Route::post('/ingresso/{id}/documentos/confirmar_cpm', [IngressoController::class, 'confirmDocumentosCpm'])->name('ingresso.documentos.confirmar_cpm');
+    // Mark candidate as 'Não Assumiu'
+    Route::post('/ingresso/{id}/nao-assumiu', [IngressoController::class, 'markNaoAssumiu'])->name('ingresso.nao_assumiu');
+    // Restore previous status when candidate was marked 'Não Assumiu'
+    Route::post('/ingresso/{id}/retirar-nao-assumiu', [IngressoController::class, 'retirarNaoAssumiu'])->name('ingresso.retirar_nao_assumiu');
     Route::post('/ingresso/{id}/assign', [IngressoController::class, 'assign'])->name('ingresso.assign');
     Route::match(['put','post'],'/ingresso/{id}/update', [IngressoController::class, 'updateCandidate'])->name('ingresso.update');
     Route::post('/ingresso/{id}/encaminhar', [IngressoController::class, 'forward'])->name('ingresso.encaminhar');

@@ -37,7 +37,57 @@ class IngressoController extends Controller
             $columns = Schema::getColumnListing('ingresso_candidatos');
         }
 
-        return view('ingresso.index', ['columns' => $columns]);
+        // Build list of available NTEs for the filter select
+        $ntes = [];
+            try {
+            if (Schema::hasTable('ingresso_candidatos') && in_array('nte', $columns)) {
+                try {
+                    $ntes = DB::table('ingresso_candidatos')
+                        ->select('nte')
+                        ->whereNotNull('nte')
+                        ->distinct()
+                        ->orderByRaw("CAST(nte AS SIGNED) ASC")
+                        ->pluck('nte')
+                        ->toArray();
+                } catch (\Throwable $ex) {
+                    $ntes = DB::table('ingresso_candidatos')
+                        ->select('nte')
+                        ->whereNotNull('nte')
+                        ->distinct()
+                        ->orderBy('nte')
+                        ->pluck('nte')
+                        ->toArray();
+                }
+            } elseif (Schema::hasTable('uees')) {
+                try {
+                    $ntes = DB::table('uees')
+                        ->select('nte')
+                        ->whereNotNull('nte')
+                        ->distinct()
+                        ->orderByRaw("CAST(nte AS SIGNED) ASC")
+                        ->pluck('nte')
+                        ->toArray();
+                } catch (\Throwable $ex) {
+                    $ntes = DB::table('uees')
+                        ->select('nte')
+                        ->whereNotNull('nte')
+                        ->distinct()
+                        ->orderBy('nte')
+                        ->pluck('nte')
+                        ->toArray();
+                }
+            } elseif (class_exists(\App\Models\Uee::class)) {
+                try {
+                    $ntes = Uee::select('nte')->whereNotNull('nte')->distinct()->orderByRaw("CAST(nte AS SIGNED) ASC")->pluck('nte')->toArray();
+                } catch (\Throwable $ex) {
+                    $ntes = Uee::select('nte')->whereNotNull('nte')->distinct()->orderBy('nte')->pluck('nte')->toArray();
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to fetch NTE list for ingresso.index', ['exception' => $e->getMessage()]);
+        }
+
+        return view('ingresso.index', ['columns' => $columns, 'ntes' => $ntes]);
     }
 
     /**
@@ -134,7 +184,7 @@ class IngressoController extends Controller
             }
 
             if (in_array('status', $available)) {
-                $ingressados = (clone $baseQuery)->whereRaw("LOWER(status) = 'ingresso validado'")->count();
+                $ingressados = (clone $baseQuery)->whereRaw("LOWER(status) = 'apto para ingresso'")->count();
 
                 // Count candidates whose status indicates they need document correction
                 try {
@@ -142,6 +192,19 @@ class IngressoController extends Controller
                 } catch (\Throwable $e) {
                     Log::warning('Failed to compute corrigir_documentacao count', ['exception' => $e->getMessage()]);
                     $corrigirDocumentacao = 0;
+                }
+
+                // Count candidates marked as 'Não Assumiu' (robust to accents/variants)
+                try {
+                    $naoAssumiu = (clone $baseQuery)
+                        ->where(function($q){
+                            $q->whereRaw("LOWER(status) LIKE '%nao assumiu%'")
+                              ->orWhereRaw("LOWER(status) LIKE '%não assumiu%'")
+                              ->orWhereRaw("LOWER(status) LIKE '%nao-assumiu%'");
+                        })->count();
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to compute nao_assumiu count', ['exception' => $e->getMessage()]);
+                    $naoAssumiu = 0;
                 }
             }
 
@@ -227,6 +290,7 @@ class IngressoController extends Controller
             'total_candidates' => $total,
             'ingressados' => $ingressados,
             'corrigir_documentacao' => $corrigirDocumentacao,
+            'nao_assumiu' => $naoAssumiu ?? 0,
             'pendencia_documentos' => $pendencia,
             'documentos_validados' => $docsValidated,
             'pendente_confirmacao_cpm' => $pendenteConfirmacaoCpm ?? 0,
@@ -380,6 +444,63 @@ class IngressoController extends Controller
                         $q->orWhere($col, 'like', "%{$searchValue}%");
                     }
                 });
+            }
+
+            // Apply client-side filters (if provided): filter_nte, filter_status
+            try {
+                $filterNte = trim((string) ($request->query('filter_nte') ?? ''));
+                if ($filterNte !== '') {
+                    if (in_array('nte', $columns)) {
+                        $filteredQuery->where('nte', $filterNte);
+                    } elseif (in_array('uee_code', $columns)) {
+                        $filteredQuery->where('uee_code', $filterNte);
+                    } elseif (in_array('uee_name', $columns)) {
+                        $filteredQuery->where('uee_name', $filterNte);
+                    } else {
+                        $filteredQuery->where('nte', $filterNte);
+                    }
+                }
+
+                $filterStatus = trim((string) ($request->query('filter_status') ?? ''));
+                if ($filterStatus !== '') {
+                    $low = mb_strtolower($filterStatus, 'UTF-8');
+                    if (in_array('status', $columns)) {
+                        if (mb_strpos($low, 'corrig') !== false) {
+                            $filteredQuery->whereRaw("LOWER(status) LIKE '%corrig%'");
+                        } elseif (mb_strpos($low, 'apto') !== false || mb_strpos($low, 'ingress') !== false || mb_strpos($low, 'ingresso') !== false) {
+                            $filteredQuery->whereRaw("LOWER(status) = 'apto para ingresso'");
+                        } elseif (mb_strpos($low, 'valid') !== false) {
+                            $filteredQuery->whereRaw("LOWER(status) LIKE '%valid%'");
+                        } elseif (mb_strpos($low, 'pend') !== false) {
+                            $filteredQuery->whereRaw("LOWER(status) LIKE '%pend%'");
+                        } else {
+                            $filteredQuery->whereRaw('LOWER(status) LIKE ?', ["%{$low}%"]);
+                        }
+                    } else {
+                        // fallback to ingresso_documentos when status column not present
+                        if (Schema::hasTable('ingresso_documentos')) {
+                            if (mb_strpos($low, 'valid') !== false) {
+                                $sub = DB::table('ingresso_documentos')
+                                    ->select('ingresso_candidato_id', DB::raw('SUM(validated) as validated_count'), DB::raw('COUNT(*) as total'))
+                                    ->groupBy('ingresso_candidato_id');
+                                $filteredQuery->joinSub($sub, 'ds', function($join) {
+                                    $join->on('ingresso_candidatos.id', '=', 'ds.ingresso_candidato_id');
+                                })->whereRaw('ds.total > 0 AND ds.validated_count = ds.total');
+                            } elseif (mb_strpos($low, 'pend') !== false) {
+                                $subPending = DB::table('ingresso_documentos')
+                                    ->select('ingresso_candidato_id', DB::raw('SUM(validated) as validated_count'), DB::raw('COUNT(*) as total'))
+                                    ->groupBy('ingresso_candidato_id');
+                                $filteredQuery->leftJoinSub($subPending, 'docsum', function($join) {
+                                    $join->on('ingresso_candidatos.id', '=', 'docsum.ingresso_candidato_id');
+                                })->where(function($q){
+                                    $q->whereNull('docsum.total')->orWhereRaw('docsum.validated_count < docsum.total');
+                                });
+                            }
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Failed to apply client filters in ingresso.data', ['exception' => $e->getMessage()]);
             }
 
             // NOTE: removed the restriction that limited results to candidates
@@ -699,10 +820,10 @@ class IngressoController extends Controller
             $syntheticCols[] = 'profissao';
         }
 
-        // Ensure we only export validated candidates: prefer `status='Ingresso Validado'`,
+        // Ensure we only export validated candidates: prefer `status='Apto para ingresso'`,
         // otherwise fallback to `documentos_validados == 1` when `status` column missing.
         if (Schema::hasColumn($table, 'status')) {
-            $query->whereRaw("LOWER(status) = 'ingresso validado'");
+            $query->whereRaw("LOWER(status) = 'apto para ingresso'");
         } elseif (Schema::hasColumn($table, 'documentos_validados')) {
             $query->where('documentos_validados', 1);
         }
@@ -1226,7 +1347,7 @@ class IngressoController extends Controller
                 $updates['documentos_validados'] = 1;
             }
             if (Schema::hasColumn('ingresso_candidatos', 'status')) {
-                $updates['status'] = 'Ingresso Validado';
+                $updates['status'] = 'Apto para ingresso';
             }
             if (Schema::hasColumn('ingresso_candidatos', 'status_validated_by')) {
                 $updates['status_validated_by'] = optional(Auth::user())->id;
@@ -1243,7 +1364,7 @@ class IngressoController extends Controller
 
             // return updated candidate for frontend convenience
             $updated = DB::table('ingresso_candidatos')->where('id', $candidateId)->first();
-            return response()->json(['success' => true, 'message' => 'Ingresso validado com sucesso.', 'candidate' => $updated]);
+            return response()->json(['success' => true, 'message' => 'Apto para ingresso com sucesso.', 'candidate' => $updated]);
         } catch (\Throwable $e) {
             Log::error('Failed to validate ingresso', ['exception' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => 'Erro ao validar ingresso'], 500);
@@ -1505,9 +1626,15 @@ class IngressoController extends Controller
                     // Build existing map and also append any custom documents to the returned list
                     $presentKeys = array_map(function($it){ return (string)($it['key'] ?? $it['label'] ?? ''); }, $list);
                     $presentNorm = array_map(function($k){ return strtolower(preg_replace('/[^a-z0-9]/','',$k)); }, $presentKeys);
+                    $reports = [];
                     foreach ($rows as $r) {
                         $k = (string) ($r->documento_key ?? '');
                         $existing[$k] = (bool) $r->validated;
+                        // collect report metadata when present in schema
+                        $reports[$k] = [
+                            'report' => (bool) ($r->report ?? false),
+                            'report_description' => (string) ($r->report_description ?? ''),
+                        ];
                         // if this document key/label isn't already in the static list, add it so the UI can show it
                         $label = (string) ($r->documento_label ?? $k ?: 'Documento não identificado');
                         $norm = strtolower(preg_replace('/[^a-z0-9]/','',$k ?: $label));
@@ -1522,7 +1649,7 @@ class IngressoController extends Controller
             Log::warning('ingresso_documentos get failed', ['exception' => $e->getMessage()]);
         }
 
-        return response()->json(['list' => $list, 'existing' => $existing]);
+        return response()->json(['list' => $list, 'existing' => $existing, 'reports' => (isset($reports) ? $reports : [])]);
     }
 
     /**
@@ -1876,6 +2003,103 @@ class IngressoController extends Controller
         } catch (\Throwable $e) {
             Log::error('storeDocumentChecklist error', ['exception' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => 'Server error'], 500);
+        }
+    }
+
+    /**
+     * Mark candidate as 'NAO ASSUMIU' by updating ingresso_candidatos.status.
+     */
+    public function markNaoAssumiu(Request $request, $id)
+    {
+        if (! $this->authorizeUser()) {
+            return response()->json(['success' => false, 'message' => 'Forbidden'], 403);
+        }
+
+        try {
+            // Resolve candidate id if $id might be a num_inscricao
+            $candidateId = DB::table('ingresso_candidatos')->where('id', $id)->orWhere('num_inscricao', $id)->value('id');
+            if (! $candidateId) {
+                return response()->json(['success' => false, 'message' => 'Candidato não encontrado'], 404);
+            }
+
+            $now = date('Y-m-d H:i:s');
+
+            // Update status field if present. Save previous status into `old_status` if column exists.
+            if (Schema::hasColumn('ingresso_candidatos', 'status')) {
+                // fetch previous status
+                $previousStatus = DB::table('ingresso_candidatos')->where('id', $candidateId)->value('status');
+                $upd = ['status' => 'NAO ASSUMIU'];
+                if (Schema::hasColumn('ingresso_candidatos', 'old_status')) {
+                    $upd['old_status'] = $previousStatus;
+                }
+                if (Schema::hasColumn('ingresso_candidatos', 'updated_at')) {
+                    $upd['updated_at'] = $now;
+                }
+                DB::table('ingresso_candidatos')->where('id', $candidateId)->update($upd);
+            } else {
+                // Fallback: mark in provimentos_encaminhados if table exists
+                if (Schema::hasTable('provimentos_encaminhados')) {
+                    $upd2 = [
+                        'situacao_programacao' => 'NAO ASSUMIU',
+                        'data_assuncao' => null,
+                    ];
+                    if (Schema::hasColumn('provimentos_encaminhados', 'updated_at')) {
+                        $upd2['updated_at'] = $now;
+                    }
+                    DB::table('provimentos_encaminhados')
+                        ->where('ingresso_candidato_id', $candidateId)
+                        ->update($upd2);
+                } else {
+                    return response()->json(['success' => false, 'message' => 'Não há campo para registrar status'], 500);
+                }
+            }
+
+            try { Log::info('Candidato marcado como NAO ASSUMIU', ['candidate_id' => $candidateId, 'user' => optional(Auth::user())->id]); } catch (\Throwable $e) {}
+
+            return response()->json(['success' => true, 'message' => 'Candidato marcado como NÃO ASSUMIU']);
+        } catch (\Throwable $e) {
+            Log::error('markNaoAssumiu failed', ['exception' => $e->getMessage(), 'identifier' => $id]);
+            return response()->json(['success' => false, 'message' => 'Erro ao marcar candidato'], 500);
+        }
+    }
+
+    /**
+     * Restore candidate status from `old_status` when previously marked as 'NAO ASSUMIU'.
+     */
+    public function retirarNaoAssumiu(Request $request, $id)
+    {
+        if (! $this->authorizeUser()) {
+            return response()->json(['success' => false, 'message' => 'Forbidden'], 403);
+        }
+
+        try {
+            $candidateId = DB::table('ingresso_candidatos')->where('id', $id)->orWhere('num_inscricao', $id)->value('id');
+            if (! $candidateId) {
+                return response()->json(['success' => false, 'message' => 'Candidato não encontrado'], 404);
+            }
+
+            if (! Schema::hasColumn('ingresso_candidatos', 'old_status')) {
+                return response()->json(['success' => false, 'message' => 'Campo old_status não existe'], 500);
+            }
+
+            $old = DB::table('ingresso_candidatos')->where('id', $candidateId)->value('old_status');
+            if ($old === null || $old === '') {
+                return response()->json(['success' => false, 'message' => 'Nenhum status anterior registrado'], 400);
+            }
+
+            $now = date('Y-m-d H:i:s');
+            $upd = ['status' => $old, 'old_status' => null];
+            if (Schema::hasColumn('ingresso_candidatos', 'updated_at')) {
+                $upd['updated_at'] = $now;
+            }
+            DB::table('ingresso_candidatos')->where('id', $candidateId)->update($upd);
+
+            try { Log::info('Retirado NAO ASSUMIU', ['candidate_id' => $candidateId, 'user' => optional(Auth::user())->id]); } catch (\Throwable $e) {}
+
+            return response()->json(['success' => true, 'message' => 'Status restaurado com sucesso']);
+        } catch (\Throwable $e) {
+            Log::error('retirarNaoAssumiu failed', ['exception' => $e->getMessage(), 'identifier' => $id]);
+            return response()->json(['success' => false, 'message' => 'Erro ao restaurar status'], 500);
         }
     }
 

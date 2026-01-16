@@ -139,12 +139,20 @@
                             <span class="badge bg-primary text-white">{{ $stats['total_candidates'] }}</span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center">
-                            Ingressados
-                            <span class="badge bg-success">{{ $stats['ingressados'] }}</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
                             Pendências
                             <span class="badge bg-warning text-dark">{{ $stats['pendencia_documentos'] }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Corrigir documentação
+                            <span class="badge bg-danger text-white">{{ $stats['corrigir_documentacao'] ?? '-' }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Não Assumiu
+                            <span class="badge bg-dark text-white">{{ $stats['nao_assumiu'] ?? 0 }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Aptos para ingresso
+                            <span class="badge bg-success text-white">{{ $stats['ingressados'] ?? 0 }}</span>
                         </li>
                     </ul>
 

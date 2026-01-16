@@ -21,8 +21,7 @@
         #ingressoTable th, #ingressoTable td { text-align: center !important; vertical-align: middle !important; }
 
         /* Botões menores e com radius de 5px */
-        #ingressoTable .btn-detalhar,
-        #ingressoTable .btn-excluir {
+        #ingressoTable .btn-detalhar {
             border-radius: 5px !important;
             padding: 0.3rem 0.3rem !important;
             font-size: 0.72rem !important;
@@ -81,11 +80,17 @@
     </style>
     <div class="bg-primary text-white card-header d-flex justify-content-between align-items-center">
         <h4 class="mb-0">INGRESSO - CANDIDATOS</h4>
-        <a href="{{ route('ingresso.dashboard') }}" class="btn btn-light btn-sm">Voltar ao Dashboard</a>
     </div>
     <div class="card-body">
-        <div class="print-btn mb-2 d-flex">
-            <div class="d-flex" style="gap:8px;">
+        <div class="print-btn mb-2 d-flex pb-4">
+            <div class="d-flex" style="gap:4px;">
+                <a href="{{ route('ingresso.dashboard') }}" class="btn btn-primary btn-sm" title="Dashboard" style="border-radius:5px;padding:5px !important;display:inline-flex;align-items:center;justify-content:center;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="icon icon-tabler icons-tabler-filled icon-tabler-layout-dashboard" style="width:24px;height:24px;">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                        <path d="M9 3a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-4a2 2 0 0 1 -2 -2v-6a2 2 0 0 1 2 -2zm0 12a2 2 0 0 1 2 2v2a2 2 0 0 1 -2 2h-4a2 2 0 0 1 -2 -2v-2a2 2 0 0 1 2 -2zm10 -4a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-4a2 2 0 0 1 -2 -2v-6a2 2 0 0 1 2 -2zm0 -8a2 2 0 0 1 2 2v2a2 2 0 0 1 -2 2h-4a2 2 0 0 1 -2 -2v-2a2 2 0 0 1 2 -2z" />
+                    </svg>
+                </a>
+
                 <button id="btn-export-csv" class="btn btn-primary btn-sm" title="Exportar CSV" style="border-radius:5px;padding:5px !important;display:inline-flex;align-items:center;justify-content:center;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-file-type-csv" style="width:24px;height:24px;">
                         <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
@@ -97,6 +102,46 @@
                     </svg>
                 </button>
             </div>
+        </div>
+        <!-- Filtro collapse (inicialmente oculto) -->
+        <div id="filterPanel" class="border rounded bg-light p-3 mb-3" style="display:none;">
+            <form id="filterForm" class="form-row align-items-end">
+                @php
+                    $isNteUser = optional(Auth::user())->profile_id == 1 && optional(Auth::user())->sector_id == 7;
+                @endphp
+                @if($isNteUser)
+                    <input type="hidden" id="filter_nte" value="{{ Auth::user()->nte ?? '' }}">
+                @else
+                <div class="col-md-2">
+                    <label for="filter_nte">NTE</label>
+                    <select id="filter_nte" class="form-control form-control-sm">
+                        <option value="">(Todos)</option>
+                        @if(!empty($ntes))
+                            @foreach($ntes as $nteVal)
+                                <option value="{{ $nteVal }}">{{ str_pad($nteVal, 2, '0', STR_PAD_LEFT) }}</option>
+                            @endforeach
+                        @elseif(optional(Auth::user())->nte)
+                            <option value="{{ Auth::user()->nte }}">{{ Auth::user()->nte }}</option>
+                        @endif
+                    </select>
+                </div>
+                @endif
+                <div class="col-md-2">
+                    <label for="filter_status">Status</label>
+                    <select id="filter_status" class="form-control form-control-sm">
+                        <option value="">(Todos)</option>
+                        <option>Documentos Validados</option>
+                        <option>Documentos Pendentes</option>
+                        <option>Apto para ingresso</option>
+                        <option>Corrigir documentação</option>
+                        <option value="Nao Assumiu">Não Assumiu</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" id="applyFilters" class="btn btn-primary">Aplicar</button>
+                    <button type="button" id="clearFilters" class="btn btn-secondary ml-2">Limpar</button>
+                </div>
+            </form>
         </div>
         <div class="table-responsive" style="position:relative">
             <!-- Custom processing overlay for nicer UX -->
@@ -122,7 +167,6 @@
                         <th scope="col">NOTA</th>
                         <th scope="col">Nº PROCESSO SEI</th>
                         <th scope="col">STATUS</th>
-                        <th scope="col">OFÍCIO</th>
                         <th scope="col">DOCS.</th>
                         <th scope="col">AÇÃO</th>
                     </tr>
@@ -227,40 +271,20 @@
                             }
                         }
 
-                        var cls = 'bg-secondary text-white';
-                        var st = String(statusText || '').toLowerCase();
-                        if (st.indexOf('valid') !== -1 || st === 'documentos validados') {
-                            cls = 'bg-success text-white';
-                        } else if (st.indexOf('pendente') !== -1 || st.indexOf('pendentes') !== -1) {
-                            cls = 'bg-warning text-dark';
-                        } else if (st.indexOf('documentos') !== -1) {
-                            cls = 'bg-secondary text-white';
-                        }
-                        return '<span class="badge '+cls+'">'+statusText+'</span>';
-                    }
-                },{
-                    data: null,
-                    name: 'oficio',
-                    orderable: false,
-                    searchable: false,
-                    render: function(data, type, row) {
-                        var id = row.id || row.num_inscricao || '';
-                        // Only allow oficio when status is explicitly 'Ingresso Validado' (case-insensitive exact match)
-                        var statusText = (row && row.status) ? String(row.status) : '';
-                        var validated = false;
-                        if (statusText && statusText.toLowerCase().trim() === 'ingresso validado') {
-                            validated = true;
-                        }
-                        if (!validated) return '-';
-                        var url = ingressoBaseUrl + '/' + encodeURIComponent(id) + '/oficio' + '?print=1';
-                        return '<a href="'+url+'" target="_blank" title="Abrir Ofício" style="display:inline-flex; align-items:center; justify-content:center;">'
-                            + '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icon-tabler-file-description" style="vertical-align:middle;">'
-                            + '<path stroke="none" d="M0 0h24v24H0z" fill="none"/>'
-                            + '<path d="M14 3v4a1 1 0 0 0 1 1h4" />'
-                            + '<path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" />'
-                            + '<path d="M9 17h6" />'
-                            + '<path d="M9 13h6" />'
-                            + '</svg></a>';
+                                var cls = 'bg-secondary text-white';
+                                var st = String(statusText || '').toLowerCase();
+                                // Detect explicit "Não Assumiu" (with or without accent or hyphen)
+                                if (st.indexOf('nao assumiu') !== -1 || st.indexOf('não assumiu') !== -1 || st.indexOf('nao-assumiu') !== -1) {
+                                    cls = 'bg-danger text-white';
+                                    statusText = 'Não Assumiu';
+                                } else if (st.indexOf('valid') !== -1 || st.indexOf('apto') !== -1 || st === 'documentos validados') {
+                                    cls = 'bg-success text-white';
+                                } else if (st.indexOf('pendente') !== -1 || st.indexOf('pendentes') !== -1) {
+                                    cls = 'bg-warning text-dark';
+                                } else if (st.indexOf('documentos') !== -1) {
+                                    cls = 'bg-secondary text-white';
+                                }
+                                return '<span class="badge '+cls+'">'+statusText+'</span>';
                     }
                 },{
                     data: null,
@@ -281,7 +305,7 @@
                             }
                         }
                         var st = String(statusText || '').toLowerCase();
-                        var isPending = (st.indexOf('pendente') !== -1 || st.indexOf('aguardando') !== -1);
+                        var isPending = (st.indexOf('pendente') !== -1 || st.indexOf('aguardando') !== -1 || st.indexOf('corrig') !== -1);
 
                         if (!isPending) return '-';
 
@@ -306,21 +330,8 @@
                             + '</svg>'
                             + '</button></a>';
 
-                        // Excluir uses the same visual format as Detalhar (anchor + button)
+                        // deletion removed for safety — only keep details action
                         var btnExcluir = '';
-                        if (!isNteUser) {
-                            btnExcluir = '<a href="#" class="ml-1" title="Excluir"><button type="button" class="btn btn-danger btn-sm btn-excluir" data-id="'+id+'">'
-                                + '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icon-tabler-trash">'
-                                + '<path stroke="none" d="M0 0h24v24H0z" fill="none" />'
-                                + '<path d="M4 7l16 0" />'
-                                + '<path d="M10 11l0 6" />'
-                                + '<path d="M14 11l0 6" />'
-                                + '<path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />'
-                                + '<path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />'
-                                + '</svg>'
-                                + '</button></a>';
-                        }
-
                         return '<div class="btn-group" role="group">'+btnDetalhar+btnExcluir+'</div>';
                     }
                 }
@@ -331,7 +342,11 @@
                 serverSide: true,
                 ajax: {
                     url: '{{ route('ingresso.data') }}',
-                    type: 'GET'
+                    type: 'GET',
+                    data: function(d) {
+                        d.filter_nte = $('#filter_nte').val();
+                        d.filter_status = $('#filter_status').val();
+                    }
                 },
                 columns: dtCols,
                 ordering: false,
@@ -409,74 +424,7 @@
                 window.location.href = ingressoBaseUrl + '/' + encodeURIComponent(id);
             });
 
-            // Delegate delete click -> confirm and AJAX DELETE
-            $(document).on('click', '.btn-excluir', function(e){
-                e.preventDefault();
-                var id = $(this).data('id');
-                if (!id) return;
-                if (!confirm('Confirma exclusão deste candidato?')) return;
-
-                fetch(ingressoBaseUrl + '/' + encodeURIComponent(id), {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': csrfToken,
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json',
-                    },
-                    credentials: 'same-origin'
-                }).then(function(response){
-                    return response.json().then(function(json){
-                        return {status: response.status, body: json};
-                    }).catch(function(){
-                        return {status: response.status, body: {success: false, message: 'Resposta inválida'}};
-                    });
-                }).then(function(result){
-                    if (result.status >= 200 && result.status < 300 && result.body && result.body.success) {
-                        $('#ingressoTable').DataTable().ajax.reload(null, false);
-                        (function(){
-                            function ensureSwal(){
-                                return new Promise(function(resolve,reject){
-                                    if (typeof Swal !== 'undefined') return resolve(window.Swal);
-                                    var s = document.createElement('script');
-                                    s.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11';
-                                    s.onload = function(){ resolve(window.Swal); };
-                                    s.onerror = function(){ reject(); };
-                                    document.head.appendChild(s);
-                                });
-                            }
-                            ensureSwal().then(function(swal){ swal.fire({ icon: 'success', title: 'Sucesso', text: 'Registro excluído com sucesso.' }); }).catch(function(){ console.warn('Swal load failed'); });
-                        })();
-                    } else {
-                        (function(){
-                            function ensureSwal(){
-                                return new Promise(function(resolve,reject){
-                                    if (typeof Swal !== 'undefined') return resolve(window.Swal);
-                                    var s = document.createElement('script');
-                                    s.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11';
-                                    s.onload = function(){ resolve(window.Swal); };
-                                    s.onerror = function(){ reject(); };
-                                    document.head.appendChild(s);
-                                });
-                            }
-                            ensureSwal().then(function(swal){ swal.fire({ icon: 'error', title: 'Erro', text: result.body && result.body.message ? result.body.message : 'Erro ao excluir registro.' }); }).catch(function(){ console.warn('Swal load failed'); });
-                        })();
-                    }
-                }).catch(function(){
-                    (function(){
-                        function ensureSwal(){
-                            return new Promise(function(resolve,reject){
-                                if (typeof Swal !== 'undefined') return resolve(window.Swal);
-                                var s = document.createElement('script');
-                                s.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11';
-                                s.onload = function(){ resolve(window.Swal); };
-                                s.onerror = function(){ reject(); };
-                                document.head.appendChild(s);
-                            });
-                        }
-                        ensureSwal().then(function(swal){ swal.fire({ icon: 'error', title: 'Erro', text: 'Erro ao conectar-se ao servidor.' }); }).catch(function(){ console.warn('Swal load failed'); });
-                    })();
-                });
-            });
+            // Deletion action removed from the UI — server-side deletions remain possible via administrative tools.
 
             // Delegate pending-docs click -> fetch documents and show modal listing pending items
             $(document).on('click', '.btn-pending-docs', function(e){
@@ -498,6 +446,11 @@
                 ensureSwal().then(function(swal){
                     swal.fire({ title: 'Carregando...', didOpen: () => { swal.showLoading(); } });
 
+                    // determine row/status: when status contains 'corrig' we show ONLY reported documents
+                    var row = (typeof ingressoTable !== 'undefined' && ingressoTable) ? ingressoTable.row($(e.currentTarget).closest('tr')).data() : null;
+                    var statusTextRow = (row && row.status) ? String(row.status) : '';
+                    var onlyReportedMode = (String(statusTextRow || '').toLowerCase().indexOf('corrig') !== -1);
+
                     fetch(ingressoBaseUrl + '/' + encodeURIComponent(id) + '/documentos', {
                         method: 'GET',
                         headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
@@ -506,10 +459,11 @@
                         return response.text();
                     }).then(function(text){
                         var list = [];
+                        var reported = [];
                         // try parse json
                         try {
                             var json = JSON.parse(text);
-                            // New format: { list: [{key,label},...], existing: { key: true/false } }
+                            // New format: { list: [{key,label},...], existing: { key: true/false }, reports: { key: {report:1, report_description:''} } }
                             if (json && Array.isArray(json.list)) {
                                 var existing = json.existing || {};
                                 function normalizeKey(k){ return (''+(k||'')).toLowerCase().replace(/[^a-z0-9]/g,'').trim(); }
@@ -525,7 +479,7 @@
                                     presentNorm[nk] = label;
                                     var validated = existingNorm[nk] === true || existingNorm[nk] === 1 || existingNorm[nk] === '1';
                                     // include item when not validated (either missing in DB or present but validated==false)
-                                    if (!validated) list.push(label);
+                                    if (!validated && !onlyReportedMode) list.push(label);
                                 });
 
                                 // Also include any documents present in DB (existing) that are not in the static list
@@ -533,7 +487,7 @@
                                     var nk = normalizeKey(k);
                                     if (!presentNorm[nk]) {
                                         var validated = existing[k] === true || existing[k] === 1 || existing[k] === '1';
-                                        if (!validated) {
+                                        if (!validated && !onlyReportedMode) {
                                             // use the raw key as label if no better label is provided
                                             list.push(k || 'Documento não identificado');
                                         }
@@ -542,6 +496,20 @@
 
                                 // dedupe
                                 list = list.filter(function(v,i,a){ return a.indexOf(v) === i; });
+
+                                // collect reported documents (with descriptions) when present
+                                if (json.reports && typeof json.reports === 'object') {
+                                    Object.keys(json.reports).forEach(function(k){
+                                        var rep = json.reports[k] || {};
+                                        var hasReport = (rep.report === true || rep.report === 1 || rep.report === '1');
+                                        if (hasReport) {
+                                            var nk = normalizeKey(k);
+                                            var label = presentNorm[nk] || k || 'Documento não identificado';
+                                            var desc = rep.report_description || rep.description || '';
+                                            reported.push({ label: label, description: desc });
+                                        }
+                                    });
+                                }
                             } else if (Array.isArray(json)) {
                                 // older format: array of docs
                                 json.forEach(function(d){ if (!d.validated || d.validated == 0) list.push(d.documento_label || d.documento_key || d.label || 'Documento não identificado'); });
@@ -578,8 +546,14 @@
                             }
                         }
 
-                        if (!list || !list.length) {
-                            swal.fire({ icon: 'info', title: 'Nenhum documento pendente', text: 'Não foram encontrados documentos pendentes para este candidato.' });
+                        var hasPending = (list && list.length);
+                        var hasReported = (reported && reported.length);
+                        if (!hasPending && !hasReported) {
+                            if (onlyReportedMode) {
+                                swal.fire({ icon: 'info', title: 'Nenhum documento reportado', text: 'Não foram encontrados documentos reportados para este candidato.' });
+                            } else {
+                                swal.fire({ icon: 'info', title: 'Nenhum documento pendente', text: 'Não foram encontrados documentos pendentes para este candidato.' });
+                            }
                             try {
                                 var $td = $(e.currentTarget).closest('td');
                                 if (typeof ingressoTable !== 'undefined' && ingressoTable && $td.length) {
@@ -589,14 +563,88 @@
                                 }
                             } catch(err) { console.warn('Failed to update cell after empty pending list', err); }
                         } else {
-                            var html = '<ul style="text-align:left; margin:0; padding-left:1.2rem;">' + list.map(function(it){ return '<li>'+it+'</li>'; }).join('') + '</ul>';
-                            swal.fire({ title: 'Documentos pendentes', html: html, width: 600 });
+                            var html = '';
+                            if (!onlyReportedMode) {
+                                if (hasPending) {
+                                    html += '<h4 style="text-align:left;margin:0 0 .25rem 0;">Documentos pendentes</h4>';
+                                    html += '<ul style="text-align:left; margin:0; padding-left:1.2rem;">' + list.map(function(it){ return '<li>'+it+'</li>'; }).join('') + '</ul>';
+                                }
+                                if (hasReported) {
+                                    html += '<h4 style="text-align:left;margin:8px 0 4px 0;">Documentos reportados</h4>';
+                                    html += '<ul style="text-align:left; margin:0; padding-left:1.2rem;">' + reported.map(function(it){
+                                        var d = it.description ? '<div style="font-size:0.85em;color:#333;margin-top:4px;">' + (it.description) + '</div>' : '';
+                                        return '<li><strong>'+it.label+'</strong>' + d + '</li>';
+                                    }).join('') + '</ul>';
+                                }
+                            } else {
+                                // only reported mode: show only reported list
+                                if (hasReported) {
+                                    html += '<h4 style="text-align:left;margin:0 0 .25rem 0;">Documentos reportados</h4>';
+                                    html += '<ul style="text-align:left; margin:0; padding-left:1.2rem;">' + reported.map(function(it){
+                                        var d = it.description ? '<div style="font-size:0.85em;color:#333;margin-top:4px;">' + (it.description) + '</div>' : '';
+                                        return '<li><strong>'+it.label+'</strong>' + d + '</li>';
+                                    }).join('') + '</ul>';
+                                }
+                            }
+                            swal.fire({ title: 'Documentos', html: html, width: 700 });
                         }
                     }).catch(function(){
                         swal.fire({ icon: 'error', title: 'Erro', text: 'Não foi possível obter a lista de documentos.' });
                     });
                 }).catch(function(){ console.warn('Swal load failed'); alert('Erro ao abrir modal'); });
             });
+            // Filter panel toggle and controls
+            (function(){
+                // add toggle button near export button if not present
+                var exportBtn = document.getElementById('btn-export-csv');
+                if (exportBtn) {
+                    var btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.id = 'btn-toggle-filters';
+                    btn.className = 'btn btn-primary btn-sm';
+                    btn.title = 'Filtros';
+                    btn.setAttribute('style', 'border-radius:5px;padding:5px !important;display:inline-flex;align-items:center;justify-content:center;');
+                    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="icon icon-tabler icons-tabler-filled icon-tabler-filter"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M20 3h-16a1 1 0 0 0 -1 1v2.227l.008 .223a3 3 0 0 0 .772 1.795l4.22 4.641v8.114a1 1 0 0 0 1.316 .949l6 -2l.108 -.043a1 1 0 0 0 .576 -.906v-6.586l4.121 -4.12a3 3 0 0 0 .879 -2.123v-2.171a1 1 0 0 0 -1 -1z" /></svg>';
+                    exportBtn.parentNode.insertBefore(btn, exportBtn);
+                }
+
+                function setFilterButtonOpen(isOpen){
+                    var btn = document.getElementById('btn-toggle-filters');
+                    if (!btn) return;
+                    if (isOpen) {
+                        btn.className = 'btn btn-danger btn-sm';
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-x"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg>';
+                        btn.setAttribute('aria-pressed','true');
+                    } else {
+                        btn.className = 'btn btn-primary btn-sm';
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="icon icon-tabler icons-tabler-filled icon-tabler-filter"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M20 3h-16a1 1 0 0 0 -1 1v2.227l.008 .223a3 3 0 0 0 .772 1.795l4.22 4.641v8.114a1 1 0 0 0 1.316 .949l6 -2l.108 -.043a1 1 0 0 0 .576 -.906v-6.586l4.121 -4.12a3 3 0 0 0 .879 -2.123v-2.171a1 1 0 0 0 -1 -1z" /></svg>';
+                        btn.setAttribute('aria-pressed','false');
+                    }
+                    btn.setAttribute('style', 'border-radius:5px;padding:5px !important;display:inline-flex;align-items:center;justify-content:center;');
+                }
+
+                $(document).on('click', '#btn-toggle-filters', function(e){
+                    e.preventDefault();
+                    $('#filterPanel').slideToggle(150, function(){
+                        setFilterButtonOpen($(this).is(':visible'));
+                    });
+                });
+
+                // ensure initial state (panel closed)
+                setFilterButtonOpen(false);
+
+                $(document).on('click', '#applyFilters', function(e){
+                    e.preventDefault();
+                    if (typeof ingressoTable !== 'undefined' && ingressoTable) ingressoTable.ajax.reload();
+                });
+
+                $(document).on('click', '#clearFilters', function(e){
+                    e.preventDefault();
+                    $('#filter_nte').val('');
+                    $('#filter_status').val('');
+                    if (typeof ingressoTable !== 'undefined' && ingressoTable) ingressoTable.ajax.reload();
+                });
+            })();
         } else {
             console.warn('jQuery or DataTables not loaded');
         }
