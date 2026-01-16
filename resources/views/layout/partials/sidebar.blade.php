@@ -48,7 +48,7 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('ingresso.dashboard') }}">
                         <i class="ti-bell menu-icon"></i>
-                        <span class="menu-title">Ingresso</span>
+                        <span class="menu-title">Processo de Ingresso</span>
                     </a>
                 </li>
                 <li class="nav-item">
