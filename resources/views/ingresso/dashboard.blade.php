@@ -58,7 +58,7 @@
     <div class="row mb-3">
         <div class="col-12 d-flex align-items-center justify-content-between mb-2">
             <div>
-                <h3 class="mb-0">Ingresso</h3>
+                <h4 class="mb-0"><strong>VALIDAÇÃO DA DOCUMENTAÇÃO</strong></h4>
                 <small class="text-muted">Visão geral do processo de ingresso</small>
             </div>
             <div class="top-action">
