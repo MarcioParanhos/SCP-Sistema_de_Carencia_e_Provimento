@@ -59,7 +59,32 @@
     @media (min-width: 577px) {
         .chart-container { height: 320px; }
     }
+    /* Convocação tab top border */
+    #aptosTabs { border-bottom: 0; }
+    .aptos-tab-link { border-top: 4px solid transparent; border-radius: 6px 6px 0 0; padding-top: 6px; background: #fff; position: relative; z-index: 2; }
+    .aptos-tab-link.active { border-top-color: var(--bs-primary, #0d6efd); box-shadow: 0 -2px 8px rgba(14,21,47,0.04); }
+    /* COP panel modern styles */
+    .cop-panel .card { border-radius:12px; overflow:visible; }
+    .cop-panel .card-body { display:flex; gap:1rem; align-items:center; padding:1rem 1.25rem; }
+    .cop-block { display:flex; align-items:center; gap:0.9rem; min-width:160px; }
+    .cop-icon { width:40px; height:40px; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#fff; }
+    .cop-meta { min-width:150px; }
+    .cop-title { font-size:0.8rem; color:#6c757d; }
+    .cop-value { font-size:1.25rem; font-weight:700; }
+    .cop-aux { text-align:right; margin-left:auto; min-width:180px; }
+    .cop-aux .cop-free { font-size:1.1rem; font-weight:700; color:#198754; }
+    .cop-progress { height:10px; border-radius:8px; overflow:hidden; background:#e9ecef; }
+    .cop-progress .bar { height:100%; background: linear-gradient(90deg,#0d6efd,#6610f2); }
+    @media (max-width: 767.98px) {
+        .cop-aux { min-width:120px; text-align:left; width:100%; }
+        .cop-panel .card-body { flex-direction:column; align-items:flex-start; gap:0.5rem; }
+    }
 </style>
+
+@php
+    $currentConv = session('filter_convocacao', request()->query('filter_convocacao', 1));
+    $currentConv = is_numeric($currentConv) ? intval($currentConv) : 1;
+@endphp
 
 <div class="container-fluid ingresso-vh full-panel">
     <div class="row mb-3">
@@ -69,147 +94,300 @@
                 <small class="text-muted">Visão geral do processo de ingresso</small>
             </div>
             <div class="top-action">
-                <a href="{{ route('ingresso.index') }}" class="btn btn-outline-primary">Ver todos os convocados</a>
-                <a href="{{ route('ingresso.aptos') }}" class="btn btn-primary">Encaminhar Aptos para ingresso</a>
+                <a id="btn-view-all" href="{{ route('ingresso.index') }}" class="btn btn-outline-primary">Ver todos os convocados</a>
+                <a href="{{ route('ingresso.aptos') }}?filter_convocacao={{ $currentConv }}" class="btn btn-primary">Encaminhar Aptos para ingresso</a>
             </div>
         </div>
     </div>
 
-    <div class="row card-section">
-        <div class="metric-col mb-3">
-            <div class="position-relative metric-card bg-primary">
-                <div>
-                    <div class="metric-title">Total de Candidatos</div>
-                    <div class="metric-value">{{ $stats['total_candidates'] }}</div>
-                </div>
-                <div class="metric-icon">&#9881;</div>
-            </div>
-        </div>
-        <div class="metric-col mb-3">
-            <div class="position-relative metric-card" style="background: linear-gradient(90deg,#e74a3b,#ff6b6b);">
-                <div>
-                    <div class="metric-title">Corrigir documentação</div>
-                    <div class="metric-value">{{ $stats['corrigir_documentacao'] ?? '-' }}</div>
-                </div>
-                <div class="metric-icon">&#9888;</div>
-            </div>
-        </div>
-        <div class="metric-col mb-3">
-            <div class="position-relative metric-card" style="background: linear-gradient(90deg,#ffc107,#ff9800);">
-                <div>
-                    <div class="metric-title">Pendência de Docs</div>
-                    <div class="metric-value">{{ $stats['pendencia_documentos'] }}</div>
-                </div>
-                <div class="metric-icon">&#9888;</div>
-            </div>
-        </div>
-        <div class="metric-col mb-3">
-            <div class="position-relative metric-card" style="background: linear-gradient(90deg,#17a2b8,#0dcaf0);">
-                <div>
-                    <div class="metric-title">Docs Validados</div>
-                    <div class="metric-value">{{ $stats['documentos_validados'] }}</div>
-                </div>
-                <div class="metric-icon">&#128214;</div>
-            </div>
-        </div>
-        <div class="metric-col mb-3">
-            <div class="position-relative metric-card" style="background: linear-gradient(90deg,#6f42c1,#8e44ad);">
-                <div>
-                    <div class="metric-title">Pendente Confirmação CPM</div>
-                    <div class="metric-value">{{ $stats['pendente_confirmacao_cpm'] ?? '-' }}</div>
-                </div>
-                <div class="metric-icon">&#9203;</div>
-            </div>
-        </div>
-    </div>
+    @if(auth()->check() && optional(auth()->user())->sector_id == 2)
+        {{-- Painel COP: valores calculados no controller e injetados na view --}}
+        @php
+            $copNumber = $copNumber ?? '—';
+            $copQuantity = $copQuantity ?? 0;
+            $candidatesCount = $candidatesCount ?? 0;
+            $copFree = $copFree ?? max(0, (int)$copQuantity - (int)$candidatesCount);
+        @endphp
 
-    <div class="collapse" id="aptosSection">
-        <div class="card mb-3">
-            <div class="card-body">
-                <h5 class="card-title">Candidatos Aptos para Ingresso</h5>
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="card shadow-sm cop-panel">
+                    <div class="card-body">
+                        <div class="cop-block">
+                            <div class="cop-icon" style="background:linear-gradient(180deg,#0d6efd,#6610f2);">
+                                <!-- Tabler: file-text icon -->
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M9 13h6"></path><path d="M9 17h6"></path></svg>
+                            </div>
+                            <div class="cop-meta">
+                                <div class="cop-title">Nº do COP</div>
+                                <div class="cop-value">{{ $copNumber ?? '—' }}</div>
+                            </div>
+                        </div>
 
-                @if(!empty($aptos_ingresso) && count($aptos_ingresso))
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover nte-table">
-                            <thead>
-                                <tr>
-                                    <th>Nome</th>
-                                    <th>CPF</th>
-                                    <th>NTE</th>
-                                    <th>Matricula</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($aptos_ingresso as $candidato)
-                                    <tr>
-                                        <td>{{ $candidato->nome ?? $candidato->name ?? '-' }}</td>
-                                        <td>{{ $candidato->cpf ?? '-' }}</td>
-                                        <td>{{ $candidato->nte ?? $candidato->nte_nome ?? '-' }}</td>
-                                        <td>{{ $candidato->matricula ?? $candidato->registration ?? '-' }}</td>
-                                        <td>
-                                            <a href="#" class="btn btn-sm btn-outline-primary">Abrir</a>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @else
-                    <p class="text-muted mb-0">Nenhum candidato apto para ingresso foi carregado. Passe os dados do controller via <code>$aptos_ingresso</code>.</p>
-                @endif
-            </div>
-        </div>
-    </div>
+                        <div class="cop-block">
+                            <div class="cop-icon" style="background:#6f42c1;">
+                                <!-- Tabler: hash icon -->
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3v18"></path><path d="M16 3v18"></path><path d="M3 8h18"></path><path d="M3 16h18"></path></svg>
+                            </div>
+                            <div class="cop-meta">
+                                <div class="cop-title">Quantidade total</div>
+                                <div class="cop-value">{{ number_format($copQuantity ?? 0,0,',','.') }}</div>
+                            </div>
+                        </div>
 
-    <div class="row">
-        <div class="col-lg-8 mb-3">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">Quantidade por NTE</h5>
-                    <div class="chart-container">
-                        <canvas id="nteChart" style="width:100%; height:100%; display:block;"></canvas>
+                        <div class="cop-block">
+                            <div class="cop-icon" style="background:#e74a3b;">
+                                <!-- Tabler: users icon -->
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0 -3 -3.85"/></svg>
+                            </div>
+                            <div class="cop-meta">
+                                <div class="cop-title">Candidatos atribuídos</div>
+                                <div class="cop-value">{{ number_format($candidatesCount ?? 0,0,',','.') }}</div>
+                            </div>
+                        </div>
+
+                        <div class="cop-aux">
+                            @php
+                                $used = max(0, ($copQuantity ?? 0) - ($copFree ?? 0));
+                                $pct = ($copQuantity > 0) ? round(($used / max(1,$copQuantity)) * 100) : 0;
+                            @endphp
+                            <div class="text-muted small">COPs livres</div>
+                            <div class="cop-free">{{ number_format($copFree ?? 0,0,',','.') }}</div>
+                            <div class="cop-progress mt-2">
+                                <div class="bar" style="width: {{ $pct }}%;"></div>
+                            </div>
+                            <div class="small text-muted mt-1">Usados: {{ $pct }}% — {{ number_format($used,0,',','.') }} / {{ number_format($copQuantity ?? 0,0,',','.') }}</div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+    @endif
 
-        <div class="col-lg-4 mb-3">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body d-flex flex-column">
-                    <h5 class="card-title">Resumo</h5>
-                    <p class="text-muted">Ações rápidas e resumo geral.</p>
+    {{-- Tabs will contain full dashboards per convocação --}}
 
-                    <ul class="list-group list-group-flush mb-3">
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            Candidatos totais
-                            <span class="badge bg-primary text-white">{{ $stats['total_candidates'] }}</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            Pendências
-                            <span class="badge bg-warning text-dark">{{ $stats['pendencia_documentos'] }}</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            Corrigir documentação
-                            <span class="badge bg-danger text-white">{{ $stats['corrigir_documentacao'] ?? '-' }}</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            Não Assumiu
-                            <span class="badge bg-dark text-white">{{ $stats['nao_assumiu'] ?? 0 }}</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            Aptos para ingresso
-                            <span class="badge bg-success text-white">{{ $stats['ingressados'] ?? 0 }}</span>
-                        </li>
-                    </ul>
+    <style>
+        /* Active tab styling: apply to the active nav-link, not the UL element */
+        #aptosTabs .aptos-tab-link.active {
+            border-top: 3px solid #0050e3 !important;
+            background-color: #fff !important;
+            box-shadow: 0 -2px 8px rgba(14,21,47,0.04);
+        }
+    </style>
+    <div class="card mb-3">
+        <div class="card-body">
+            <ul class="nav nav-tabs" id="aptosTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link aptos-tab-link {{ $currentConv === 1 ? 'active' : '' }}" id="conv1-tab" data-toggle="tab" href="#conv1" role="tab" aria-controls="conv1" aria-selected="{{ $currentConv === 1 ? 'true' : 'false' }}">1ª Convocação</a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link aptos-tab-link {{ $currentConv === 2 ? 'active' : '' }}" id="conv2-tab" data-toggle="tab" href="#conv2" role="tab" aria-controls="conv2" aria-selected="{{ $currentConv === 2 ? 'true' : 'false' }}">2ª Convocação</a>
+                </li>
+            </ul>
 
-                    <div class="mt-auto">
-                        <a href="{{ route('ingresso.index') }}" class="btn btn-primary btn-block">Abrir lista completa</a>
+            <div class="tab-content" id="aptosTabsContent">
+                <div class="tab-pane fade {{ $currentConv === 1 ? 'show active' : '' }}" id="conv1" role="tabpanel" aria-labelledby="conv1-tab">
+                    <div class="row card-section">
+                        <div class="metric-col mb-3">
+                            <div class="position-relative metric-card bg-primary">
+                                <div>
+                                    <div class="metric-title">Total de Candidatos (1ª)</div>
+                                    <div class="metric-value">{{ $stats_conv1['total_candidates'] ?? 0 }}</div>
+                                </div>
+                                <div class="metric-icon">&#9881;</div>
+                            </div>
+                        </div>
+                        <div class="metric-col mb-3">
+                            <div class="position-relative metric-card" style="background: linear-gradient(90deg,#e74a3b,#ff6b6b);">
+                                <div>
+                                    <div class="metric-title">Corrigir documentação</div>
+                                    <div class="metric-value">{{ $stats_conv1['corrigir_documentacao'] ?? 0 }}</div>
+                                </div>
+                                <div class="metric-icon">&#9888;</div>
+                            </div>
+                        </div>
+                        <div class="metric-col mb-3">
+                            <div class="position-relative metric-card" style="background: linear-gradient(90deg,#ffc107,#ff9800);">
+                                <div>
+                                    <div class="metric-title">Pendência de Docs</div>
+                                    <div class="metric-value">{{ $stats_conv1['pendencia_documentos'] ?? 0 }}</div>
+                                </div>
+                                <div class="metric-icon">&#9888;</div>
+                            </div>
+                        </div>
+                        <div class="metric-col mb-3">
+                            <div class="position-relative metric-card" style="background: linear-gradient(90deg,#17a2b8,#0dcaf0);">
+                                <div>
+                                    <div class="metric-title">Docs Validados</div>
+                                    <div class="metric-value">{{ $stats_conv1['documentos_validados'] ?? 0 }}</div>
+                                </div>
+                                <div class="metric-icon">&#128214;</div>
+                            </div>
+                        </div>
+                        <div class="metric-col mb-3">
+                            <div class="position-relative metric-card" style="background: linear-gradient(90deg,#6f42c1,#8e44ad);">
+                                <div>
+                                    <div class="metric-title">Pendente Confirmação CPM</div>
+                                    <div class="metric-value">{{ $stats_conv1['pendente_confirmacao_cpm'] ?? 0 }}</div>
+                                </div>
+                                <div class="metric-icon">&#9203;</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-lg-8 mb-3">
+                            <div class="card h-100 shadow-sm">
+                                <div class="card-body">
+                                    <h5 class="card-title">Quantidade por NTE (1ª Convocação)</h5>
+                                    <div class="chart-container">
+                                        <canvas id="nteChart1" style="width:100%; height:100%; display:block;"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-4 mb-3">
+                            <div class="card h-100 shadow-sm">
+                                <div class="card-body d-flex flex-column">
+                                    <h5 class="card-title">Resumo (1ª)</h5>
+                                    <p class="text-muted">Visão rápida da 1ª convocação.</p>
+
+                                    <ul class="list-group list-group-flush mb-3">
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Candidatos totais
+                                            <span class="badge bg-primary text-white">{{ $stats_conv1['total_candidates'] ?? 0 }}</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Pendências
+                                            <span class="badge bg-warning text-dark">{{ $stats_conv1['pendencia_documentos'] ?? 0 }}</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Corrigir documentação
+                                            <span class="badge bg-danger text-white">{{ $stats_conv1['corrigir_documentacao'] ?? 0 }}</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Não Assumiu
+                                            <span class="badge bg-dark text-white">{{ $stats_conv1['nao_assumiu'] ?? 0 }}</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Aptos para ingresso
+                                            <span class="badge bg-success text-white">{{ $stats_conv1['ingressados'] ?? 0 }}</span>
+                                        </li>
+                                    </ul>
+
+                                    <div class="mt-auto">
+                                        <a href="{{ route('ingresso.index') }}" class="btn btn-primary btn-block">Abrir lista completa</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade {{ $currentConv === 2 ? 'show active' : '' }}" id="conv2" role="tabpanel" aria-labelledby="conv2-tab">
+                    <div class="row card-section">
+                        <div class="metric-col mb-3">
+                            <div class="position-relative metric-card bg-primary">
+                                <div>
+                                    <div class="metric-title">Total de Candidatos (2ª)</div>
+                                    <div class="metric-value">{{ $stats_conv2['total_candidates'] ?? 0 }}</div>
+                                </div>
+                                <div class="metric-icon">&#9881;</div>
+                            </div>
+                        </div>
+                        <div class="metric-col mb-3">
+                            <div class="position-relative metric-card" style="background: linear-gradient(90deg,#e74a3b,#ff6b6b);">
+                                <div>
+                                    <div class="metric-title">Corrigir documentação</div>
+                                    <div class="metric-value">{{ $stats_conv2['corrigir_documentacao'] ?? 0 }}</div>
+                                </div>
+                                <div class="metric-icon">&#9888;</div>
+                            </div>
+                        </div>
+                        <div class="metric-col mb-3">
+                            <div class="position-relative metric-card" style="background: linear-gradient(90deg,#ffc107,#ff9800);">
+                                <div>
+                                    <div class="metric-title">Pendência de Docs</div>
+                                    <div class="metric-value">{{ $stats_conv2['pendencia_documentos'] ?? 0 }}</div>
+                                </div>
+                                <div class="metric-icon">&#9888;</div>
+                            </div>
+                        </div>
+                        <div class="metric-col mb-3">
+                            <div class="position-relative metric-card" style="background: linear-gradient(90deg,#17a2b8,#0dcaf0);">
+                                <div>
+                                    <div class="metric-title">Docs Validados</div>
+                                    <div class="metric-value">{{ $stats_conv2['documentos_validados'] ?? 0 }}</div>
+                                </div>
+                                <div class="metric-icon">&#128214;</div>
+                            </div>
+                        </div>
+                        <div class="metric-col mb-3">
+                            <div class="position-relative metric-card" style="background: linear-gradient(90deg,#6f42c1,#8e44ad);">
+                                <div>
+                                    <div class="metric-title">Pendente Confirmação CPM</div>
+                                    <div class="metric-value">{{ $stats_conv2['pendente_confirmacao_cpm'] ?? 0 }}</div>
+                                </div>
+                                <div class="metric-icon">&#9203;</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-lg-8 mb-3">
+                            <div class="card h-100 shadow-sm">
+                                <div class="card-body">
+                                    <h5 class="card-title">Quantidade por NTE (2ª Convocação)</h5>
+                                    <div class="chart-container">
+                                        <canvas id="nteChart2" style="width:100%; height:100%; display:block;"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-4 mb-3">
+                            <div class="card h-100 shadow-sm">
+                                <div class="card-body d-flex flex-column">
+                                    <h5 class="card-title">Resumo (2ª)</h5>
+                                    <p class="text-muted">Visão rápida da 2ª convocação.</p>
+
+                                    <ul class="list-group list-group-flush mb-3">
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Candidatos totais
+                                            <span class="badge bg-primary text-white">{{ $stats_conv2['total_candidates'] ?? 0 }}</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Pendências
+                                            <span class="badge bg-warning text-dark">{{ $stats_conv2['pendencia_documentos'] ?? 0 }}</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Corrigir documentação
+                                            <span class="badge bg-danger text-white">{{ $stats_conv2['corrigir_documentacao'] ?? 0 }}</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Não Assumiu
+                                            <span class="badge bg-dark text-white">{{ $stats_conv2['nao_assumiu'] ?? 0 }}</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Aptos para ingresso
+                                            <span class="badge bg-success text-white">{{ $stats_conv2['ingressados'] ?? 0 }}</span>
+                                        </li>
+                                    </ul>
+
+                                    <div class="mt-auto">
+                                        <a href="{{ route('ingresso.index') }}" class="btn btn-primary btn-block">Abrir lista completa</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    {{-- global chart/summary removed; charts are per-tab now --}}
 
 </div>
 
@@ -220,40 +398,96 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const raw = @json($nte_breakdown ?? []);
-        if (!raw || !raw.length) return;
-
-        const labels = raw.map(r => r.nte);
-        const data = raw.map(r => r.count);
-
-        const ctx = document.getElementById('nteChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Quantidade por NTE',
-                    data: data,
-                    backgroundColor: labels.map((_,i) => {
-                        const palette = ['#4e73df','#1cc88a','#36b9cc','#f6c23e','#e74a3b'];
-                        return palette[i % palette.length];
-                    }),
-                    borderRadius: 6,
-                    barThickness: 30
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false }
+        function renderNteChart(canvasId, rawData) {
+            if (!rawData || !rawData.length) return;
+            const labels = rawData.map(r => r.nte);
+            const data = rawData.map(r => r.count);
+            const ctxEl = document.getElementById(canvasId);
+            if (!ctxEl) return;
+            const ctx = ctxEl.getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Quantidade por NTE',
+                        data: data,
+                        backgroundColor: labels.map((_,i) => {
+                            const palette = ['#4e73df','#1cc88a','#36b9cc','#f6c23e','#e74a3b'];
+                            return palette[i % palette.length];
+                        }),
+                        borderRadius: 6,
+                        barThickness: 30
+                    }]
                 },
-                scales: {
-                    x: { grid: { display: false } },
-                    y: { beginAtZero: true }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { grid: { display: false } }, y: { beginAtZero: true } }
                 }
-            }
+            });
+        }
+
+        renderNteChart('nteChart1', @json($nte_breakdown_conv1 ?? []));
+        renderNteChart('nteChart2', @json($nte_breakdown_conv2 ?? []));
+    });
+</script>
+<script>
+    // Keep the "Ver todos os convocados" link in sync with the active convocação tab
+    document.addEventListener('DOMContentLoaded', function(){
+        var link = document.getElementById('btn-view-all');
+        if (!link) return;
+
+        function setConvLink(conv) {
+            var base = '{{ route('ingresso.index') }}';
+            var url = new URL(base, window.location.origin);
+            url.searchParams.set('filter_convocacao', String(conv));
+            link.href = url.pathname + url.search;
+        }
+
+        // initialize based on currently active tab
+        var active = document.querySelector('#aptosTabs .nav-link.active');
+        if (active && active.id === 'conv2-tab') setConvLink(2); else setConvLink(1);
+
+        // listen for tab changes: support both jQuery/Bootstrap events and plain clicks
+        var tabs = document.querySelectorAll('#aptosTabs a[data-toggle="tab"]');
+        tabs.forEach(function(t){
+            // fallback: update on click
+            t.addEventListener('click', function(e){
+                var val = (t.id === 'conv2-tab') ? 2 : 1;
+                // set server-side session so subsequent actions use this convocação
+                try {
+                    fetch('{{ route('ingresso.session.convocacao') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ convocacao: val })
+                    }).catch(function(){});
+                } catch (err) {}
+                if (t.id === 'conv2-tab') setConvLink(2); else setConvLink(1);
+            });
         });
+        // if jQuery + Bootstrap is present, also listen to the shown.bs.tab event for programmatic changes
+        if (window.jQuery && typeof jQuery === 'function' && typeof jQuery.fn !== 'undefined') {
+            try {
+                $(document).on('shown.bs.tab', '#aptosTabs a[data-toggle="tab"]', function(e){
+                    if (!e || !e.target) return;
+                    var id = e.target.id || '';
+                    if (id === 'conv2-tab') {
+                        try { fetch('{{ route('ingresso.session.convocacao') }}', { method: 'POST', headers: { 'Content-Type':'application/json','X-CSRF-TOKEN':'{{ csrf_token() }}' }, body: JSON.stringify({ convocacao: 2 }) }); } catch(e){}
+                        setConvLink(2);
+                    } else {
+                        try { fetch('{{ route('ingresso.session.convocacao') }}', { method: 'POST', headers: { 'Content-Type':'application/json','X-CSRF-TOKEN':'{{ csrf_token() }}' }, body: JSON.stringify({ convocacao: 1 }) }); } catch(e){}
+                        setConvLink(1);
+                    }
+                });
+            } catch (err) {
+                // ignore if Bootstrap's tab plugin not available
+            }
+        }
     });
 </script>
 @endpush

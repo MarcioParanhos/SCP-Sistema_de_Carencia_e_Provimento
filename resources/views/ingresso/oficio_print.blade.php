@@ -385,7 +385,26 @@
                                     $vesp_total += $vesp;
                                     $not_total += $not;
 
-                                    $disc = $enc->disciplina ?? ($enc->disciplina_name ?? ($enc->disciplina_code ?? '-'));
+                                    // Resolve discipline from multiple possible fields; fallback to lookup in 'disciplinas' table
+                                    $disc = null;
+                                    try {
+                                        // prefer explicit name fields
+                                        $disc = $enc->disciplina_name ?? $enc->disciplina ?? $enc->disciplina_nome ?? $enc->nome_disciplina ?? $enc->disciplina_code ?? null;
+
+                                        // if still empty and there is a disciplina_id or disciplina (numeric), try lookup
+                                        if (empty($disc)) {
+                                            $maybeId = $enc->disciplina_id ?? $enc->disciplina ?? null;
+                                            if (!empty($maybeId) && is_numeric($maybeId) && Schema::hasTable('disciplinas')) {
+                                                $found = DB::table('disciplinas')->where('id', intval($maybeId))->orWhere('cod_disciplina', $maybeId)->orWhere('codigo', $maybeId)->first();
+                                                if ($found) {
+                                                    $disc = $found->nome ?? $found->nome_disciplina ?? $found->descricao ?? null;
+                                                }
+                                            }
+                                        }
+                                    } catch (\Throwable $e) {
+                                        $disc = $enc->disciplina ?? $enc->disciplina_name ?? $enc->disciplina_code ?? null;
+                                    }
+                                    $disc = $disc ?? '-';
                                 @endphp
                                 <tr>
                                     <td class="disciplina" title="{{ $disc }}">{{ \Illuminate\Support\Str::limit($disc, 100) }}</td>

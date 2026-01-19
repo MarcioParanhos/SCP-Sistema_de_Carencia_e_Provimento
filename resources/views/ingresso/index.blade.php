@@ -141,6 +141,8 @@
                     <button type="button" id="applyFilters" class="btn btn-primary">Aplicar</button>
                     <button type="button" id="clearFilters" class="btn btn-secondary ml-2">Limpar</button>
                 </div>
+                {{-- Convocacao filter passed from dashboard or session --}}
+                <input type="hidden" id="filter_convocacao" value="{{ session('filter_convocacao', request()->query('filter_convocacao', '')) }}">
             </form>
         </div>
         <div class="table-responsive" style="position:relative">
@@ -346,6 +348,7 @@
                     data: function(d) {
                         d.filter_nte = $('#filter_nte').val();
                         d.filter_status = $('#filter_status').val();
+                        d.filter_convocacao = $('#filter_convocacao').val();
                     }
                 },
                 columns: dtCols,

@@ -4,6 +4,11 @@
 
 @section('content')
 
+@php
+    $currentConv = session('filter_convocacao', request()->query('filter_convocacao', ''));
+    $currentConv = is_numeric($currentConv) ? intval($currentConv) : null;
+@endphp
+
 <div class="container-fluid ingresso-vh full-panel">
     <div class="card">
         <style>
@@ -45,6 +50,7 @@
                             <th scope="col">NOTA</th>
                             <th scope="col">STATUS</th>
                             <th scope="col">ENCAMINHAMENTO</th>
+                            <th scope="col">ASSUNÇÃO</th>
                             <th scope="col">TERMO ENC.</th>
                             <th scope="col">AÇÃO</th>
                         </tr>
@@ -99,6 +105,24 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         },
         {
+            data: null, name: 'oficio', orderable:false, searchable:false,
+            render: function(data, type, row){
+                // Show oficio when candidate has valid encaminhamento or is apto/documentos validados
+                var status = (row && row.status) ? String(row.status).toLowerCase() : '';
+                var encStatus = (row && row.encaminhamento_status) ? String(row.encaminhamento_status) : '';
+                var can = false;
+                if (encStatus && /validad|valid/i.test(encStatus)) can = true;
+                if (status.indexOf('apto') !== -1 || status.indexOf('documentos validados') !== -1) can = true;
+                if (!can) return '<span class="text-muted">-</span>';
+                var id = row.id || row.num_inscricao || null;
+                if (!id) return '<span class="text-muted">-</span>';
+                var href = ingressoBaseUrl + '/' + id + '/oficio?print=1';
+                return '<a href="'+href+'" target="_blank" rel="noopener" title="Abrir Ofício" class="btn btn-light btn-sm" style="padding:4px 6px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;">'
+                    + '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="icon icon-tabler icons-tabler-filled icon-tabler-file-invoice" aria-hidden="true"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 2l.117 .007a1 1 0 0 1 .876 .876l.007 .117v4l.005 .15a2 2 0 0 0 1.838 1.844l.157 .006h4l.117 .007a1 1 0 0 1 .876 .876l.007 .117v9a3 3 0 0 1 -2.824 2.995l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-14a3 3 0 0 1 2.824 -2.995l.176 -.005zm4 15h-2a1 1 0 0 0 0 2h2a1 1 0 0 0 0 -2m0 -4h-8a1 1 0 0 0 0 2h8a1 1 0 0 0 0 -2m-7 -7h-1a1 1 0 1 0 0 2h1a1 1 0 1 0 0 -2" /><path d="M19 7h-4l-.001 -4.001z" /></svg>'
+                    + '</a>';
+            }
+        },
+        {
             data: 'encaminhamento_id', name: 'encaminhamento_id', orderable:false, searchable:false,
             render: function(data, type, row){
                 var status = (row && row.encaminhamento_status) ? String(row.encaminhamento_status) : '';
@@ -134,13 +158,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const $overlay = $('<div id="dt-processing-overlay" style="display:none;position:absolute;inset:0;align-items:center;justify-content:center;background:rgba(0,0,0,0.10);z-index:1100;"></div>');
     $('#aptosTable').parent().css('position','relative').prepend($overlay);
 
-    $('#aptosTable').DataTable({
+        $('#aptosTable').DataTable({
         processing: true,
         serverSide: true,
         ajax: {
             url: '{{ route('ingresso.data') }}',
             type: 'GET',
-            data: function(d){ d.filter_status = 'Apto para ingresso'; }
+                data: function(d){
+                    d.filter_status = 'Apto para ingresso';
+                    // prefer server-side session value injected via Blade, fallback to URL param
+                    @if(!empty($currentConv))
+                        d.filter_convocacao = '{{ $currentConv }}';
+                    @else
+                        var qp = (new URLSearchParams(window.location.search)).get('filter_convocacao');
+                        if (qp) d.filter_convocacao = qp;
+                    @endif
+                }
         },
         columns: dtCols,
         ordering: false,

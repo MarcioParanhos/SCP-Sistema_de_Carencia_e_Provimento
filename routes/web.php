@@ -221,6 +221,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/ingresso/{id}/assign', [IngressoController::class, 'assign'])->name('ingresso.assign');
     Route::match(['put','post'],'/ingresso/{id}/update', [IngressoController::class, 'updateCandidate'])->name('ingresso.update');
     Route::post('/ingresso/{id}/encaminhar', [IngressoController::class, 'forward'])->name('ingresso.encaminhar');
+    // Save selected convocação in session (AJAX)
+    Route::post('/ingresso/session/convocacao', [IngressoController::class, 'setConvocacaoSession'])->name('ingresso.session.convocacao');
     Route::post('/ingresso/{id}/encaminhar/status', [IngressoController::class, 'setEncaminhamentoStatus'])->name('ingresso.encaminhar.status');
     Route::delete('/ingresso/{id}/encaminhar/{encaminhamento}', [IngressoController::class, 'destroyEncaminhamento'])->name('ingresso.encaminhar.destroy');
     Route::post('/ingresso/{id}/assign', [IngressoController::class, 'assign'])->name('ingresso.assign');

@@ -153,9 +153,16 @@ class IngressoController extends Controller
             // now compute stats from scoped (and filtered) baseQuery using clones to avoid mutating it
             $total = (clone $baseQuery)->count();
 
-            // Prefer authoritative calculation from ingresso_documentos when available
+            // Determine documentos validados count.
+            // Prefer explicit `status` = 'Documentos Validados' when the column exists (exact match),
+            // then fall back to `documentos_validados` boolean column, and finally to
+            // ingresso_documentos summary only if neither column is present.
             try {
-                if (Schema::hasTable('ingresso_documentos')) {
+                if (in_array('status', $available)) {
+                    $docsValidated = (clone $baseQuery)->whereRaw("LOWER(TRIM(status)) = 'documentos validados'")->count();
+                } elseif (in_array('documentos_validados', $available)) {
+                    $docsValidated = (clone $baseQuery)->where('documentos_validados', 1)->count();
+                } elseif (Schema::hasTable('ingresso_documentos')) {
                     $sub = DB::table('ingresso_documentos')
                         ->select('ingresso_candidato_id', DB::raw('SUM(validated) as validated_count'), DB::raw('COUNT(*) as total'))
                         ->groupBy('ingresso_candidato_id');
@@ -167,19 +174,13 @@ class IngressoController extends Controller
                         ->whereRaw('ds.total > 0 AND ds.validated_count = ds.total');
 
                     $docsValidated = $qbValid->count();
-                } else {
-                    if (in_array('documentos_validados', $available)) {
-                        $docsValidated = (clone $baseQuery)->where('documentos_validados', 1)->count();
-                    } elseif (in_array('status', $available)) {
-                        $docsValidated = (clone $baseQuery)->whereRaw("LOWER(status) LIKE '%valid%'")->count();
-                    }
                 }
             } catch (\Throwable $e) {
                 Log::warning('Failed to compute documentos_validados from ingresso_documentos, falling back', ['exception' => $e->getMessage()]);
-                if (in_array('documentos_validados', $available)) {
+                if (in_array('status', $available)) {
+                    $docsValidated = (clone $baseQuery)->whereRaw("LOWER(TRIM(status)) = 'documentos validados'")->count();
+                } elseif (in_array('documentos_validados', $available)) {
                     $docsValidated = (clone $baseQuery)->where('documentos_validados', 1)->count();
-                } elseif (in_array('status', $available)) {
-                    $docsValidated = (clone $baseQuery)->whereRaw("LOWER(status) LIKE '%valid%'")->count();
                 }
             }
 
@@ -235,7 +236,8 @@ class IngressoController extends Controller
                         })->count();
                     } else {
                         if (in_array('status', $available)) {
-                            $pendencia = (clone $baseQuery)->whereRaw("LOWER(status) NOT LIKE '%valid%'")->count();
+                            // Treat as pending when status is not exactly 'Documentos Validados' (or is NULL)
+                            $pendencia = (clone $baseQuery)->whereRaw("(status IS NULL OR LOWER(TRIM(status)) != 'documentos validados')")->count();
                         }
                     }
                 }
@@ -247,7 +249,7 @@ class IngressoController extends Controller
                         $q->whereNull('documentos_validados')->orWhere('documentos_validados', '<>', 1);
                     })->count();
                 } elseif (in_array('status', $available)) {
-                    $pendencia = (clone $baseQuery)->whereRaw("LOWER(status) NOT LIKE '%valid%'")->count();
+                    $pendencia = (clone $baseQuery)->whereRaw("(status IS NULL OR LOWER(TRIM(status)) != 'documentos validados')")->count();
                 }
             }
 
@@ -296,6 +298,98 @@ class IngressoController extends Controller
             'pendente_confirmacao_cpm' => $pendenteConfirmacaoCpm ?? 0,
         ];
 
+        // Helper to compute stats for a given status_convocacao value
+        $computeStatsForConv = function($statusConv) use ($table, $available) {
+            try {
+                $cols = Schema::hasTable($table) ? Schema::getColumnListing($table) : [];
+                $base = DB::table($table);
+                // apply NTE scoping if authenticated user has nte
+                try {
+                    $u = Auth::user();
+                    $userNte = $u->nte ?? null;
+                    if ($userNte) {
+                        if (in_array('nte', $cols)) $base->where('nte', $userNte);
+                        elseif (in_array('uee_code', $cols)) $base->where('uee_code', $userNte);
+                        elseif (in_array('uee_name', $cols)) $base->where('uee_name', $userNte);
+                    }
+                } catch (\Throwable $e) {}
+
+                if (in_array('status_convocacao', $cols)) {
+                    $base->where('status_convocacao', $statusConv);
+                }
+
+                $total = (clone $base)->count();
+
+                $ingressados = 0; $corrigir = 0; $naoAssumiu = 0; $pendencia = 0; $docsValidated = 0; $pendenteCpm = 0;
+
+                if (in_array('status', $cols)) {
+                    $ingressados = (clone $base)->whereRaw("LOWER(status) = 'apto para ingresso'")->count();
+                    try { $corrigir = (clone $base)->whereRaw("LOWER(status) LIKE '%corrig%'")->count(); } catch (\Throwable $e) { $corrigir = 0; }
+                    try {
+                        $naoAssumiu = (clone $base)->where(function($q){
+                            $q->whereRaw("LOWER(status) LIKE '%nao assumiu%'")
+                              ->orWhereRaw("LOWER(status) LIKE '%não assumiu%'")
+                              ->orWhereRaw("LOWER(status) LIKE '%nao-assumiu%'");
+                        })->count();
+                    } catch (\Throwable $e) { $naoAssumiu = 0; }
+                }
+
+                // documentos validados preference: exact status, then documentos_validados column, then ingresso_documentos summary
+                if (in_array('status', $cols)) {
+                    $docsValidated = (clone $base)->whereRaw("LOWER(TRIM(status)) = 'documentos validados'")->count();
+                } elseif (in_array('documentos_validados', $cols)) {
+                    $docsValidated = (clone $base)->where('documentos_validados', 1)->count();
+                } elseif (Schema::hasTable('ingresso_documentos')) {
+                    $sub = DB::table('ingresso_documentos')
+                        ->select('ingresso_candidato_id', DB::raw('SUM(validated) as validated_count'), DB::raw('COUNT(*) as total'))
+                        ->groupBy('ingresso_candidato_id');
+                    $qbValid = (clone $base)
+                        ->joinSub($sub, 'ds', function($join){ $join->on('ingresso_candidatos.id', '=', 'ds.ingresso_candidato_id'); })
+                        ->whereRaw('ds.total > 0 AND ds.validated_count = ds.total');
+                    $docsValidated = $qbValid->count();
+                }
+
+                // pendencia: status not equal to exact 'Documentos Validados' or documentos_validados != 1
+                if (in_array('documentos_validados', $cols)) {
+                    $pendencia = (clone $base)->where(function($q){ $q->whereNull('documentos_validados')->orWhere('documentos_validados','<>',1); })->count();
+                } elseif (in_array('status', $cols)) {
+                    $pendencia = (clone $base)->whereRaw("(status IS NULL OR LOWER(TRIM(status)) != 'documentos validados')")->count();
+                }
+
+                // pendente_confirmacao_cpm: status contains aguard and cpm
+                if (in_array('status', $cols)) {
+                    try { $pendenteCpm = (clone $base)->whereRaw("LOWER(status) LIKE '%aguard%'")->whereRaw("LOWER(status) LIKE '%cpm%'")->count(); } catch (\Throwable $e) { $pendenteCpm = 0; }
+                } elseif (Schema::hasTable('ingresso_documentos')) {
+                    $subPending = DB::table('ingresso_documentos')
+                        ->select('ingresso_candidato_id', DB::raw('SUM(validated) as validated_count'), DB::raw('COUNT(*) as total'))
+                        ->groupBy('ingresso_candidato_id');
+                    $qbPend = (clone $base)->leftJoinSub($subPending, 'docsum', function($join){ $join->on('ingresso_candidatos.id', '=', 'docsum.ingresso_candidato_id'); })->where(function($q){ $q->whereNull('docsum.total')->orWhereRaw('docsum.validated_count < docsum.total'); });
+                    $pendenteCpm = $qbPend->distinct('ingresso_candidatos.id')->count('ingresso_candidatos.id');
+                }
+
+                return [
+                    'total_candidates' => $total,
+                    'ingressados' => $ingressados,
+                    'corrigir_documentacao' => $corrigir,
+                    'nao_assumiu' => $naoAssumiu,
+                    'pendencia_documentos' => $pendencia,
+                    'documentos_validados' => $docsValidated,
+                    'pendente_confirmacao_cpm' => $pendenteCpm,
+                ];
+            } catch (\Throwable $e) {
+                Log::warning('computeStatsForConv failed', ['exception' => $e->getMessage()]);
+                return [
+                    'total_candidates' => 0,
+                    'ingressados' => 0,
+                    'corrigir_documentacao' => 0,
+                    'nao_assumiu' => 0,
+                    'pendencia_documentos' => 0,
+                    'documentos_validados' => 0,
+                    'pendente_confirmacao_cpm' => 0,
+                ];
+            }
+        };
+
         // Build NTE breakdown by choosing an available grouping column
         $groupCol = null;
         foreach (['nte','unidade_organizacional','uee_municipio','uee_code','uee_name'] as $c) {
@@ -342,14 +436,135 @@ class IngressoController extends Controller
             $nte_breakdown = $rows->map(function($r){ return ['nte' => $r->nte ?? '—', 'count' => intval($r->count)]; })->toArray();
         }
 
+        // Prepare aptos lists split by status_convocacao (1 and 2) for dashboard tabs
+        $aptos_conv1 = collect();
+        $aptos_conv2 = collect();
+        try {
+            $table = 'ingresso_candidatos';
+            $availableCols = Schema::hasTable($table) ? Schema::getColumnListing($table) : [];
+            if (Schema::hasTable($table) && in_array('status_convocacao', $availableCols)) {
+                $baseCols = ['id','name','nome','cpf','nte','matricula','num_inscricao','status'];
+                $selectCols = array_values(array_intersect($baseCols, $availableCols));
+                if (empty($selectCols)) $selectCols = ['id'];
+
+                $u = Auth::user();
+                $userNte = $u->nte ?? null;
+
+                $q1 = DB::table($table)->select($selectCols)->where('status_convocacao', 1);
+                $q2 = DB::table($table)->select($selectCols)->where('status_convocacao', 2);
+
+                if ($userNte) {
+                    if (in_array('nte', $availableCols)) {
+                        $q1->where('nte', $userNte);
+                        $q2->where('nte', $userNte);
+                    } elseif (in_array('uee_code', $availableCols)) {
+                        $q1->where('uee_code', $userNte);
+                        $q2->where('uee_code', $userNte);
+                    } elseif (in_array('uee_name', $availableCols)) {
+                        $q1->where('uee_name', $userNte);
+                        $q2->where('uee_name', $userNte);
+                    }
+                }
+
+                $aptos_conv1 = $q1->orderBy('name','asc')->get();
+                $aptos_conv2 = $q2->orderBy('name','asc')->get();
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to build aptos convocation lists', ['exception' => $e->getMessage()]);
+        }
+
+        // Compute per-convocation stats and NTE breakdowns
+        $stats_conv1 = $computeStatsForConv(1);
+        $stats_conv2 = $computeStatsForConv(2);
+
+        $nte_breakdown_conv1 = $nte_breakdown_conv2 = [];
+        if (!empty($groupCol)) {
+            try {
+                $cols = Schema::hasTable($table) ? Schema::getColumnListing($table) : [];
+                $qb1 = DB::table($table)->select($groupCol . ' as nte', DB::raw('COUNT(*) as count'))->where('status_convocacao', 1)->groupBy($groupCol);
+                $qb2 = DB::table($table)->select($groupCol . ' as nte', DB::raw('COUNT(*) as count'))->where('status_convocacao', 2)->groupBy($groupCol);
+
+                // apply user NTE scoping if present
+                try {
+                    $u = Auth::user();
+                    $userNte = $u->nte ?? null;
+                    if ($userNte) {
+                        if (in_array('nte', $cols)) { $qb1->where('nte', $userNte); $qb2->where('nte', $userNte); }
+                        elseif (in_array('uee_code', $cols)) { $qb1->where('uee_code', $userNte); $qb2->where('uee_code', $userNte); }
+                        elseif (in_array('uee_name', $cols)) { $qb1->where('uee_name', $userNte); $qb2->where('uee_name', $userNte); }
+                    }
+                } catch (\Throwable $e) {}
+
+                try { $rows1 = (clone $qb1)->orderByRaw("CAST(`$groupCol` AS SIGNED) ASC")->get(); } catch (\Throwable $e) { $rows1 = (clone $qb1)->orderBy($groupCol,'asc')->get(); }
+                try { $rows2 = (clone $qb2)->orderByRaw("CAST(`$groupCol` AS SIGNED) ASC")->get(); } catch (\Throwable $e) { $rows2 = (clone $qb2)->orderBy($groupCol,'asc')->get(); }
+
+                $nte_breakdown_conv1 = $rows1->map(function($r){ return ['nte' => $r->nte ?? '—', 'count' => intval($r->count)]; })->toArray();
+                $nte_breakdown_conv2 = $rows2->map(function($r){ return ['nte' => $r->nte ?? '—', 'count' => intval($r->count)]; })->toArray();
+            } catch (\Throwable $e) {
+                Log::warning('Failed to compute NTE breakdown per convocation', ['exception' => $e->getMessage()]);
+            }
+        }
+
         Log::info('ingresso.dashboard stats', $stats);
-        return view('ingresso.dashboard', ['stats' => $stats, 'nte_breakdown' => $nte_breakdown]);
+        // Prepare COP summary for dashboard (moved from view)
+        $copNumber = null; $copQuantity = 0; $candidatesCount = 0; $copFree = 0;
+        try {
+            $cols = Schema::hasTable($table) ? Schema::getColumnListing($table) : [];
+            // Find most common COP in ingresso_candidatos when column exists
+            if (in_array('cop', $cols)) {
+                $most = DB::table('ingresso_candidatos')
+                    ->select('cop', DB::raw('COUNT(*) as cnt'))
+                    ->whereNotNull('cop')
+                    ->groupBy('cop')
+                    ->orderByDesc('cnt')
+                    ->first();
+                $copNumber = $most->cop ?? null;
+            }
+
+            // fallback to first available num in num_cop table if still null
+            if (!$copNumber && Schema::hasTable('num_cop')) {
+                $copNumber = DB::table('num_cop')->value('num');
+            }
+
+            // fetch quantity from num_cop using correct column 'num'
+            if ($copNumber && Schema::hasTable('num_cop')) {
+                $numcop = DB::table('num_cop')->where('num', $copNumber)->first();
+                if ($numcop) {
+                    // support possible column names
+                    $copQuantity = intval($numcop->quantidade ?? $numcop->quantity ?? $numcop->qtd ?? $numcop->quantidade_atual ?? 0);
+                }
+            }
+
+            // count candidates that reference this COP (when column exists)
+            if ($copNumber && in_array('cop', $cols)) {
+                $candidatesCount = DB::table('ingresso_candidatos')->where('cop', $copNumber)->count();
+            }
+
+            $copFree = max(0, $copQuantity - $candidatesCount);
+        } catch (\Throwable $e) {
+            Log::warning('Failed to compute COP summary for dashboard', ['exception' => $e->getMessage()]);
+        }
+
+        return view('ingresso.dashboard', [
+            'stats' => $stats,
+            'nte_breakdown' => $nte_breakdown,
+            'aptos_conv1' => $aptos_conv1,
+            'aptos_conv2' => $aptos_conv2,
+            'stats_conv1' => $stats_conv1,
+            'stats_conv2' => $stats_conv2,
+            'nte_breakdown_conv1' => $nte_breakdown_conv1,
+            'nte_breakdown_conv2' => $nte_breakdown_conv2,
+            'copNumber' => $copNumber,
+            'copQuantity' => $copQuantity,
+            'candidatesCount' => $candidatesCount,
+            'copFree' => $copFree,
+        ]);
     }
 
     /**
      * Página que lista candidatos aptos para ingresso
      */
-    public function aptos()
+    public function aptos(Request $request)
     {
         if (! $this->authorizeUser()) {
             abort(403);
@@ -381,6 +596,30 @@ class IngressoController extends Controller
             }
         } catch (\Throwable $e) {
             // ignore scoping failures
+        }
+
+        // Determine convocacao filter: prefer explicit query param, then session
+        try {
+            $filterConv = null;
+            $reqConv = $request->query('filter_convocacao', null);
+            if ($reqConv !== null && $reqConv !== '') {
+                if (is_numeric($reqConv)) $reqConv = intval($reqConv);
+                $filterConv = $reqConv;
+                // persist user's choice in session so other pages can reuse it
+                session(['filter_convocacao' => $filterConv]);
+            } else {
+                $sessConv = session('filter_convocacao', null);
+                if ($sessConv !== null && $sessConv !== '') {
+                    if (is_numeric($sessConv)) $sessConv = intval($sessConv);
+                    $filterConv = $sessConv;
+                }
+            }
+
+            if ($filterConv !== null && in_array('status_convocacao', $available)) {
+                $query->where('status_convocacao', $filterConv);
+            }
+        } catch (\Throwable $e) {
+            // ignore
         }
 
         // Filtrar candidatos aptos: priorize coluna `status` quando existir
@@ -639,6 +878,19 @@ class IngressoController extends Controller
                         }
                     }
                 }
+                // Apply convocacao filter (status_convocacao) when provided
+                $filterConv = trim((string) ($request->query('filter_convocacao') ?? ''));
+                if ($filterConv !== '') {
+                    // only apply if the column exists
+                    if (in_array('status_convocacao', $columns)) {
+                        // accept numeric or string values; cast to int when possible
+                        if (is_numeric($filterConv)) {
+                            $filteredQuery->where('status_convocacao', intval($filterConv));
+                        } else {
+                            $filteredQuery->where('status_convocacao', $filterConv);
+                        }
+                    }
+                }
             } catch (\Throwable $e) {
                 Log::warning('Failed to apply client filters in ingresso.data', ['exception' => $e->getMessage()]);
             }
@@ -777,6 +1029,34 @@ class IngressoController extends Controller
             Log::error('IngressoController::data error', ['exception' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return response()->json(['message' => 'Server error'], 500);
         }
+    }
+
+    /**
+     * Save selected convocacao in session (AJAX)
+     */
+    public function setConvocacaoSession(Request $request)
+    {
+        if (! $this->authorizeUser()) {
+            return response()->json(['success' => false, 'message' => 'Forbidden'], 403);
+        }
+
+        $conv = $request->input('convocacao');
+        if ($conv === null) {
+            return response()->json(['success' => false, 'message' => 'Missing convocacao'], 422);
+        }
+
+        // accept numeric strings as ints
+        if (is_numeric($conv)) $conv = intval($conv);
+
+        // basic validation (most sites only have 1 or 2)
+        if (! in_array($conv, [1,2], true)) {
+            // still allow storing other values but be conservative
+            return response()->json(['success' => false, 'message' => 'Invalid convocacao'], 422);
+        }
+
+        session(['filter_convocacao' => $conv]);
+
+        return response()->json(['success' => true, 'convocacao' => $conv]);
     }
 
     /**
