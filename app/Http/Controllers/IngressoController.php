@@ -1968,23 +1968,46 @@ class IngressoController extends Controller
         $candidate = DB::table('ingresso_candidatos')->where('id', $identifier)->orWhere('num_inscricao', $identifier)->first();
         if ($candidate) $candidate = (array) $candidate;
 
+        $encaminhamentos = DB::table('ingresso_encaminhamentos')
+            ->where('ingresso_candidato_id', $candidate['id'] ?? 0)
+            ->orderBy('created_at','desc')
+            ->get();
+
+       
+
         $encs = collect();
         try {
-            // prefer provimentos_encaminhados as source of truth if available
-            if (Schema::hasTable('provimentos_encaminhados') && ($candidate['id'] ?? null)) {
-                // Use Eloquent so relationship `uee` is available in the view
-                $encs = ProvimentosEncaminhado::with('uee')
-                    ->where('ingresso_candidato_id', $candidate['id'])
-                    ->orderBy('created_at','desc')
-                    ->get();
-            } elseif (Schema::hasTable('ingresso_encaminhamentos') && ($candidate['id'] ?? null)) {
+            // use ingresso_encaminhamentos as the single source for oficio data
+            if (Schema::hasTable('ingresso_encaminhamentos') && ($candidate['id'] ?? null)) {
                 $encs = DB::table('ingresso_encaminhamentos')
                     ->where('ingresso_candidato_id', $candidate['id'])
                     ->orderBy('created_at','desc')
+                    ->selectRaw('*, COALESCE(disciplina_name, disciplina, disciplina_code) as disciplina_resolved')
                     ->get();
+            } else {
+                $encs = collect();
             }
         } catch (\Throwable $e) {
             Log::warning('oficio read failed', ['exception' => $e->getMessage()]);
+            $encs = collect();
+        }
+
+        // attach disciplina_resolved property to each item for view compatibility
+        try {
+            if (is_iterable($encs) && count($encs)) {
+                $encs = collect($encs)->map(function ($it) {
+                    if (is_object($it)) {
+                        $it->disciplina_resolved = $it->disciplina_resolved ?? ($it->disciplina_name ?? $it->disciplina ?? $it->disciplina_code ?? null);
+                        return $it;
+                    }
+                    $arr = (array) $it;
+                    $obj = (object) $arr;
+                    $obj->disciplina_resolved = $arr['disciplina_resolved'] ?? ($arr['disciplina_name'] ?? $arr['disciplina'] ?? $arr['disciplina_code'] ?? null);
+                    return $obj;
+                })->values();
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to attach disciplina_resolved', ['err' => $e->getMessage()]);
         }
 
         // ensure candidate is array and attempt to infer UEE name/code from candidate or first encaminhamento
@@ -2019,9 +2042,12 @@ class IngressoController extends Controller
             // ignore inference failures
         }
 
+         
+
         if ($request->boolean('print')) {
-            return response()->view('ingresso.oficio_print', ['candidate' => $candidate, 'encaminhamentos' => $encs]);
+            return response()->view('ingresso.oficio_print', ['candidate' => $candidate, 'encaminhamentos' => $encaminhamentos]);
         }
+        
 
         return view('ingresso.oficio', ['candidate' => $candidate, 'encaminhamentos' => $encs]);
     }
