@@ -36,6 +36,13 @@
     .full-panel { padding: 22px; }
     .chart-container { width: 100%; }
 
+    /* Top action buttons spacing and responsive stacking */
+    .top-action { display: flex; gap: 0.5rem; align-items: center; }
+    @media (max-width: 576px) {
+        .top-action { flex-direction: column; width: 100%; }
+        .top-action .btn { width: 100%; }
+    }
+
     /* Mobile adjustments */
     @media (max-width: 576px) {
         .ingresso-vh { min-height: auto; padding: 12px; }
@@ -63,6 +70,7 @@
             </div>
             <div class="top-action">
                 <a href="{{ route('ingresso.index') }}" class="btn btn-outline-primary">Ver todos os convocados</a>
+                <a href="{{ route('ingresso.aptos') }}" class="btn btn-primary">Encaminhar Aptos para ingresso</a>
             </div>
         </div>
     </div>
@@ -111,6 +119,45 @@
                     <div class="metric-value">{{ $stats['pendente_confirmacao_cpm'] ?? '-' }}</div>
                 </div>
                 <div class="metric-icon">&#9203;</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="collapse" id="aptosSection">
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Candidatos Aptos para Ingresso</h5>
+
+                @if(!empty($aptos_ingresso) && count($aptos_ingresso))
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover nte-table">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>CPF</th>
+                                    <th>NTE</th>
+                                    <th>Matricula</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($aptos_ingresso as $candidato)
+                                    <tr>
+                                        <td>{{ $candidato->nome ?? $candidato->name ?? '-' }}</td>
+                                        <td>{{ $candidato->cpf ?? '-' }}</td>
+                                        <td>{{ $candidato->nte ?? $candidato->nte_nome ?? '-' }}</td>
+                                        <td>{{ $candidato->matricula ?? $candidato->registration ?? '-' }}</td>
+                                        <td>
+                                            <a href="#" class="btn btn-sm btn-outline-primary">Abrir</a>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <p class="text-muted mb-0">Nenhum candidato apto para ingresso foi carregado. Passe os dados do controller via <code>$aptos_ingresso</code>.</p>
+                @endif
             </div>
         </div>
     </div>

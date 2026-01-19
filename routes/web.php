@@ -85,6 +85,7 @@ Route::middleware('auth')->group(function () {
     //Unidades Escolares
     Route::get('/uees/{tipo}', [UeeController::class, 'showUees'])->name('uees.show');
     Route::get('/uees/detail/{id}', [UeeController::class, 'detailUee']);
+    Route::get('/uees/info/{id}', [UeeController::class, 'info']);
     Route::put('/uees/update/{id}', [UeeController::class, 'update']);
     Route::get('/homologarUnidade/{new_cod}/{action}', [UeeController::class, 'homologarUnidade']);
     Route::post('/consultarUnidade/{cod_unidade}', [UeeController::class, 'searchUnidade']);
@@ -199,6 +200,8 @@ Route::middleware('auth')->group(function () {
     // Ingresso
     Route::get('/ingresso', [IngressoController::class, 'index'])->name('ingresso.index');
     Route::get('/ingresso/dashboard', [IngressoController::class, 'dashboard'])->name('ingresso.dashboard');
+    Route::get('/ingresso/aptos', [IngressoController::class, 'aptos'])->name('ingresso.aptos');
+    Route::get('/ingresso/{identifier}/encaminhar', [IngressoController::class, 'encaminharForm'])->name('ingresso.encaminhar.form');
     Route::post('/ingresso/search-cpf', [IngressoController::class, 'searchByCpf']);
     Route::post('/ingresso/{id}/validar', [IngressoController::class, 'validateIngresso'])->name('ingresso.validar');
     Route::post('/ingresso/{id}/retirar-validacao', [IngressoController::class, 'unvalidateIngresso'])->name('ingresso.retirar_validacao');
@@ -218,6 +221,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/ingresso/{id}/assign', [IngressoController::class, 'assign'])->name('ingresso.assign');
     Route::match(['put','post'],'/ingresso/{id}/update', [IngressoController::class, 'updateCandidate'])->name('ingresso.update');
     Route::post('/ingresso/{id}/encaminhar', [IngressoController::class, 'forward'])->name('ingresso.encaminhar');
+    Route::post('/ingresso/{id}/encaminhar/status', [IngressoController::class, 'setEncaminhamentoStatus'])->name('ingresso.encaminhar.status');
     Route::delete('/ingresso/{id}/encaminhar/{encaminhamento}', [IngressoController::class, 'destroyEncaminhamento'])->name('ingresso.encaminhar.destroy');
     Route::post('/ingresso/{id}/assign', [IngressoController::class, 'assign'])->name('ingresso.assign');
     Route::delete('/ingresso/{id}', [IngressoController::class, 'destroy'])->name('ingresso.destroy');

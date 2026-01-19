@@ -347,6 +347,147 @@ class IngressoController extends Controller
     }
 
     /**
+     * Página que lista candidatos aptos para ingresso
+     */
+    public function aptos()
+    {
+        if (! $this->authorizeUser()) {
+            abort(403);
+        }
+
+        $table = 'ingresso_candidatos';
+        $available = Schema::hasTable($table) ? Schema::getColumnListing($table) : [];
+
+        if (! Schema::hasTable($table)) {
+            return redirect()->route('ingresso.dashboard')->with('status', 'Tabela de candidatos indisponível.');
+        }
+
+        $query = DB::table($table);
+
+        // Se for usuário NTE, faça scope para o NTE dele
+        try {
+            $u = Auth::user();
+            if ($u && isset($u->profile_id) && $u->profile_id == 1 && isset($u->sector_id) && $u->sector_id == 7) {
+                $userNte = $u->nte ?? null;
+                if ($userNte) {
+                    if (in_array('nte', $available)) {
+                        $query->where('nte', $userNte);
+                    } elseif (in_array('uee_code', $available)) {
+                        $query->where('uee_code', $userNte);
+                    } elseif (in_array('uee_name', $available)) {
+                        $query->where('uee_name', $userNte);
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // ignore scoping failures
+        }
+
+        // Filtrar candidatos aptos: priorize coluna `status` quando existir
+        try {
+            if (in_array('status', $available)) {
+                $query->whereRaw("LOWER(status) = 'apto para ingresso' OR LOWER(status) LIKE '%apto%'");
+            } elseif (Schema::hasTable('ingresso_documentos')) {
+                // fallback: considerar aptos aqueles com todos os documentos validados
+                $sub = DB::table('ingresso_documentos')
+                    ->select('ingresso_candidato_id', DB::raw('SUM(validated) as validated_count'), DB::raw('COUNT(*) as total'))
+                    ->groupBy('ingresso_candidato_id');
+
+                $query->joinSub($sub, 'ds', function($join) {
+                    $join->on('ingresso_candidatos.id', '=', 'ds.ingresso_candidato_id');
+                })->whereRaw('ds.total > 0 AND ds.validated_count = ds.total');
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to build aptos query', ['exception' => $e->getMessage()]);
+        }
+
+        $desired = ['id','num_inscricao','name','nome','cpf','nte','matricula','status','documentos_validados'];
+        $select = array_values(array_intersect($desired, $available));
+        if (empty($select)) $select = ['*'];
+
+        $rows = $query->select($select)->orderBy('name')->get();
+
+        return view('ingresso.aptos', ['aptos_ingresso' => $rows]);
+    }
+
+    /**
+     * Show form to encaminhar (forward) a candidate to a school/discipline
+     */
+    public function encaminharForm($identifier)
+    {
+        if (! $this->authorizeUser()) {
+            abort(403);
+        }
+
+        $candidate = DB::table('ingresso_candidatos')
+            ->where('id', $identifier)
+            ->orWhere('num_inscricao', $identifier)
+            ->first();
+
+        if (! $candidate) {
+            return redirect()->route('ingresso.aptos')->with('status', 'Candidato não encontrado');
+        }
+
+        // fetch available unidades escolares and disciplinas
+        $uees = [];
+        $disciplinas = [];
+       
+                // include NTE and municipio so the view options have data attributes
+                $uees = Uee::select('id','unidade_escolar','cod_unidade','nte','municipio')
+                    ->orderBy('unidade_escolar')
+                    ->get();
+     
+
+        try {
+            if (class_exists(\App\Models\Disciplina::class)) {
+                $disciplinas = \App\Models\Disciplina::select('id','nome')->orderBy('nome')->get();
+            }
+        } catch (\Throwable $e) { $disciplinas = collect(); }
+
+        // attempt to load the most recent encaminhamento for this candidate (if any)
+        $lastEncaminhamento = null;
+        try {
+            if (Schema::hasTable('ingresso_encaminhamentos')) {
+                $lastEncaminhamento = DB::table('ingresso_encaminhamentos')
+                    ->where('ingresso_candidato_id', $candidate->id)
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+            }
+        } catch (\Throwable $e) {
+            $lastEncaminhamento = null;
+        }
+
+        // If last encaminhamento exists but lacks nte/municipio, try to enrich it from the Uee record
+        try {
+            if ($lastEncaminhamento && (empty($lastEncaminhamento->uee_nte) || empty($lastEncaminhamento->uee_municipio))) {
+                $ueeCode = $lastEncaminhamento->uee_code ?? $lastEncaminhamento->uee_id ?? null;
+                if ($ueeCode) {
+                    // try by cod_unidade first then id
+                    $uee = Uee::where('cod_unidade', $ueeCode)->orWhere('id', $ueeCode)->first();
+                    if ($uee) {
+                        if (empty($lastEncaminhamento->uee_nte) && (isset($uee->nte) || isset($uee->nte_nome))) {
+                            $lastEncaminhamento->uee_nte = $uee->nte ?? $uee->nte_nome ?? null;
+                        }
+                        if (empty($lastEncaminhamento->uee_municipio) && (isset($uee->municipio) || isset($uee->municipio_nome))) {
+                            $lastEncaminhamento->uee_municipio = $uee->municipio ?? $uee->municipio_nome ?? null;
+                        }
+                        if (empty($lastEncaminhamento->uee_name) && (isset($uee->unidade_escolar))) {
+                            $lastEncaminhamento->uee_name = $uee->unidade_escolar;
+                        }
+                        if (empty($lastEncaminhamento->uee_codigo) && (isset($uee->cod_unidade))) {
+                            $lastEncaminhamento->uee_codigo = $uee->cod_unidade;
+                        }
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // ignore enrichment failures
+        }
+
+        return view('ingresso.encaminhar', ['candidate' => $candidate, 'uees' => $uees, 'disciplinas' => $disciplinas, 'last_encaminhamento' => $lastEncaminhamento]);
+    }
+
+    /**
      * DataTables server-side endpoint for ingresso_candidatos
      */
     public function data(Request $request)
@@ -386,19 +527,18 @@ class IngressoController extends Controller
             } else {
                 $filteredQuery = DB::table('ingresso_candidatos')->select($selectCols);
             }
-            // If the current user is an NTE user, restrict results to their NTE
+            // If the authenticated user has an `nte` attribute, restrict results to that NTE.
+            // This makes NTE-scoped accounts (users assigned to an NTE) only see their NTE.
             try {
                 $u = Auth::user();
-                if ($u && isset($u->profile_id) && $u->profile_id == 1 && isset($u->sector_id) && $u->sector_id == 7) {
-                    $userNte = $u->nte ?? null;
-                    if ($userNte) {
-                        if (in_array('nte', $columns)) {
-                            $filteredQuery->where('nte', $userNte);
-                        } elseif (in_array('uee_code', $columns)) {
-                            $filteredQuery->where('uee_code', $userNte);
-                        } elseif (in_array('uee_name', $columns)) {
-                            $filteredQuery->where('uee_name', $userNte);
-                        }
+                $userNte = $u->nte ?? null;
+                if ($userNte) {
+                    if (in_array('nte', $columns)) {
+                        $filteredQuery->where('nte', $userNte);
+                    } elseif (in_array('uee_code', $columns)) {
+                        $filteredQuery->where('uee_code', $userNte);
+                    } elseif (in_array('uee_name', $columns)) {
+                        $filteredQuery->where('uee_name', $userNte);
                     }
                 }
             } catch (\Throwable $e) {
@@ -549,7 +689,28 @@ class IngressoController extends Controller
                         ->keyBy('ingresso_candidato_id');
                 }
 
-                $data = $rows->map(function($r) use ($docSummary) {
+                // Precompute latest ingresso_encaminhamentos.status per candidate to avoid N+1 queries
+                $encMap = collect();
+                try {
+                    if (count($ids) && Schema::hasTable('ingresso_encaminhamentos')) {
+                        $encRows = DB::table('ingresso_encaminhamentos')
+                            ->whereIn('ingresso_candidato_id', $ids)
+                            ->orderBy('created_at', 'desc')
+                            ->get()
+                            ->groupBy('ingresso_candidato_id')
+                            ->map(function($g){
+                                // take the newest by created_at
+                                return $g->sortByDesc('created_at')->first();
+                            });
+                        $encMap = $encRows->mapWithKeys(function($v, $k){
+                            return [$k => ['id' => $v->id ?? null, 'status' => $v->status ?? null]];
+                        });
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to load ingresso_encaminhamentos in data endpoint', ['exception' => $e->getMessage()]);
+                }
+
+                $data = $rows->map(function($r) use ($docSummary, $encMap) {
                     $row = (array) $r;
                     $status = null;
 
@@ -580,6 +741,16 @@ class IngressoController extends Controller
                     }
 
                     $row['status'] = $status;
+                    // attach encaminhamento status if available
+                    $row['encaminhamento_status'] = null;
+                    $row['encaminhamento_id'] = null;
+                    try {
+                        if (isset($row['id']) && $encMap && isset($encMap[$row['id']])) {
+                            $enc = $encMap[$row['id']];
+                            $row['encaminhamento_status'] = $enc['status'] ?? null;
+                            $row['encaminhamento_id'] = $enc['id'] ?? null;
+                        }
+                    } catch (\Throwable $e) {}
                     return (object) $row;
                 })->values();
             } catch (\Throwable $e) {
@@ -2232,15 +2403,57 @@ class IngressoController extends Controller
                     }
 
                     // motivo (top-level field) — persist only if column exists
+                    // accept either an explicit 'motivo' input or fallback to 'tipo_encaminhamento'
                     if (Schema::hasColumn('ingresso_encaminhamentos', 'motivo')) {
-                        $row['motivo'] = $request->input('motivo') ?? null;
+                        $row['motivo'] = $request->input('motivo') ?? $request->input('tipo_encaminhamento') ?? null;
                     }
+
+                        // tipo de encaminhamento (if table has column)
+                        if (Schema::hasColumn('ingresso_encaminhamentos', 'tipo_encaminhamento')) {
+                            $row['tipo_encaminhamento'] = $request->input('tipo_encaminhamento') ?? null;
+                        } elseif (Schema::hasColumn('ingresso_encaminhamentos', 'tipo')) {
+                            $row['tipo'] = $request->input('tipo_encaminhamento') ?? null;
+                        }
 
                     return $row;
                 };
 
                 // If caller provided a 'disciplinas' array, create one row per discipline
                 $disciplinas = $request->input('disciplinas');
+
+                // Check for an existing encaminhamento for this candidate
+                $existing = DB::table('ingresso_encaminhamentos')
+                    ->where('ingresso_candidato_id', $candidateId)
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+
+                if ($existing) {
+                    // If multiple disciplines submitted, replace existing row with multiple new rows
+                    if (is_array($disciplinas) && count($disciplinas) > 1) {
+                        // delete existing single row
+                        DB::table('ingresso_encaminhamentos')->where('id', $existing->id)->delete();
+                        foreach ($disciplinas as $d) {
+                            $rowsToInsert[] = $assembleRow($d);
+                        }
+                        DB::table('ingresso_encaminhamentos')->insert($rowsToInsert);
+                        Log::info('Ingresso encaminhado (replaced with multiple)', ['user' => optional(Auth::user())->id, 'candidate' => $candidateId, 'rows' => count($rowsToInsert)]);
+                        return response()->json(['success' => true, 'message' => 'Encaminhamento registrado.']);
+                    }
+
+                    // Single-discipline update: update the existing row with new values
+                    $first = (is_array($disciplinas) && count($disciplinas)) ? $disciplinas[0] : null;
+                    $updateRow = $assembleRow($first);
+                    // remove creation-only fields
+                    if (isset($updateRow['created_by'])) unset($updateRow['created_by']);
+                    if (isset($updateRow['created_at'])) unset($updateRow['created_at']);
+                    // ensure updated_at is current
+                    $updateRow['updated_at'] = now();
+                    DB::table('ingresso_encaminhamentos')->where('id', $existing->id)->update($updateRow);
+                    Log::info('Ingresso encaminhado (updated existing)', ['user' => optional(Auth::user())->id, 'candidate' => $candidateId, 'encaminhamento' => $existing->id]);
+                    return response()->json(['success' => true, 'message' => 'Encaminhamento atualizado.']);
+                }
+
+                // No existing row: perform insert (multiple rows allowed)
                 if (is_array($disciplinas) && count($disciplinas)) {
                     foreach ($disciplinas as $d) {
                         $rowsToInsert[] = $assembleRow($d);
@@ -2250,9 +2463,7 @@ class IngressoController extends Controller
                     $rowsToInsert[] = $assembleRow(null);
                 }
 
-                // perform insert (multiple rows allowed)
                 DB::table('ingresso_encaminhamentos')->insert($rowsToInsert);
-
                 Log::info('Ingresso encaminhado', ['user' => optional(Auth::user())->id, 'candidate' => $candidateId, 'rows' => count($rowsToInsert)]);
                 return response()->json(['success' => true, 'message' => 'Encaminhamento registrado.']);
             }
@@ -2262,6 +2473,71 @@ class IngressoController extends Controller
         }
 
         return response()->json(['success' => false, 'message' => 'Recurso de encaminhamento indisponível'], 404);
+    }
+
+    /**
+     * Set the status field on the most recent encaminhamento for a candidate.
+     */
+    public function setEncaminhamentoStatus(Request $request, $identifier)
+    {
+        if (! $this->authorizeUser()) {
+            return response()->json(['success' => false, 'message' => 'Ação não autorizada'], 403);
+        }
+
+        // Allow clearing the status by explicitly sending a JSON null value for `status`.
+        // If `status` is not present in the request, treat as invalid input.
+        if (! $request->has('status')) {
+            return response()->json(['success' => false, 'message' => 'Status inválido'], 422);
+        }
+        $rawStatus = $request->input('status');
+        // null means clear the status
+        if (is_null($rawStatus)) {
+            $status = null;
+        } else {
+            $status = trim((string) $rawStatus);
+            // empty string is considered invalid
+            if ($status === '') {
+                return response()->json(['success' => false, 'message' => 'Status inválido'], 422);
+            }
+        }
+
+        try {
+            $candidateId = DB::table('ingresso_candidatos')->where('id', $identifier)->orWhere('num_inscricao', $identifier)->value('id');
+            if (! $candidateId) {
+                return response()->json(['success' => false, 'message' => 'Candidato não encontrado'], 404);
+            }
+
+            if (! Schema::hasTable('ingresso_encaminhamentos')) {
+                return response()->json(['success' => false, 'message' => 'Recurso de encaminhamentos indisponível'], 404);
+            }
+
+            $enc = DB::table('ingresso_encaminhamentos')
+                ->where('ingresso_candidato_id', $candidateId)
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            if (! $enc) {
+                return response()->json(['success' => false, 'message' => 'Nenhum encaminhamento encontrado para este candidato'], 404);
+            }
+
+            if (! Schema::hasColumn('ingresso_encaminhamentos', 'status')) {
+                return response()->json(['success' => false, 'message' => 'Coluna status inexistente na tabela de encaminhamentos'], 400);
+            }
+
+            $upd = ['updated_at' => now()];
+            if (is_null($status)) {
+                $upd['status'] = null;
+            } else {
+                $upd['status'] = mb_substr($status, 0, 255);
+            }
+            DB::table('ingresso_encaminhamentos')->where('id', $enc->id)->update($upd);
+            Log::info('Encaminhamento status atualizado', ['user' => optional(Auth::user())->id, 'candidate' => $candidateId, 'encaminhamento' => $enc->id, 'status' => $status]);
+
+            return response()->json(['success' => true, 'message' => is_null($status) ? 'Status removido' : 'Status atualizado', 'status' => $status]);
+        } catch (\Throwable $e) {
+            Log::error('setEncaminhamentoStatus failed', ['exception' => $e->getMessage(), 'identifier' => $identifier]);
+            return response()->json(['success' => false, 'message' => 'Erro ao atualizar status'], 500);
+        }
     }
 
     /**

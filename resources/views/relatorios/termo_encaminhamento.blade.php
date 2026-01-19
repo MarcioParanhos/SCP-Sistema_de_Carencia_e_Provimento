@@ -237,7 +237,7 @@
     <header>
         <div class="header border mb-2">
             <img src="/images/teste.png" alt="">
-            <div class="inputs">
+            {{-- <div class="inputs">
                 <div class="radio_buttons">
                     <input type="checkbox">
                     <label for="">INGRESSO</label>
@@ -246,7 +246,7 @@
                     <input type="checkbox">
                     <label for="">COMPLEMENTAÇÃO</label>
                 </div>
-            </div>
+            </div> --}}
         </div>
         <div class="title-header">
             <p>
@@ -260,31 +260,30 @@
     </header>
     <section class="date">
         <div class="date_anuencia">
-        <p>Salvador, <span id="date">{{ \Carbon\Carbon::parse($provimentos_encaminhado->data_encaminhamento)->format('d/m/Y') }}</span></p>
+        @php
+            $dateToShow = optional($provimentos_encaminhado)->data_encaminhamento ? \Carbon\Carbon::parse($provimentos_encaminhado->data_encaminhamento)->format('d/m/Y') : \Carbon\Carbon::now()->format('d/m/Y');
+        @endphp
+        <p>Salvador, <span id="date">{{ $dateToShow }}</span></p>
         </div>
     </section>
     <section class="after_date">
         <p><strong>OF. CIRC CPM</strong></p>
     </section>
     <section class="unidade_escolar">
-    <p>{{ $provimentos_encaminhado->uee->unidade_escolar }} - {{ $provimentos_encaminhado->uee->cod_unidade}}.</p>
+    <p>{{ optional($provimentos_encaminhado->uee)->unidade_escolar ?? '-' }} - {{ optional($provimentos_encaminhado->uee)->cod_unidade ?? '' }}.</p>
     </section>
     <main>
         <p>Senhor (a) Diretor (a): </p>
+        @php
+            $server = $provimentos_encaminhado->servidorEncaminhado ?? null;
+            $serverName = optional($server)->nome ?? optional($server)->name ?? optional($provimentos_encaminhado)->servidor ?? '-';
+            $serverCpf = optional($server)->cpf ?? '-';
+            $cargo = optional($server)->cargo ?? optional($provimentos_encaminhado)->vinculo ?? null;
+        @endphp
         <p class="main-content">
-            Encaminhamos o(a) PROFESSOR(A) {{ $provimentos_encaminhado->servidorEncaminhado->nome  }},
-            @if ($provimentos_encaminhado->servidorEncaminhado->cargo === "REDA SELETIVO")
-               REDA SELETIVO
-            @else
-                EFETIVO
-            @endif, 
-            CPF {{ $provimentos_encaminhado->servidorEncaminhado->cpf }}  com carga horária de 
-            @if ($provimentos_encaminhado->servidorEncaminhado->cargo === "REDA SELETIVO")
-                20hs
-            @else
-                40hs
-            @endif (hs), para atuar nos turnos abaixo indicados, na(s) disciplina(s) {{ $provimentos_encaminhado->disciplina }}.
-
+            Encaminhamos o(a) Professor(a) {{ $serverName }},
+            @if($cargo) {{ $cargo }}, @endif
+            CPF {{ $serverCpf }} com carga horária de 20hs, para atuar nos turnos abaixo indicados, na(s) disciplina(s) {{ $provimentos_encaminhado->disciplina ?? '-' }}.
         </p>
         <div class="table">
             <table class="table-bordered">
@@ -297,14 +296,14 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td class="text-center">{{ $provimentos_encaminhado->total_matutino }}</td>
-                        <td class="text-center">{{ $provimentos_encaminhado->total_vespertino }}</td>
-                        <td class="text-center">{{ $provimentos_encaminhado->total_noturno }}</td>
+                        <td class="text-center">{{ optional($provimentos_encaminhado)->total_matutino ?? 0 }}</td>
+                        <td class="text-center">{{ optional($provimentos_encaminhado)->total_vespertino ?? 0 }}</td>
+                        <td class="text-center">{{ optional($provimentos_encaminhado)->total_noturno ?? 0 }}</td>
                     </tr>
                 </tbody>
             </table>
         </div>
-        <p class="main_content_two">Informamos que a assunção deverá ser entregue em 02 (Duas) vias, no prazo de 48 horas nesta coordenação, sala 117.
+        <p class="main_content_two">Informamos que a assunção deverá ser entregue em 02 (Duas) vias, no prazo de 48 horas.
         </p>
     </main>
     <section class="tipo_vaga">
@@ -314,7 +313,7 @@
         <p>Atenciosamente, </p>
     </section>
     <section class="responsavel">
-        <p><strong>LUCIANA SILVA LIBARINO</strong></p>
+        <p><strong>Manoel Vidal Colaço Neto</strong></p>
         <p>COORDENADOR TÉCNICO</p>
     </section>
 

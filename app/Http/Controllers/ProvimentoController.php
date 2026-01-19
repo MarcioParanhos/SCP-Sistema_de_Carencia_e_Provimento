@@ -1641,6 +1641,32 @@ class ProvimentoController extends Controller
             $provimentos_encaminhado->total_noturno = array_sum(array_map('intval', explode(',', $provimentos_encaminhado->noturno)));
         }
 
+        // If not found in provimentos_encaminhados, try ingresso_encaminhamentos table
+        if (! $provimentos_encaminhado) {
+            $ing = DB::table('ingresso_encaminhamentos')->where('id', $encaminhamento)->first();
+            if ($ing) {
+                // map ingresso_encaminhamentos row into an object compatible with the termo view
+                $obj = new \stdClass();
+                $obj->id = $ing->id;
+                $obj->data_encaminhamento = $ing->data_encaminhamento ?? $ing->created_at ?? null;
+                $obj->disciplina = $ing->disciplina_name ?? $ing->disciplina_nome ?? $ing->disciplina ?? ($ing->disciplina_code ?? '');
+                $obj->total_matutino = intval($ing->quant_matutino ?? $ing->total_matutino ?? 0);
+                $obj->total_vespertino = intval($ing->quant_vespertino ?? $ing->total_vespertino ?? 0);
+                $obj->total_noturno = intval($ing->quant_noturno ?? $ing->total_noturno ?? 0);
+                // uee mapping
+                $uee = new \stdClass();
+                $uee->unidade_escolar = $ing->uee_name ?? $ing->uee_nome ?? $ing->uee ?? '';
+                $uee->cod_unidade = $ing->uee_code ?? $ing->uee_codigo ?? $ing->cod_unidade ?? '';
+                $obj->uee = $uee;
+                // servidor (candidate) mapping - try to fetch IngressoCandidato
+                $ingressoCandidate = null;
+                if (! empty($ing->ingresso_candidato_id)) {
+                    try { $ingressoCandidate = \App\Models\IngressoCandidato::find($ing->ingresso_candidato_id); } catch (\Throwable $e) { $ingressoCandidate = null; }
+                }
+                $obj->servidorEncaminhado = $ingressoCandidate;
+                $provimentos_encaminhado = $obj;
+            }
+        }
 
         return view('relatorios.termo_encaminhamento', [
             'provimentos_encaminhado' => $provimentos_encaminhado,

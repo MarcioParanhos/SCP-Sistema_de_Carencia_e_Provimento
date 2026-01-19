@@ -472,6 +472,21 @@ class UeeController extends Controller
         return view('uees.detail_uee', compact('uee'));
     }
 
+    /**
+     * Return UEE info as JSON for AJAX requests
+     */
+    public function info($id)
+    {
+        $uee = Uee::select('id','cod_unidade','unidade_escolar','nte','municipio')
+            ->where('id', $id)
+            ->orWhere('cod_unidade', $id)
+            ->first();
+        if ($uee) {
+            return response()->json(['success' => true, 'data' => $uee]);
+        }
+        return response()->json(['success' => false, 'message' => 'Unidade não encontrada'], 404);
+    }
+
     public function update(Request $request)
     {
 
