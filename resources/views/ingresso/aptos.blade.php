@@ -74,6 +74,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!(window.jQuery && $.fn.dataTable)) return;
 
     const ingressoBaseUrl = '{{ url('/ingresso') }}';
+    // Server-side flag: allow encaminhar only on 2026-01-30
+    
     const termoBaseUrl = '{{ url('/provimentos/encaminhamento') }}';
         const dtCols = [
         { data: 'num_inscricao', name: 'num_inscricao', render: function(d){ return d || '-'; } },

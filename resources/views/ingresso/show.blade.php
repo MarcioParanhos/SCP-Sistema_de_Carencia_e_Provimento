@@ -886,8 +886,18 @@
                                 $showPrintFromStatus = isset($candidate['status']) && mb_strtolower(trim($candidate['status']), 'UTF-8') === 'apto para ingresso';
                             @endphp
                             @if ($isCpm)
-                                {{-- Show validate button only when documents are validated and there are encaminhamentos --}}
-                                @if ($docsValid && $hasEnc)
+                                @php $showFlags = request()->query('show_flags') == 1; @endphp
+                                @if($showFlags)
+                                    <div class="mb-2 p-2 border rounded bg-light small text-dark">
+                                        <strong>Debug flags:</strong>
+                                        <div>isCpm: {{ $isCpm ? 'true' : 'false' }}</div>
+                                        <div>docsValid: {{ $docsValid ? 'true' : 'false' }}</div>
+                                        <div>hasEncaminhamentos: {{ (isset($encaminhamentos) ? (is_countable($encaminhamentos) ? count($encaminhamentos) : (is_object($encaminhamentos) && method_exists($encaminhamentos,'count') ? $encaminhamentos->count() : 0)) : 0) }}</div>
+                                        <div>status: {{ $candidate['status'] ?? '' }}</div>
+                                    </div>
+                                @endif
+                                {{-- Show validate button when documents are validated (encaminhamentos not required) --}}
+                                @if ($docsValid)
                                         @php $isIngressado = isset($candidate['status']) && mb_strtolower(trim($candidate['status']), 'UTF-8') === 'apto para ingresso'; @endphp
                                             @if ($isIngressado)
                                             <button id="btn-retirar-validacao-ingresso" class="btn btn-danger btn-sm" style="border-radius:5px;" {{ ($isNaoAssumiu ?? false) ? 'disabled' : '' }}>

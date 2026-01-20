@@ -611,7 +611,7 @@
             (function(){
                 // add toggle button near export button if not present
                 var exportBtn = document.getElementById('btn-export-csv');
-                if (exportBtn) {
+                if (exportBtn && !document.getElementById('btn-toggle-filters')) {
                     var btn = document.createElement('button');
                     btn.type = 'button';
                     btn.id = 'btn-toggle-filters';
