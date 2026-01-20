@@ -185,7 +185,7 @@ class IngressoController extends Controller
             }
 
             if (in_array('status', $available)) {
-                $ingressados = (clone $baseQuery)->whereRaw("LOWER(status) = 'apto para ingresso'")->count();
+                $ingressados = (clone $baseQuery)->whereRaw("LOWER(status) = 'apto para encaminhamento'")->count();
 
                 // Count candidates whose status indicates they need document correction
                 try {
@@ -323,7 +323,7 @@ class IngressoController extends Controller
                 $ingressados = 0; $corrigir = 0; $naoAssumiu = 0; $pendencia = 0; $docsValidated = 0; $pendenteCpm = 0;
 
                 if (in_array('status', $cols)) {
-                    $ingressados = (clone $base)->whereRaw("LOWER(status) = 'apto para ingresso'")->count();
+                    $ingressados = (clone $base)->whereRaw("LOWER(status) = 'apto para encaminhamento'")->count();
                     try { $corrigir = (clone $base)->whereRaw("LOWER(status) LIKE '%corrig%'")->count(); } catch (\Throwable $e) { $corrigir = 0; }
                     try {
                         $naoAssumiu = (clone $base)->where(function($q){
@@ -625,7 +625,7 @@ class IngressoController extends Controller
         // Filtrar candidatos aptos: priorize coluna `status` quando existir
         try {
             if (in_array('status', $available)) {
-                $query->whereRaw("LOWER(status) = 'apto para ingresso' OR LOWER(status) LIKE '%apto%'");
+                $query->whereRaw("LOWER(status) = 'apto para encaminhamento' OR LOWER(status) LIKE '%apto%'");
             } elseif (Schema::hasTable('ingresso_documentos')) {
                 // fallback: considerar aptos aqueles com todos os documentos validados
                 $sub = DB::table('ingresso_documentos')
@@ -847,7 +847,7 @@ class IngressoController extends Controller
                         if (mb_strpos($low, 'corrig') !== false) {
                             $filteredQuery->whereRaw("LOWER(status) LIKE '%corrig%'");
                         } elseif (mb_strpos($low, 'apto') !== false || mb_strpos($low, 'ingress') !== false || mb_strpos($low, 'ingresso') !== false) {
-                            $filteredQuery->whereRaw("LOWER(status) = 'apto para ingresso'");
+                            $filteredQuery->whereRaw("LOWER(status) = 'apto para encaminhamento'");
                         } elseif (mb_strpos($low, 'valid') !== false) {
                             $filteredQuery->whereRaw("LOWER(status) LIKE '%valid%'");
                         } elseif (mb_strpos($low, 'pend') !== false) {
@@ -1271,10 +1271,10 @@ class IngressoController extends Controller
             $syntheticCols[] = 'profissao';
         }
 
-        // Ensure we only export validated candidates: prefer `status='Apto para ingresso'`,
+        // Ensure we only export validated candidates: prefer `status='Apto para encaminhamento'`,
         // otherwise fallback to `documentos_validados == 1` when `status` column missing.
         if (Schema::hasColumn($table, 'status')) {
-            $query->whereRaw("LOWER(status) = 'apto para ingresso'");
+            $query->whereRaw("LOWER(status) = 'apto para encaminhamento'");
         } elseif (Schema::hasColumn($table, 'documentos_validados')) {
             $query->where('documentos_validados', 1);
         }
@@ -1804,7 +1804,7 @@ class IngressoController extends Controller
                 $updates['documentos_validados'] = 1;
             }
             if (Schema::hasColumn('ingresso_candidatos', 'status')) {
-                $updates['status'] = 'Apto para ingresso';
+                $updates['status'] = 'Apto para encaminhamento';
             }
             if (Schema::hasColumn('ingresso_candidatos', 'status_validated_by')) {
                 $updates['status_validated_by'] = optional(Auth::user())->id;
@@ -1821,7 +1821,7 @@ class IngressoController extends Controller
 
             // return updated candidate for frontend convenience
             $updated = DB::table('ingresso_candidatos')->where('id', $candidateId)->first();
-            return response()->json(['success' => true, 'message' => 'Apto para ingresso com sucesso.', 'candidate' => $updated]);
+            return response()->json(['success' => true, 'message' => 'Apto para encaminhamento com sucesso.', 'candidate' => $updated]);
         } catch (\Throwable $e) {
             Log::error('Failed to validate ingresso', ['exception' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => 'Erro ao validar ingresso'], 500);

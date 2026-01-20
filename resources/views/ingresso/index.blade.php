@@ -137,13 +137,14 @@
                     </select>
                 </div>
                 @endif
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <label for="filter_status">Status</label>
                     <select id="filter_status" class="form-control form-control-sm">
                         <option value="">(Todos)</option>
                         <option>Documentos Validados</option>
+                        <option>Aguardando Confirmação pela CPM</option>
                         <option>Documentos Pendentes</option>
-                        <option>Apto para ingresso</option>
+                        <option>Apto para encaminhamento</option>
                         <option>Corrigir documentação</option>
                         <option value="Nao Assumiu">Não Assumiu</option>
                     </select>

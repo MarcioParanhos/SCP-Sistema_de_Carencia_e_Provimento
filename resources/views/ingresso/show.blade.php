@@ -120,9 +120,38 @@
                 min-width: 170px;
             }
 
+            /* Override any global .dropdown button sizing for this header */
+            .candidate-actions .dropdown button {
+                width: 150px !important;
+                display: inline-flex !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+                padding: 10px 10px !important;
+            }
+
             /* Button style for 'Não Assumiu' placed inline in actions */
             .btn-nao-assumiu {
                 box-shadow: 0 6px 14px rgba(15,23,42,0.06);
+            }
+
+            /* Remove hover/interactive visual cues for dropdown action items in the header
+               Keep them clickable but present them as informational/neutral controls */
+            .candidate-actions .dropdown-menu .dropdown-item.btn {
+                cursor: pointer !important;
+                background-color: transparent !important;
+                color: inherit !important;
+                box-shadow: none !important;
+                transform: none !important;
+                text-decoration: none !important;
+            }
+
+            .candidate-actions .dropdown-menu .dropdown-item.btn:hover,
+            .candidate-actions .dropdown-menu .dropdown-item.btn:focus,
+            .candidate-actions .dropdown-menu .dropdown-item.btn:active {
+                background-color: transparent !important;
+                box-shadow: none !important;
+                transform: none !important;
+                text-decoration: none !important;
             }
 
             .candidate-body {
@@ -214,10 +243,23 @@
             }
 
             .badge-status {
-                border-radius: 5px;
-                padding: 0.35em 0.6em;
-                font-weight: 700;
+                display: inline-block;
+                border-radius: 8px;
+                padding: 0.45em 0.8em;
+                font-weight: 800;
+                font-size: 0.95rem;
+                letter-spacing: 0.2px;
+                box-shadow: 0 4px 10px rgba(2,6,23,0.04);
+                border: 1px solid rgba(15,23,42,0.03);
+                transition: box-shadow 140ms ease;
+                cursor: default; /* indicate non-interactive information */
             }
+
+            /* Remove interactive hover cues so it reads as an information label */
+            .badge-status:hover { box-shadow: 0 4px 10px rgba(2,6,23,0.04); }
+
+            /* Slightly larger/darker text on danger/success for readability */
+            .badge-status.bg-danger, .badge-status.bg-success { font-weight: 900; }
 
             .btn-action {
                 width: 100%;
@@ -391,42 +433,55 @@
                         }
                     }
                 @endphp
-                        <span class="badge-status {{ $badgeClass }}">{{ $displayStatus }}</span>
+                        <span class="badge-status {{ $badgeClass }}" role="status" aria-label="Status: {{ $displayStatus }}">{{ $displayStatus }}</span>
                 @php $user = optional(Auth::user()); @endphp
                 @php
                     $conv = session('filter_convocacao', request()->query('filter_convocacao', ''));
                     $conv = is_null($conv) ? '' : $conv;
                     $backUrl = url('/ingresso') . ($conv !== '' ? ('?filter_convocacao=' . urlencode($conv)) : '');
                 @endphp
-                <a href="{{ $backUrl }}" class="btn btn-primary btn-sm" title="Voltar" aria-label="Voltar" style="border-radius:6px;padding:4px 8px;display:inline-flex;align-items:center;justify-content:center;margin-right:6px;">
+                {{-- <a href="{{ $backUrl }}" class="btn btn-primary btn-sm" title="Voltar" aria-label="Voltar" style="border-radius:6px;padding:4px 8px;display:inline-flex;align-items:center;justify-content:center;margin-right:6px;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icon-tabler-arrow-left" aria-hidden="true" style="vertical-align:middle;margin-right:6px;"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12h14" /><path d="M5 12l6 6" /><path d="M5 12l6 -6" /></svg>
                     <span style="vertical-align:middle;"></span>
-                </a>
-                @php $isIngressadoTop = isset($candidate['status']) && mb_strtolower(trim($candidate['status']), 'UTF-8') === 'apto para ingresso'; @endphp
-                @if($user && isset($user->profile_id) && $user->profile_id == 1 && optional($user)->sector_id == 2)
-                    @if($isNaoAssumiu)
-                        <button id="btn-reativar-candidato" class="btn btn-warning btn-sm d-flex align-items-center" style="border-radius:6px;padding:6px 10px;" title="Reativar Candidato" aria-label="Reativar Candidato">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icon-tabler-user-check" aria-hidden="true">
-                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                                <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
-                                <path d="M6 21v-2a4 4 0 0 1 4 -4h4" />
-                                <path d="M15 19l2 2l4 -4" />
-                            </svg>
-                            <span style="margin-left:8px;font-weight:700;">Reativar Candidato</span>
+                </a> --}}
+                @php $isIngressadoTop = isset($candidate['status']) && mb_strtolower(trim($candidate['status']), 'UTF-8') === 'apto para encaminhamento'; @endphp
+                @php $isCpm = isset($isCpm) ? $isCpm : (optional(Auth::user())->sector_id == 2 && optional(Auth::user())->profile_id == 1); @endphp
+                @if($isCpm)
+                    <div class="dropdown">
+                        <button class="btn btn-primary btn-sm btn-options dropdown-toggle" type="button" id="candidateOptionsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="display:inline-flex;align-items:center;border-radius:5px;">
+                            <span><strong>AÇÕES</strong></span>
                         </button>
-                    @else
-                        @if (!($isIngressadoTop ?? false))
-                        <button id="btn-nao-assumiu" class="btn btn-danger btn-sm d-flex align-items-center btn-nao-assumiu" style="border-radius:6px;padding:6px 10px;" title="Marcar como Não Assumiu" aria-label="Não Assumiu">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-off" aria-hidden="true">
-                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                                <path d="M8.18 8.189a4.01 4.01 0 0 0 2.616 2.627m3.507 -.545a4 4 0 1 0 -5.59 -5.552" />
-                                <path d="M6 21v-2a4 4 0 0 1 4 -4h4c.412 0 .81 .062 1.183 .178m2.633 2.618c.12 .38 .184 .785 .184 1.204v2" />
-                                <path d="M3 3l18 18" />
-                            </svg>
-                            <span style="margin-left:8px;font-weight:700;">Não Assumiu</span>
-                        </button>
-                        @endif
-                    @endif
+                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="candidateOptionsDropdown">
+                            @if($isNaoAssumiu)
+                                <a id="btn-reativar-candidato" class="dropdown-item btn btn-warning btn-sm" style="display:flex;align-items:center;gap:8px;">Reativar Candidato</a>
+                            @else
+                                @unless($isIngressadoTop)
+                                    <a id="btn-nao-assumiu" class="dropdown-item btn btn-danger btn-sm btn-nao-assumiu" style="display:flex;align-items:center;gap:8px;text-transform:uppercase;font-size:0.7rem;color:#dc3545!important;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-off"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8.18 8.189a4.01 4.01 0 0 0 2.616 2.627m3.507 -.545a4 4 0 1 0 -5.59 -5.552" /><path d="M6 21v-2a4 4 0 0 1 4 -4h4c.412 0 .81 .062 1.183 .178m2.633 2.618c.12 .38 .184 .785 .184 1.204v2" /><path d="M3 3l18 18" /></svg>
+                                        Não Assumiu</a>
+                                @endunless
+                            @endif
+                            @php
+                                $docsValidatedTop = (isset($candidate['documentos_validados']) && ($candidate['documentos_validados'] == 1 || $candidate['documentos_validados'] === true)) || (isset($candidate['status']) && (mb_stripos($candidate['status'], 'valid', 0, 'UTF-8') !== false || mb_stripos($candidate['status'], 'apto', 0, 'UTF-8') !== false));
+                                $isIngressadoTop = isset($candidate['status']) && mb_strtolower(trim($candidate['status']), 'UTF-8') === 'apto para encaminhamento';
+                            @endphp
+
+                            <div class="dropdown-divider"></div>
+
+                            @if($docsValidatedTop && ! $isIngressadoTop)
+                                <a id="btn-validar-ingresso" class="dropdown-item btn btn-success btn-sm" style="display:flex;align-items:center;gap:8px;text-transform:uppercase;font-size:0.7rem;color:#57b657!important;" {{ ($isNaoAssumiu ?? false) ? 'disabled' : '' }}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-check"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h4" /><path d="M15 19l2 2l4 -4" /></svg>
+                                    APTO PARA ENCAMINHAMENTO</a>
+                            @endif
+
+                            @if($docsValidatedTop && $isIngressadoTop)
+                                <a id="btn-retirar-validacao-ingresso" class="dropdown-item btn text-danger btn-sm" style="display:flex;align-items:center;gap:8px;text-transform:uppercase;font-size:0.7rem;color:#dc3545!important;" {{ ($isNaoAssumiu ?? false) ? 'disabled' : '' }}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-cancel"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h3.5" /><path d="M16 19a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /><path d="M17 21l4 -4" /></svg>
+                                    RETIRAR VALIDAÇÃO DE APTO
+                                </a>
+                            @endif
+                        </div>
+                    </div>
                 @endif
                 
             </div>
@@ -438,7 +493,7 @@
                     <div class="d-flex align-items-center justify-content-between">
                         <div class="section-title">Dados Principais</div>
                         @php
-                            $isIngressadoForButtons = isset($candidate['status']) && mb_strtolower(trim($candidate['status']), 'UTF-8') === 'apto para ingresso';
+                            $isIngressadoForButtons = isset($candidate['status']) && mb_strtolower(trim($candidate['status']), 'UTF-8') === 'apto para encaminhamento';
                         @endphp
                         <div>
                             <button id="btn-edit-dados" type="button" class="btn btn-sm btn-primary" style="border-radius:5px; display:inline-flex; align-items:center; justify-content:center; padding:5px !important;" {{ ($isIngressadoForButtons || ($isNaoAssumiu ?? false)) ? 'disabled' : '' }}>
@@ -765,7 +820,7 @@
                         @if ($isCpm)
                             @php
                                 $docsValidated = (isset($candidate['documentos_validados']) && ($candidate['documentos_validados'] == 1 || $candidate['documentos_validados'] === true)) || (isset($candidate['status']) && (mb_stripos($candidate['status'], 'valid', 0, 'UTF-8') !== false || mb_stripos($candidate['status'], 'apto', 0, 'UTF-8') !== false));
-                                $isIngressadoForButtons = isset($candidate['status']) && mb_strtolower(trim($candidate['status']), 'UTF-8') === 'apto para ingresso';
+                                $isIngressadoForButtons = isset($candidate['status']) && mb_strtolower(trim($candidate['status']), 'UTF-8') === 'apto para encaminhamento';
                             @endphp
                             <div class="d-flex gap-2 mb-2">
                                 @if ($docsValidated)
@@ -853,7 +908,7 @@
 
                         <div class="section-title">Registrar Processo SEI</div>
                         @php
-                            $isIngressadoForButtons = isset($candidate['status']) && mb_strtolower(trim($candidate['status']), 'UTF-8') === 'apto para ingresso';
+                            $isIngressadoForButtons = isset($candidate['status']) && mb_strtolower(trim($candidate['status']), 'UTF-8') === 'apto para encaminhamento';
                         @endphp
                         @if (Route::has('ingresso.assign'))
                             <form id="sei-form" method="POST"
@@ -882,8 +937,8 @@
                                 $docsValid = (isset($candidate['documentos_validados']) && ($candidate['documentos_validados'] == 1 || $candidate['documentos_validados'] === true)) || (isset($candidate['status']) && (mb_stripos($candidate['status'], 'valid', 0, 'UTF-8') !== false || mb_stripos($candidate['status'], 'apto', 0, 'UTF-8') !== false));
                                 $hasSei = !empty($candidate['sei_number']);
                                 $hasEnc = isset($encaminhamentos) && count($encaminhamentos) > 0;
-                                // show print button only when DB status equals exactly 'Apto para ingresso'
-                                $showPrintFromStatus = isset($candidate['status']) && mb_strtolower(trim($candidate['status']), 'UTF-8') === 'apto para ingresso';
+                                // show print button only when DB status equals exactly 'Apto para encaminhamento'
+                                $showPrintFromStatus = isset($candidate['status']) && mb_strtolower(trim($candidate['status']), 'UTF-8') === 'apto para encaminhamento';
                             @endphp
                             @if ($isCpm)
                                 @php $showFlags = request()->query('show_flags') == 1; @endphp
@@ -898,15 +953,10 @@
                                 @endif
                                 {{-- Show validate button when documents are validated (encaminhamentos not required) --}}
                                 @if ($docsValid)
-                                        @php $isIngressado = isset($candidate['status']) && mb_strtolower(trim($candidate['status']), 'UTF-8') === 'apto para ingresso'; @endphp
-                                            @if ($isIngressado)
-                                            <button id="btn-retirar-validacao-ingresso" class="btn btn-danger btn-sm" style="border-radius:5px;" {{ ($isNaoAssumiu ?? false) ? 'disabled' : '' }}>
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-cancel" style="margin-right:6px;vertical-align:middle;width:16px;height:16px;"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h3.5" /><path d="M16 19a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /><path d="M17 21l4 -4" /></svg>
-                                                <span>Retirar Validação do Ingresso</span>
-                                            </button>
-                                            @else
-                                            <button id="btn-validar-ingresso" class="btn btn-success btn-sm" style="border-radius:5px;" {{ ($isNaoAssumiu ?? false) ? 'disabled' : '' }}>Apto para ingresso</button>
-                                        @endif
+                                        @php $isIngressado = isset($candidate['status']) && mb_strtolower(trim($candidate['status']), 'UTF-8') === 'apto para encaminhamento'; @endphp
+                                                    @if (! $isIngressado)
+                                                                {{-- botão movido para o dropdown no header --}}
+                                                                @endif
                                     @endif
                                 {{-- CPM document validation button is rendered below the document checklist; removed duplicate here --}}
                                     {{-- botão Imprimir Ofício removido --}}
@@ -1179,7 +1229,7 @@
                 try {
                     if (!isNteUser) return;
                     const srv = serverStatus ? String(serverStatus).toLowerCase().trim() : '';
-                    const shouldLock = (srv === 'apto para ingresso');
+                    const shouldLock = (srv === 'apto para encaminhamento');
                     if (!shouldLock) return;
                     // scope to candidate area (prefer .candidate-body, fallback to .card)
                     const container = document.querySelector('.candidate-body') || document.querySelector('.card');
@@ -1489,10 +1539,10 @@
             const btnConfirmDocsCpm = document.getElementById('btn-validar-documentos-cpm');
             const btnPrint = document.getElementById('btn-print');
             const serverCandidateStatus = @json($candidate['status'] ?? null);
-            // If server status equals final 'Apto para ingresso', disable CPM's "Retirar Validação dos Documentos" button
+            // If server status equals final 'Apto para encaminhamento', disable CPM's "Retirar Validação dos Documentos" button
             try {
                 const sInit = serverCandidateStatus ? String(serverCandidateStatus).toLowerCase() : '';
-                if (sInit.indexOf('apto para ingresso') !== -1) {
+                if (sInit.indexOf('apto para encaminhamento') !== -1) {
                     const btnCpmInit = document.getElementById('btn-validar-documentos-cpm');
                     if (btnCpmInit) {
                         btnCpmInit.disabled = true;
@@ -1514,7 +1564,7 @@
                         const res = await fetch(`/ingresso/${candidateId}/validar`, { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'X-Requested-With':'XMLHttpRequest' }});
                         const j = await res.json();
                         if (j.success) {
-                                await Swal.fire({ icon: 'success', title: 'Sucesso', text: j.message || 'Apto para ingresso' });
+                                await Swal.fire({ icon: 'success', title: 'Sucesso', text: j.message || 'Apto para encaminhamento' });
                                 // if controller returned the updated candidate, update UI state immediately
                                 if (j.candidate) {
                                     try {
@@ -1816,11 +1866,11 @@
                                         }
                                 }
                                 // Update CPM button appearance: red when validated, green otherwise.
-                                // If the overall ingresso is already final ('Apto para ingresso'), keep the CPM button disabled.
+                                // If the overall ingresso is already final ('Apto para encaminhamento'), keep the CPM button disabled.
                                 try {
                                     const btnCpm = document.getElementById('btn-validar-documentos-cpm');
                                     if (btnCpm) {
-                                        if (low.indexOf('apto para ingresso') !== -1) {
+                                        if (low.indexOf('apto para encaminhamento') !== -1) {
                                             btnCpm.disabled = true;
                                             btnCpm.className = 'btn btn-danger btn-action';
                                             btnCpm.textContent = 'Retirar Validação dos Documentos';
@@ -1835,10 +1885,10 @@
                                         }
                                     }
                                         try { console.log('debug-status set CPM:', { low: low, btnDisabled: btnCpm ? btnCpm.disabled : null, text: btnCpm ? btnCpm.textContent : null }); } catch(e) {}
-                                    // If the candidate status is 'Apto para ingresso', replace the validate-ingresso button with a danger 'Retirar Validação' UI-only button
+                                    // If the candidate status is 'Apto para encaminhamento', replace the validate-ingresso button with a danger 'Retirar Validação' UI-only button
                                     try {
                                         const btnValNow = document.getElementById('btn-validar-ingresso');
-                                        if (btnValNow && (low.indexOf('apto para ingresso') !== -1 || low.indexOf('apto') !== -1)) {
+                                        if (btnValNow && (low.indexOf('apto para encaminhamento') !== -1 || low.indexOf('apto') !== -1)) {
                                             if (typeof window.replaceValidateWithRetirar === 'function') window.replaceValidateWithRetirar();
                                         }
                                     } catch(e) {}
@@ -1912,8 +1962,8 @@
                     try {
                         const btnCpm = document.getElementById('btn-validar-documentos-cpm');
                         const s = serverCandidateStatus ? String(serverCandidateStatus).toLowerCase() : '';
-                        if (btnCpm) {
-                            if (s.indexOf('apto para ingresso') !== -1) {
+                            if (btnCpm) {
+                            if (s.indexOf('apto para encaminhamento') !== -1) {
                                 btnCpm.disabled = true;
                                 btnCpm.className = 'btn btn-danger btn-action';
                                 btnCpm.textContent = 'Retirar Validação dos Documentos';

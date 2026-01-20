@@ -1,6 +1,6 @@
 @extends('layout.main')
 
-@section('title', 'SCP - Candidatos Aptos para Ingresso')
+@section('title', 'SCP - Candidatos Apto para Encaminhamento')
 
 @section('content')
 
@@ -21,7 +21,7 @@
         </style>
 
         <div class="bg-primary text-white card-header d-flex justify-content-between align-items-center">
-            <h4 class="mb-0">ENCAMINHAMENTO DE CANDIDATOS APTOS PARA INGRESSO</h4>
+            <h4 class="mb-0">ENCAMINHAMENTO DE CANDIDATOS APTO PARA ENCAMINHAMENTO</h4>
         </div>
 
         <div class="card-body">
@@ -56,8 +56,8 @@
                             <th scope="col">NOTA</th>
                             <th scope="col">STATUS</th>
                             <th scope="col">ENCAMINHAMENTO</th>
-                            <th scope="col">ASSUNÇÃO</th>
                             <th scope="col">TERMO ENC.</th>
+                            <th scope="col">ASSUNÇÃO</th>
                             <th scope="col">AÇÃO</th>
                         </tr>
                     </thead>
@@ -112,6 +112,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 return '<span class="badge '+cls+'">'+txt+'</span>';
             }
         },
+        
+        {
+            data: 'encaminhamento_id', name: 'encaminhamento_id', orderable:false, searchable:false,
+            render: function(data, type, row){
+                var status = (row && row.encaminhamento_status) ? String(row.encaminhamento_status) : '';
+                if (!status || !/validad/i.test(status)) return '<span class="text-muted">-</span>';
+                var id = data || row.encaminhamento_id || null;
+                if (!id) return '<span class="text-muted">-</span>';
+                var href = termoBaseUrl + '/' + id;
+                return '<a href="'+href+'" target="_blank" rel="noopener" title="Abrir Termo" class="btn btn-light btn-sm" style="padding:4px 6px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;">'
+                    + '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="icon icon-tabler icons-tabler-filled icon-tabler-file-invoice" aria-hidden="true"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 2l.117 .007a1 1 0 0 1 .876 .876l.007 .117v4l.005 .15a2 2 0 0 0 1.838 1.844l.157 .006h4l.117 .007a1 1 0 0 1 .876 .876l.007 .117v9a3 3 0 0 1 -2.824 2.995l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-14a3 3 0 0 1 2.824 -2.995l.176 -.005zm4 15h-2a1 1 0 0 0 0 2h2a1 1 0 0 0 0 -2m0 -4h-8a1 1 0 0 0 0 2h8a1 1 0 0 0 0 -2m-7 -7h-1a1 1 0 1 0 0 2h1a1 1 0 1 0 0 -2" /><path d="M19 7h-4l-.001 -4.001z" /></svg>'
+                    + '</a>';
+            }
+        },
         {
             data: null, name: 'oficio', orderable:false, searchable:false,
             render: function(data, type, row){
@@ -126,19 +140,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!id) return '<span class="text-muted">-</span>';
                 var href = ingressoBaseUrl + '/' + id + '/oficio?print=1';
                 return '<a href="'+href+'" target="_blank" rel="noopener" title="Abrir Ofício" class="btn btn-light btn-sm" style="padding:4px 6px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;">'
-                    + '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="icon icon-tabler icons-tabler-filled icon-tabler-file-invoice" aria-hidden="true"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 2l.117 .007a1 1 0 0 1 .876 .876l.007 .117v4l.005 .15a2 2 0 0 0 1.838 1.844l.157 .006h4l.117 .007a1 1 0 0 1 .876 .876l.007 .117v9a3 3 0 0 1 -2.824 2.995l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-14a3 3 0 0 1 2.824 -2.995l.176 -.005zm4 15h-2a1 1 0 0 0 0 2h2a1 1 0 0 0 0 -2m0 -4h-8a1 1 0 0 0 0 2h8a1 1 0 0 0 0 -2m-7 -7h-1a1 1 0 1 0 0 2h1a1 1 0 1 0 0 -2" /><path d="M19 7h-4l-.001 -4.001z" /></svg>'
-                    + '</a>';
-            }
-        },
-        {
-            data: 'encaminhamento_id', name: 'encaminhamento_id', orderable:false, searchable:false,
-            render: function(data, type, row){
-                var status = (row && row.encaminhamento_status) ? String(row.encaminhamento_status) : '';
-                if (!status || !/validad/i.test(status)) return '<span class="text-muted">-</span>';
-                var id = data || row.encaminhamento_id || null;
-                if (!id) return '<span class="text-muted">-</span>';
-                var href = termoBaseUrl + '/' + id;
-                return '<a href="'+href+'" target="_blank" rel="noopener" title="Abrir Termo" class="btn btn-light btn-sm" style="padding:4px 6px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;">'
                     + '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="icon icon-tabler icons-tabler-filled icon-tabler-file-invoice" aria-hidden="true"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 2l.117 .007a1 1 0 0 1 .876 .876l.007 .117v4l.005 .15a2 2 0 0 0 1.838 1.844l.157 .006h4l.117 .007a1 1 0 0 1 .876 .876l.007 .117v9a3 3 0 0 1 -2.824 2.995l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-14a3 3 0 0 1 2.824 -2.995l.176 -.005zm4 15h-2a1 1 0 0 0 0 2h2a1 1 0 0 0 0 -2m0 -4h-8a1 1 0 0 0 0 2h8a1 1 0 0 0 0 -2m-7 -7h-1a1 1 0 1 0 0 2h1a1 1 0 1 0 0 -2" /><path d="M19 7h-4l-.001 -4.001z" /></svg>'
                     + '</a>';
             }
@@ -173,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function() {
             url: '{{ route('ingresso.data') }}',
             type: 'GET',
                 data: function(d){
-                    d.filter_status = 'Apto para ingresso';
+                    d.filter_status = 'Apto para encaminhamento';
                     // prefer server-side session value injected via Blade, fallback to URL param
                     @if(!empty($currentConv))
                         d.filter_convocacao = '{{ $currentConv }}';
