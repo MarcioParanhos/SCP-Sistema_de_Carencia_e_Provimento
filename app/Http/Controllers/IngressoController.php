@@ -1696,6 +1696,9 @@ class IngressoController extends Controller
             'cep',
             'uf',
             'pais',
+            'banco',
+            'agencia',
+            'conta',
             'tel_contato',
             'tel_celular',
             'email',
@@ -1749,6 +1752,9 @@ class IngressoController extends Controller
             'nome_pai' => 'Nome do Pai',
             'nome_mae' => 'Nome da Mãe',
             'situacao_candidato' => 'Situação do Candidato',
+            'banco' => 'Banco',
+            'agencia' => 'Agência',
+            'conta' => 'Conta',
             'classificacao_quota_racial' => 'Classificação (Quota Racial)',
         ];
 
@@ -2910,17 +2916,35 @@ class IngressoController extends Controller
 
             $available = Schema::hasTable('ingresso_candidatos') ? Schema::getColumnListing('ingresso_candidatos') : [];
 
-            // Define the main fields editable in the UI
-            $primaryKeys = [
-                'num_inscricao','name','nome','cpf','data_nascimento','nota','classificacao_ampla','classificacao_quota_pne','classificacao_racial','classificacao',
-            ];
+            // Build updates from the submitted payload by intersecting with actual table columns.
+            // Exclude primary id and timestamps to avoid accidental overwrite.
+            $exclude = ['id', 'created_at', 'updated_at'];
+            $columns = array_values(array_diff($available, $exclude));
 
             $updates = [];
-            foreach ($primaryKeys as $k) {
-                if (in_array($k, $available) && $request->has($k)) {
+            foreach ($columns as $k) {
+                if ($request->has($k)) {
                     $val = $request->input($k);
-                    // basic normalization for date fields
-                    if ($k === 'data_nascimento' && $val === '') $val = null;
+
+                    // Normalize empty date-like fields to NULL
+                    if ($val === '' && (stripos($k, 'data') !== false || stripos($k, 'date') !== false || substr($k, -3) === '_at')) {
+                        $val = null;
+                    }
+
+                    // Accept localized dates in DD/MM/YYYY or DD/MM/YYYY HH:MM(:SS) and convert to YYYY-MM-DD[ HH:MM:SS]
+                    if (is_string($val)) {
+                        if (preg_match('/^\s*(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}:\d{2}(?::\d{2})?))?\s*$/', $val, $m)) {
+                            $date = $m[3] . '-' . $m[2] . '-' . $m[1];
+                            if (!empty($m[4])) {
+                                $time = $m[4];
+                                if (preg_match('/^\d{2}:\d{2}$/', $time)) $time .= ':00';
+                                $val = $date . ' ' . $time;
+                            } else {
+                                $val = $date;
+                            }
+                        }
+                    }
+
                     $updates[$k] = $val;
                 }
             }

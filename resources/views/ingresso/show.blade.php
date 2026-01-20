@@ -393,6 +393,15 @@
                 @endphp
                         <span class="badge-status {{ $badgeClass }}">{{ $displayStatus }}</span>
                 @php $user = optional(Auth::user()); @endphp
+                @php
+                    $conv = session('filter_convocacao', request()->query('filter_convocacao', ''));
+                    $conv = is_null($conv) ? '' : $conv;
+                    $backUrl = url('/ingresso') . ($conv !== '' ? ('?filter_convocacao=' . urlencode($conv)) : '');
+                @endphp
+                <a href="{{ $backUrl }}" class="btn btn-primary btn-sm" title="Voltar" aria-label="Voltar" style="border-radius:6px;padding:4px 8px;display:inline-flex;align-items:center;justify-content:center;margin-right:6px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icon-tabler-arrow-left" aria-hidden="true" style="vertical-align:middle;margin-right:6px;"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12h14" /><path d="M5 12l6 6" /><path d="M5 12l6 -6" /></svg>
+                    <span style="vertical-align:middle;"></span>
+                </a>
                 @php $isIngressadoTop = isset($candidate['status']) && mb_strtolower(trim($candidate['status']), 'UTF-8') === 'apto para ingresso'; @endphp
                 @if($user && isset($user->profile_id) && $user->profile_id == 1 && optional($user)->sector_id == 2)
                     @if($isNaoAssumiu)
