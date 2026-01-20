@@ -59,6 +59,21 @@
     @media (min-width: 577px) {
         .chart-container { height: 320px; }
     }
+    /* Modal guide sizing: limit overall height and make body scrollable so footer stays visible */
+    .modal-dialog {
+        max-height: 90vh;
+        margin: 1.75rem auto;
+    }
+    .modal-content {
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+    }
+    .modal-body {
+        overflow-y: auto;
+        max-height: calc(90vh - 160px);
+        -webkit-overflow-scrolling: touch;
+    }
     /* Convocação tab top border */
     #aptosTabs { border-bottom: 0; }
     .aptos-tab-link { border-top: 4px solid transparent; border-radius: 6px 6px 0 0; padding-top: 6px; background: #fff; position: relative; z-index: 2; }
@@ -96,6 +111,7 @@
             <div class="top-action">
                 <a id="btn-view-all" href="{{ route('ingresso.index') }}" class="btn btn-outline-primary">Ver todos os convocados</a>
                 <a href="{{ route('ingresso.aptos') }}?filter_convocacao={{ $currentConv }}" class="btn btn-primary">Aptos para encaminhamento</a>
+                <button id="btn-open-dashboard-doc" type="button" class="btn btn-outline-secondary" title="Guia da página">Guia da Página</button>
             </div>
         </div>
     </div>
@@ -163,6 +179,26 @@
             </div>
         </div>
     @endif
+
+    <!-- Modal: Dashboard Guide -->
+    <div class="modal fade" id="dashboardGuideModal" tabindex="-1" role="dialog" aria-labelledby="dashboardGuideModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="dashboardGuideModalLabel">Guia: Dashboard de Validação</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="dashboardGuideContent" class="markdown-body">Carregando...</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     {{-- Tabs will contain full dashboards per convocação --}}
 
@@ -609,4 +645,54 @@
         }
     });
 </script>
+    <script>
+        // Dashboard guide: load marked.js dynamically and render the markdown guide
+        (function(){
+            function ensureMarked(cb){
+                if (window.marked) return cb();
+                var s = document.createElement('script');
+                s.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
+                s.onload = function(){ cb(); };
+                s.onerror = function(){ cb(new Error('failed to load marked')); };
+                document.head.appendChild(s);
+            }
+
+            function openGuideModal(){
+                var container = document.getElementById('dashboardGuideContent');
+                if (!container) return;
+                fetch('/docs/INGRESSO_DASHBOARD.md').then(function(r){ return r.text(); }).then(function(md){
+                    try {
+                        ensureMarked(function(err){
+                            if (!err && window.marked) {
+                                container.innerHTML = marked.parse(md);
+                            } else {
+                                // fallback: show raw markdown inside <pre>
+                                container.innerHTML = '<pre style="white-space:pre-wrap;">' + md.replace(/</g,'&lt;') + '</pre>';
+                            }
+                        });
+                    } catch(e){
+                        container.innerHTML = '<pre style="white-space:pre-wrap;">' + md.replace(/</g,'&lt;') + '</pre>';
+                    }
+                }).catch(function(){
+                    container.innerHTML = '<div class="text-danger">Não foi possível carregar o guia.</div>';
+                });
+
+                // show modal (support Bootstrap/jQuery if present)
+                try {
+                    if (window.jQuery && typeof jQuery === 'function' && typeof jQuery.fn.modal === 'function') {
+                        $('#dashboardGuideModal').modal('show');
+                    } else {
+                        var m = document.getElementById('dashboardGuideModal');
+                        if (m) m.style.display = 'block';
+                    }
+                } catch(e){}
+            }
+
+            document.addEventListener('DOMContentLoaded', function(){
+                var btn = document.getElementById('btn-open-dashboard-doc');
+                if (!btn) return;
+                btn.addEventListener('click', function(){ openGuideModal(); });
+            });
+        })();
+    </script>
 @endpush

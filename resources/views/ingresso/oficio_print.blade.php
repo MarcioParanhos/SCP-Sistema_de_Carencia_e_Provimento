@@ -373,51 +373,15 @@
                     @endphp
 
                     <tbody>
-                        @if (count($encaminhamentos))
-                            @foreach ($encaminhamentos as $enc)
-                                @php
-                                    // provimentos_encaminhados stores disciplina and shift quantities in these fields
-                                    $mat = intval($enc->matutino ?? $enc->quant_matutino ?? 0);
-                                    $vesp = intval($enc->vespertino ?? $enc->quant_vespertino ?? 0);
-                                    $not = intval($enc->noturno ?? $enc->quant_noturno ?? 0);
-
-                                    $mat_total += $mat;
-                                    $vesp_total += $vesp;
-                                    $not_total += $not;
-
-                                    // Resolve discipline from multiple possible fields; fallback to lookup in 'disciplinas' table
-                                    $disc = null;
-                                    try {
-                                        // prefer explicit name fields
-                                        $disc = $enc->disciplina_name ?? $enc->disciplina ?? $enc->disciplina_nome ?? $enc->nome_disciplina ?? $enc->disciplina_code ?? null;
-
-                                        // if still empty and there is a disciplina_id or disciplina (numeric), try lookup
-                                        if (empty($disc)) {
-                                            $maybeId = $enc->disciplina_id ?? $enc->disciplina ?? null;
-                                            if (!empty($maybeId) && is_numeric($maybeId) && Schema::hasTable('disciplinas')) {
-                                                $found = DB::table('disciplinas')->where('id', intval($maybeId))->orWhere('cod_disciplina', $maybeId)->orWhere('codigo', $maybeId)->first();
-                                                if ($found) {
-                                                    $disc = $found->nome ?? $found->nome_disciplina ?? $found->descricao ?? null;
-                                                }
-                                            }
-                                        }
-                                    } catch (\Throwable $e) {
-                                        $disc = $enc->disciplina ?? $enc->disciplina_name ?? $enc->disciplina_code ?? null;
-                                    }
-                                    $disc = $disc ?? '-';
-                                @endphp
-                                <tr>
-                                    <td class="disciplina" title="{{ $disc }}">{{ \Illuminate\Support\Str::limit($disc, 100) }}</td>
-                                    <td class="turno text-center" aria-label="Matutino">{{ $mat > 0 ? $mat : '-' }}</td>
-                                    <td class="turno text-center" aria-label="Vespertino">{{ $vesp > 0 ? $vesp : '-' }}</td>
-                                    <td class="turno text-center" aria-label="Noturno">{{ $not > 0 ? $not : '-' }}</td>
-                                </tr>
-                            @endforeach
-                        @else
+                        {{-- Espaço em branco com 7 linhas para preenchimento manual --}}
+                        @for ($i = 0; $i < 7; $i++)
                             <tr>
-                                <td colspan="4" class="text-center">Nenhum encaminhamento registrado.</td>
+                                <td class="disciplina" title="">&nbsp;</td>
+                                <td class="turno text-center" aria-label="Matutino">&nbsp;</td>
+                                <td class="turno text-center" aria-label="Vespertino">&nbsp;</td>
+                                <td class="turno text-center" aria-label="Noturno">&nbsp;</td>
                             </tr>
-                        @endif
+                        @endfor
                     </tbody>
 
                     @if (count($encaminhamentos))
