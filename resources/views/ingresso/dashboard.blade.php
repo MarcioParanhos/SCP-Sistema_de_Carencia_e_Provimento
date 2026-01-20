@@ -95,7 +95,7 @@
             </div>
             <div class="top-action">
                 <a id="btn-view-all" href="{{ route('ingresso.index') }}" class="btn btn-outline-primary">Ver todos os convocados</a>
-                <a href="{{ route('ingresso.aptos') }}?filter_convocacao={{ $currentConv }}" class="btn btn-primary">Encaminhar Aptos para ingresso</a>
+                <a href="{{ route('ingresso.aptos') }}?filter_convocacao={{ $currentConv }}" class="btn btn-primary">Aptos para encaminhamento</a>
             </div>
         </div>
     </div>
@@ -271,7 +271,7 @@
                                             <span class="badge bg-dark text-white">{{ $stats_conv1['nao_assumiu'] ?? 0 }}</span>
                                         </li>
                                         <li class="list-group-item d-flex justify-content-between align-items-center">
-                                            Aptos para ingresso
+                                            Aptos para encaminhamento
                                             <span class="badge bg-success text-white">{{ $stats_conv1['ingressados'] ?? 0 }}</span>
                                         </li>
                                     </ul>
@@ -370,7 +370,7 @@
                                             <span class="badge bg-dark text-white">{{ $stats_conv2['nao_assumiu'] ?? 0 }}</span>
                                         </li>
                                         <li class="list-group-item d-flex justify-content-between align-items-center">
-                                            Aptos para ingresso
+                                            Aptos para encaminhamento
                                             <span class="badge bg-success text-white">{{ $stats_conv2['ingressados'] ?? 0 }}</span>
                                         </li>
                                     </ul>
@@ -450,24 +450,106 @@
         var active = document.querySelector('#aptosTabs .nav-link.active');
         if (active && active.id === 'conv2-tab') setConvLink(2); else setConvLink(1);
 
+        // Delegated capture handler on the tabs container to ensure interception
+        var tabsContainer = document.getElementById('aptosTabs');
+        if (tabsContainer) {
+            tabsContainer.addEventListener('click', function(ev){
+                try { console.debug('aptosTabs clicked'); } catch(e){}
+                var a = ev.target.closest && ev.target.closest('a[data-toggle="tab"]');
+                if (!a) return;
+                // ensure we only handle actual tab anchors inside this container
+                if (!tabsContainer.contains(a)) return;
+                ev.preventDefault();
+                ev.stopPropagation && ev.stopPropagation();
+                ev.stopImmediatePropagation && ev.stopImmediatePropagation();
+
+                var id = a.id || '';
+                var val = (id === 'conv2-tab') ? 2 : 1;
+                var label = a.textContent.trim() || ('Convocação ' + val);
+
+                function confirmAndShow() {
+                    try { console.debug('confirmAndShow for', label); } catch(e){}
+                    // set session and show tab
+                    try { fetch('{{ route('ingresso.session.convocacao') }}', { method: 'POST', headers: { 'Content-Type':'application/json','X-CSRF-TOKEN':'{{ csrf_token() }}' }, body: JSON.stringify({ convocacao: val }) }); } catch(e){}
+                    setConvLink(val);
+                    try {
+                        // mark as confirmed so Bootstrap's show handler doesn't re-prompt
+                        if (window.jQuery && typeof $(a).data === 'function') { $(a).data('confirmed', true); }
+                        else if (a && a.dataset) { a.dataset.confirmed = 'true'; }
+                        if (window.jQuery && typeof $(a).tab === 'function') { $(a).tab('show'); }
+                        else {
+                            document.querySelectorAll('#aptosTabs .nav-link').forEach(function(x){ x.classList.remove('active'); });
+                            a.classList.add('active');
+                            document.querySelectorAll('.tab-pane').forEach(function(p){ p.classList.remove('show','active'); });
+                            var pane = document.querySelector(a.getAttribute('href'));
+                            if (pane) pane.classList.add('show','active');
+                        }
+                    } catch(e){}
+                }
+
+                if (window.Swal && typeof Swal.fire === 'function') {
+                    Swal.fire({ title: 'Confirmar alteração', text: 'Deseja mudar para ' + label + '?', icon: 'question', showCancelButton: true, confirmButtonText: 'Sim', cancelButtonText: 'Não' }).then(function(resp){ if (resp && resp.isConfirmed) confirmAndShow(); });
+                } else {
+                    if (confirm('Deseja mudar para ' + label + '?')) confirmAndShow();
+                }
+            }, true);
+        }
+
         // listen for tab changes: support both jQuery/Bootstrap events and plain clicks
         var tabs = document.querySelectorAll('#aptosTabs a[data-toggle="tab"]');
         tabs.forEach(function(t){
-            // fallback: update on click
+            // intercept click and ask for confirmation before switching convocação
+            // use capture phase and stopImmediatePropagation to prevent Bootstrap/jQuery handlers
+            t.addEventListener('click', function(e){
+                e.preventDefault();
+                e.stopImmediatePropagation && e.stopImmediatePropagation();
+            }, true);
+
             t.addEventListener('click', function(e){
                 var val = (t.id === 'conv2-tab') ? 2 : 1;
-                // set server-side session so subsequent actions use this convocação
-                try {
-                    fetch('{{ route('ingresso.session.convocacao') }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify({ convocacao: val })
-                    }).catch(function(){});
-                } catch (err) {}
-                if (t.id === 'conv2-tab') setConvLink(2); else setConvLink(1);
+                var label = t.textContent.trim() || ('Convocação ' + val);
+
+                function proceed() {
+                    // set server-side session so subsequent actions use this convocação
+                    try {
+                        fetch('{{ route('ingresso.session.convocacao') }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({ convocacao: val })
+                        }).catch(function(){});
+                    } catch (err) {}
+                    if (t.id === 'conv2-tab') setConvLink(2); else setConvLink(1);
+                    // show the tab (support Bootstrap jQuery tab if available)
+                    try {
+                        if (window.jQuery && typeof $(t).tab === 'function') {
+                            $(t).tab('show');
+                        } else {
+                            // fallback: manually toggle classes
+                            document.querySelectorAll('#aptosTabs .nav-link').forEach(function(a){ a.classList.remove('active'); });
+                            t.classList.add('active');
+                            document.querySelectorAll('.tab-pane').forEach(function(p){ p.classList.remove('show','active'); });
+                            var pane = document.querySelector(t.getAttribute('href'));
+                            if (pane) pane.classList.add('show','active');
+                        }
+                    } catch (err) {}
+                }
+
+                // Use SweetAlert2 if available, otherwise fallback to native confirm
+                if (window.Swal && typeof Swal.fire === 'function') {
+                    Swal.fire({
+                        title: 'Confirmar alteração',
+                        text: 'Deseja mudar para ' + label + '?',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Sim',
+                        cancelButtonText: 'Não'
+                    }).then(function(resp){ if (resp && resp.isConfirmed) proceed(); });
+                } else {
+                    if (confirm('Deseja mudar para ' + label + '?')) proceed();
+                }
             });
         });
         // if jQuery + Bootstrap is present, also listen to the shown.bs.tab event for programmatic changes
@@ -487,6 +569,43 @@
             } catch (err) {
                 // ignore if Bootstrap's tab plugin not available
             }
+        }
+
+        // Additionally, intercept Bootstrap's show event to force confirmation before changing tabs
+        try {
+            if (window.jQuery && typeof jQuery === 'function' && typeof jQuery.fn !== 'undefined') {
+                $(document).on('show.bs.tab', '#aptosTabs a[data-toggle="tab"]', function(e){
+                        var $t = $(this);
+                        // if already confirmed programmatically, allow (check jQuery data or DOM dataset)
+                        var domEl = $t && $t.get && $t.get(0) ? $t.get(0) : null;
+                        var confirmedFlag = false;
+                        try { confirmedFlag = ($t.data && $t.data('confirmed')) || (domEl && domEl.dataset && domEl.dataset.confirmed === 'true'); } catch(e) { confirmedFlag = false; }
+                        if (confirmedFlag) {
+                            try { $t.data && $t.data('confirmed', false); } catch(e){}
+                            try { if (domEl && domEl.dataset) domEl.dataset.confirmed = 'false'; } catch(e){}
+                            return;
+                        }
+                    e.preventDefault();
+                    var id = this.id || '';
+                    var val = (id === 'conv2-tab') ? 2 : 1;
+                    var label = $t.text().trim() || ('Convocação ' + val);
+
+                    function doShow() {
+                        $t.data('confirmed', true);
+                        $t.tab('show');
+                        try { fetch('{{ route('ingresso.session.convocacao') }}', { method: 'POST', headers: { 'Content-Type':'application/json','X-CSRF-TOKEN':'{{ csrf_token() }}' }, body: JSON.stringify({ convocacao: val }) }); } catch(e){}
+                        setConvLink(val);
+                    }
+
+                    if (window.Swal && typeof Swal.fire === 'function') {
+                        Swal.fire({ title: 'Confirmar alteração', text: 'Deseja mudar para ' + label + '?', icon: 'question', showCancelButton: true, confirmButtonText: 'Sim', cancelButtonText: 'Não' }).then(function(resp){ if (resp && resp.isConfirmed) doShow(); });
+                    } else {
+                        if (confirm('Deseja mudar para ' + label + '?')) doShow();
+                    }
+                });
+            }
+        } catch (err) {
+            // ignore any errors
         }
     });
 </script>
