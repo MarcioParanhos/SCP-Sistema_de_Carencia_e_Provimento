@@ -43,6 +43,27 @@
         .top-action .btn { width: 100%; }
     }
 
+    /* Icon-only buttons that reveal label on hover/focus with smooth transition */
+    /* ensure icon is perfectly centered when label hidden (no gap reserved) */
+    .top-action .btn { display:inline-flex; align-items:center; justify-content:center; padding:8px 10px; min-width:44px; overflow:visible; }
+    .top-action .btn .btn-icon { display:inline-flex; align-items:center; justify-content:center; transition: opacity .28s ease, transform .28s ease; }
+    .top-action .btn .btn-label { display:inline-block; white-space:nowrap; opacity:0; max-width:0; overflow:hidden; padding-left:0; transition: opacity .28s ease, max-width .28s ease, padding-left .28s ease; }
+    .top-action .btn { text-decoration:none; }
+
+    /* On hover/focus: reveal label smoothly and fade icon */
+    .top-action .btn:focus .btn-label,
+    .top-action .btn:hover .btn-label,
+    .top-action .btn:active .btn-label { opacity:1; max-width:220px; padding-left:8px; }
+    .top-action .btn:focus .btn-icon,
+    .top-action .btn:hover .btn-icon,
+    .top-action .btn:active .btn-icon { opacity:0; transform: scale(.92); }
+
+    @media (max-width: 576px) {
+        /* On small screens, show labels by default for tappable targets */
+        .top-action .btn .btn-label { opacity:1; max-width:1000px; padding-left:8px; }
+        .top-action .btn .btn-icon { opacity:1; }
+    }
+
     /* Mobile adjustments */
     @media (max-width: 576px) {
         .ingresso-vh { min-height: auto; padding: 12px; }
@@ -109,9 +130,26 @@
                 <small class="text-muted">Visão geral do processo de ingresso</small>
             </div>
             <div class="top-action">
-                <a id="btn-view-all" href="{{ route('ingresso.index') }}" class="btn btn-outline-primary">Ver todos os convocados</a>
-                <a href="{{ route('ingresso.aptos') }}?filter_convocacao={{ $currentConv }}" class="btn btn-primary">Aptos para encaminhamento</a>
-                <button id="btn-open-dashboard-doc" type="button" class="btn btn-outline-secondary" title="Guia da página">Guia da Página</button>
+                <a id="btn-view-all" href="{{ route('ingresso.index') }}" class="btn btn-primary" aria-label="Ver todos os convocados">
+                    <span class="btn-icon" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-users-group"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 13a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /><path d="M8 21v-1a2 2 0 0 1 2 -2h4a2 2 0 0 1 2 2v1" /><path d="M15 5a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /><path d="M17 10h2a2 2 0 0 1 2 2v1" /><path d="M5 5a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /><path d="M3 13v-1a2 2 0 0 1 2 -2h2" /></svg>
+                    </span>
+                    <span class="btn-label">Ver todos os convocados</span>
+                </a>
+
+                <a href="{{ route('ingresso.aptos') }}?filter_convocacao={{ $currentConv }}" class="btn btn-primary" aria-label="Aptos para encaminhamento">
+                    <span class="btn-icon" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-share"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h3" /><path d="M16 22l5 -5" /><path d="M21 21.5v-4.5h-4.5" /></svg>
+                    </span>
+                    <span class="btn-label">Aptos para encaminhamento</span>
+                </a>
+
+                <button id="btn-open-dashboard-doc" type="button" class="btn btn-primary" title="Guia da página" aria-label="Guia da página">
+                    <span class="btn-icon" aria-hidden="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-question-mark"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 8a3.5 3 0 0 1 3.5 -3h1a3.5 3 0 0 1 3.5 3a3 3 0 0 1 -2 3a3 4 0 0 0 -2 4" /><path d="M12 19l0 .01" /></svg>
+                    </span>
+                    <span class="btn-label">Guia da Página</span>
+                </button>
             </div>
         </div>
     </div>
@@ -665,9 +703,26 @@
                         ensureMarked(function(err){
                             if (!err && window.marked) {
                                 container.innerHTML = marked.parse(md);
-                            } else {
-                                // fallback: show raw markdown inside <pre>
+                                return;
+                            }
+
+                            // Fallback minimal renderer: convert image markdown to <img> and escape the rest
+                            try {
+                                // Convert image syntax ![alt](url) to img tags
+                                var html = md.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function(_, alt, src){
+                                    // sanitize src by allowing only relative or absolute paths
+                                    var safeSrc = src.replace(/"/g, '%22');
+                                    return '<img src="' + safeSrc + '" alt="' + (alt||'') + '" style="height:20px; vertical-align:middle; margin-right:8px;" />';
+                                });
+
+                                // Replace double newlines with paragraph breaks and single newlines with <br>
+                                html = html.replace(/\r/g,'').replace(/\n\n+/g, '</p><p>').replace(/\n/g, '<br>');
+                                html = '<div class="markdown-body"><p>' + html + '</p></div>';
+                                container.innerHTML = html;
+                                return;
+                            } catch (e) {
                                 container.innerHTML = '<pre style="white-space:pre-wrap;">' + md.replace(/</g,'&lt;') + '</pre>';
+                                return;
                             }
                         });
                     } catch(e){
