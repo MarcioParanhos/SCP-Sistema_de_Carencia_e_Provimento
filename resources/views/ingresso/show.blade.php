@@ -4,38 +4,45 @@
 
 @section('content')
 
-@php
-    $user = optional(Auth::user());
-    $statusTextTop = isset($candidate['status']) ? (string) $candidate['status'] : '';
-    $statusLowerTop = mb_strtolower($statusTextTop, 'UTF-8');
-    $isNaoAssumiuTop = false;
-    if ($statusLowerTop !== '') {
-        if (mb_stripos($statusLowerTop, 'nao assumiu', 0, 'UTF-8') !== false || mb_stripos($statusLowerTop, 'não assumiu', 0, 'UTF-8') !== false || mb_stripos($statusLowerTop, 'nao-assumiu', 0, 'UTF-8') !== false) {
-            $isNaoAssumiuTop = true;
+    @php
+        $user = optional(Auth::user());
+        $statusTextTop = isset($candidate['status']) ? (string) $candidate['status'] : '';
+        $statusLowerTop = mb_strtolower($statusTextTop, 'UTF-8');
+        $isNaoAssumiuTop = false;
+        if ($statusLowerTop !== '') {
+            if (
+                mb_stripos($statusLowerTop, 'nao assumiu', 0, 'UTF-8') !== false ||
+                mb_stripos($statusLowerTop, 'não assumiu', 0, 'UTF-8') !== false ||
+                mb_stripos($statusLowerTop, 'nao-assumiu', 0, 'UTF-8') !== false
+            ) {
+                $isNaoAssumiuTop = true;
+            }
         }
-    }
-@endphp
+    @endphp
 
-    @if($isNaoAssumiuTop && $user && isset($user->profile_id) && $user->profile_id == 1 && optional($user)->sector_id == 7)
-    <div class="col-12">
-        <div class="top-reativar-alert mb-3" role="alert" style="margin:0;">
-            <div class="alert-inner">
-                <div class="alert-icon" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icon-tabler-user-off" style="color:inherit;">
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                        <path d="M8.18 8.189a4.01 4.01 0 0 0 2.616 2.627m3.507 -.545a4 4 0 1 0 -5.59 -5.552" />
-                        <path d="M6 21v-2a4 4 0 0 1 4 -4h4c.412 0 .81 .062 1.183 .178m2.633 2.618c.12 .38 .184 .785 .184 1.204v2" />
-                        <path d="M3 3l18 18" />
-                    </svg>
-                </div>
-                <div class="alert-text">
-                    <div class="alert-title">O candidato encontra-se com o status “Não Assumiu”.</div>
-                    <div class="alert-sub">Para realizar a reativação, é necessário entrar em contato com a CPM.</div>
+    @if ($isNaoAssumiuTop && $user && isset($user->profile_id) && $user->profile_id == 1 && optional($user)->sector_id == 7)
+        <div class="col-12">
+            <div class="top-reativar-alert mb-3" role="alert" style="margin:0;">
+                <div class="alert-inner">
+                    <div class="alert-icon" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                            stroke-linejoin="round" class="icon icon-tabler icon-tabler-user-off" style="color:inherit;">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M8.18 8.189a4.01 4.01 0 0 0 2.616 2.627m3.507 -.545a4 4 0 1 0 -5.59 -5.552" />
+                            <path
+                                d="M6 21v-2a4 4 0 0 1 4 -4h4c.412 0 .81 .062 1.183 .178m2.633 2.618c.12 .38 .184 .785 .184 1.204v2" />
+                            <path d="M3 3l18 18" />
+                        </svg>
+                    </div>
+                    <div class="alert-text">
+                        <div class="alert-title">O candidato encontra-se com o status “Não Assumiu”.</div>
+                        <div class="alert-sub">Para realizar a reativação, é necessário entrar em contato com a CPM.</div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-@endif
+    @endif
 
     <div class="card">
         @if (session('status'))
@@ -131,32 +138,59 @@
 
             /* Button style for 'Não Assumiu' placed inline in actions */
             .btn-nao-assumiu {
-                box-shadow: 0 6px 14px rgba(15,23,42,0.06);
+                box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
             }
 
-            /* Remove hover/interactive visual cues for dropdown action items in the header
-               Keep them clickable but present them as informational/neutral controls */
-            .candidate-actions .dropdown-menu .dropdown-item.btn {
-                cursor: pointer !important;
-                background-color: transparent !important;
-                color: inherit !important;
-                box-shadow: none !important;
-                transform: none !important;
-                text-decoration: none !important;
+            /* Professional dropdown: subtle card, rounded, grouped actions with icons */
+            .candidate-actions .dropdown-menu {
+                min-width: 220px;
+                padding: 8px;
+                border-radius: 10px;
+                box-shadow: 0 8px 28px rgba(2, 6, 23, 0.12);
+                border: 1px solid rgba(15, 23, 42, 0.04);
+                background: #fff;
             }
 
-            .candidate-actions .dropdown-menu .dropdown-item.btn:hover,
-            .candidate-actions .dropdown-menu .dropdown-item.btn:focus,
-            .candidate-actions .dropdown-menu .dropdown-item.btn:active {
-                background-color: transparent !important;
-                box-shadow: none !important;
-                transform: none !important;
-                text-decoration: none !important;
+            .candidate-actions .dropdown-item {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 10px 12px;
+                border-radius: 8px;
+                color: #0f172a;
+                font-weight: 700;
+            }
+
+            .candidate-actions .dropdown-item:hover,
+            .candidate-actions .dropdown-item:focus {
+                background-color: #f1f5f9;
+                color: #0b1220;
+                text-decoration: none;
+            }
+
+            .candidate-actions .dropdown-divider {
+                margin: 6px 0;
+            }
+
+            .candidate-actions .dropdown-item svg {
+                width: 18px;
+                height: 18px;
+                opacity: 0.85;
+                flex-shrink: 0;
+            }
+
+            /* small muted helper text for items (if needed) */
+            .candidate-actions .dropdown-item .muted {
+                font-weight: 400;
+                font-size: 0.85rem;
+                color: #6b7280;
+                margin-left: auto;
             }
 
             .candidate-body {
                 display: flex;
-                flex-direction: column; /* stack columns so each section is full width (12 cols) */
+                flex-direction: column;
+                /* stack columns so each section is full width (12 cols) */
                 gap: 1.5rem;
                 padding: 1rem;
             }
@@ -187,7 +221,8 @@
 
             /* Checklist container limit to avoid overflowing the card */
             #document-list {
-                max-height: 300px; /* increased from 180px */
+                max-height: 300px;
+                /* increased from 180px */
                 overflow-y: auto;
                 padding-right: 0.25rem;
             }
@@ -204,7 +239,7 @@
             }
 
             /* Ensure checkboxes are clickable even if some global CSS sets pointer-events:none
-                              or if .form-check-input is absolutely positioned by global bootstrap rules. */
+                                  or if .form-check-input is absolutely positioned by global bootstrap rules. */
             #document-list,
             #document-list * {
                 pointer-events: auto !important;
@@ -249,17 +284,23 @@
                 font-weight: 800;
                 font-size: 0.95rem;
                 letter-spacing: 0.2px;
-                box-shadow: 0 4px 10px rgba(2,6,23,0.04);
-                border: 1px solid rgba(15,23,42,0.03);
+                box-shadow: 0 4px 10px rgba(2, 6, 23, 0.04);
+                border: 1px solid rgba(15, 23, 42, 0.03);
                 transition: box-shadow 140ms ease;
-                cursor: default; /* indicate non-interactive information */
+                cursor: default;
+                /* indicate non-interactive information */
             }
 
             /* Remove interactive hover cues so it reads as an information label */
-            .badge-status:hover { box-shadow: 0 4px 10px rgba(2,6,23,0.04); }
+            .badge-status:hover {
+                box-shadow: 0 4px 10px rgba(2, 6, 23, 0.04);
+            }
 
             /* Slightly larger/darker text on danger/success for readability */
-            .badge-status.bg-danger, .badge-status.bg-success { font-weight: 900; }
+            .badge-status.bg-danger,
+            .badge-status.bg-success {
+                font-weight: 900;
+            }
 
             .btn-action {
                 width: 100%;
@@ -301,18 +342,21 @@
                 width: 92% !important;
                 padding: 1.25rem !important;
                 border-radius: 12px !important;
-                box-shadow: 0 10px 40px rgba(2,6,23,0.12) !important;
+                box-shadow: 0 10px 40px rgba(2, 6, 23, 0.12) !important;
             }
+
             .swal2-custom-title {
                 font-size: 1.05rem !important;
                 font-weight: 700 !important;
                 color: #0f172a !important;
                 margin-bottom: 0.25rem !important;
             }
+
             .swal2-custom-text {
                 color: #475569 !important;
                 margin-bottom: 0.6rem !important;
             }
+
             .swal2-custom-textarea,
             .swal2-custom-textarea textarea,
             .swal2-textarea {
@@ -327,29 +371,38 @@
                 border: 1px solid #e6e9ef !important;
                 box-shadow: none !important;
             }
-            .swal2-footer { font-size: 0.85rem !important; color: #64748b !important; }
+
+            .swal2-footer {
+                font-size: 0.85rem !important;
+                color: #64748b !important;
+            }
+
             /* Strong block for checklist when candidate is 'Não Assumiu' */
             .checklist-blocked {
                 pointer-events: none;
                 opacity: 0.65;
             }
+
             .checklist-blocked .form-check-input {
                 cursor: not-allowed !important;
             }
+
             /* Top reactivation alert styles (attention colors) */
             .top-reativar-alert {
                 background: linear-gradient(90deg, #fff7ed 0%, #fffbeb 100%);
-                border-left: 4px solid rgba(245,158,11,0.95);
+                border-left: 4px solid rgba(245, 158, 11, 0.95);
                 padding: 0.7rem 0.9rem;
                 border-radius: 8px;
                 color: #92400e;
-                box-shadow: 0 8px 22px rgba(2,6,23,0.06);
+                box-shadow: 0 8px 22px rgba(2, 6, 23, 0.06);
             }
+
             .top-reativar-alert .alert-inner {
                 display: flex;
                 gap: 0.9rem;
                 align-items: flex-start;
             }
+
             .top-reativar-alert .alert-icon {
                 width: 40px;
                 height: 40px;
@@ -360,10 +413,21 @@
                 justify-content: center;
                 color: #fff;
                 flex: 0 0 40px;
-                box-shadow: 0 6px 16px rgba(15,23,42,0.06);
+                box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
             }
-            .top-reativar-alert .alert-title { font-weight: 800; font-size: 1rem; color: #92400e; }
-            .top-reativar-alert .alert-sub { color: #92400e; margin-top: 3px; font-size: 0.95rem; opacity: 0.9; }
+
+            .top-reativar-alert .alert-title {
+                font-weight: 800;
+                font-size: 1rem;
+                color: #92400e;
+            }
+
+            .top-reativar-alert .alert-sub {
+                color: #92400e;
+                margin-top: 3px;
+                font-size: 0.95rem;
+                opacity: 0.9;
+            }
         </style>
 
         <div class="candidate-header">
@@ -399,13 +463,23 @@
                     $statusLabel = isset($candidate['status']) ? (string) $candidate['status'] : null;
                     $statusText = $statusLabel !== null ? (string) $statusLabel : '';
                     $statusLower = mb_strtolower($statusText, 'UTF-8');
-                    $statusIndicatesValidated = $statusText !== '' && (mb_stripos($statusText, 'valid', 0, 'UTF-8') !== false || mb_stripos($statusText, 'apto', 0, 'UTF-8') !== false);
-                    $isValidated = (isset($candidate['documentos_validados']) && ($candidate['documentos_validados'] == 1 || $candidate['documentos_validados'] === true)) || $statusIndicatesValidated;
+                    $statusIndicatesValidated =
+                        $statusText !== '' &&
+                        (mb_stripos($statusText, 'valid', 0, 'UTF-8') !== false ||
+                            mb_stripos($statusText, 'apto', 0, 'UTF-8') !== false);
+                    $isValidated =
+                        (isset($candidate['documentos_validados']) &&
+                            ($candidate['documentos_validados'] == 1 || $candidate['documentos_validados'] === true)) ||
+                        $statusIndicatesValidated;
 
                     // Special-case: normalize 'Não Assumiu' status and apply danger badge
                     $isNaoAssumiu = false;
                     if ($statusLower !== '') {
-                        if (mb_stripos($statusLower, 'nao assumiu', 0, 'UTF-8') !== false || mb_stripos($statusLower, 'não assumiu', 0, 'UTF-8') !== false || mb_stripos($statusLower, 'nao-assumiu', 0, 'UTF-8') !== false) {
+                        if (
+                            mb_stripos($statusLower, 'nao assumiu', 0, 'UTF-8') !== false ||
+                            mb_stripos($statusLower, 'não assumiu', 0, 'UTF-8') !== false ||
+                            mb_stripos($statusLower, 'nao-assumiu', 0, 'UTF-8') !== false
+                        ) {
                             $isNaoAssumiu = true;
                         }
                     }
@@ -426,19 +500,24 @@
                         // determine badge class from actual status text or validation flag
                         if ($statusIndicatesValidated || $isValidated) {
                             $badgeClass = 'bg-success text-white';
-                        } elseif ($statusLower !== '' && (mb_stripos($statusLower, 'pendente', 0, 'UTF-8') !== false || mb_stripos($statusLower, 'pendentes', 0, 'UTF-8') !== false)) {
+                        } elseif (
+                            $statusLower !== '' &&
+                            (mb_stripos($statusLower, 'pendente', 0, 'UTF-8') !== false ||
+                                mb_stripos($statusLower, 'pendentes', 0, 'UTF-8') !== false)
+                        ) {
                             $badgeClass = 'bg-warning text-dark';
                         } else {
                             $badgeClass = 'bg-secondary text-white';
                         }
                     }
                 @endphp
-                        <span class="badge-status {{ $badgeClass }}" role="status" aria-label="Status: {{ $displayStatus }}">{{ $displayStatus }}</span>
+                <span class="badge-status {{ $badgeClass }}" role="status"
+                    aria-label="Status: {{ $displayStatus }}">{{ $displayStatus }}</span>
                 @php $user = optional(Auth::user()); @endphp
                 @php
                     $conv = session('filter_convocacao', request()->query('filter_convocacao', ''));
                     $conv = is_null($conv) ? '' : $conv;
-                    $backUrl = url('/ingresso') . ($conv !== '' ? ('?filter_convocacao=' . urlencode($conv)) : '');
+                    $backUrl = url('/ingresso') . ($conv !== '' ? '?filter_convocacao=' . urlencode($conv) : '');
                 @endphp
                 {{-- <a href="{{ $backUrl }}" class="btn btn-primary btn-sm" title="Voltar" aria-label="Voltar" style="border-radius:6px;padding:4px 8px;display:inline-flex;align-items:center;justify-content:center;margin-right:6px;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icon-tabler-arrow-left" aria-hidden="true" style="vertical-align:middle;margin-right:6px;"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12h14" /><path d="M5 12l6 6" /><path d="M5 12l6 -6" /></svg>
@@ -446,44 +525,52 @@
                 </a> --}}
                 @php $isIngressadoTop = isset($candidate['status']) && mb_strtolower(trim($candidate['status']), 'UTF-8') === 'apto para encaminhamento'; @endphp
                 @php $isCpm = isset($isCpm) ? $isCpm : (optional(Auth::user())->sector_id == 2 && optional(Auth::user())->profile_id == 1); @endphp
-                @if($isCpm)
+                @if ($isCpm)
                     <div class="dropdown">
-                        <button class="btn btn-primary btn-sm btn-options dropdown-toggle" type="button" id="candidateOptionsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="display:inline-flex;align-items:center;border-radius:5px;">
-                            <span><strong>AÇÕES</strong></span>
+                         <button class="btn btn-primary btn-sm btn-options dropdown-toggle" type="button" id="candidateOptionsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="display:inline-flex;align-items:center;border-radius:6px;padding:8px 12px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;opacity:0.95;vertical-align:middle;"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                            <span><strong style="letter-spacing:0.6px;">AÇÕES</strong></span>
                         </button>
-                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="candidateOptionsDropdown">
-                            @if($isNaoAssumiu)
-                                <a id="btn-reativar-candidato" class="dropdown-item btn btn-warning btn-sm" style="display:flex;align-items:center;gap:8px;">Reativar Candidato</a>
-                            @else
-                                @unless($isIngressadoTop)
-                                    <a id="btn-nao-assumiu" class="dropdown-item btn btn-danger btn-sm btn-nao-assumiu" style="display:flex;align-items:center;gap:8px;text-transform:uppercase;font-size:0.7rem;color:#dc3545!important;">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-off"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8.18 8.189a4.01 4.01 0 0 0 2.616 2.627m3.507 -.545a4 4 0 1 0 -5.59 -5.552" /><path d="M6 21v-2a4 4 0 0 1 4 -4h4c.412 0 .81 .062 1.183 .178m2.633 2.618c.12 .38 .184 .785 .184 1.204v2" /><path d="M3 3l18 18" /></svg>
-                                        Não Assumiu</a>
-                                @endunless
-                            @endif
+                        <ul class="dropdown-menu">
+                            <li class="mb-2">
+                                @if ($isNaoAssumiu)
+                                    <a class="bg-success text-white dropdown-item" id="btn-reativar-candidato" type="button">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-share"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h3" /><path d="M16 22l5 -5" /><path d="M21 21.5v-4.5h-4.5" /></svg>
+                                        Reativar Candidato
+                                    </a>
+                                @else
+                                    @unless ($isIngressadoTop)
+                                        <a class="bg-danger text-white dropdown-item" id="btn-nao-assumiu" type="button">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-off"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8.18 8.189a4.01 4.01 0 0 0 2.616 2.627m3.507 -.545a4 4 0 1 0 -5.59 -5.552" /><path d="M6 21v-2a4 4 0 0 1 4 -4h4c.412 0 .81 .062 1.183 .178m2.633 2.618c.12 .38 .184 .785 .184 1.204v2" /><path d="M3 3l18 18" /></svg>
+                                            Não Assumiu
+                                        </a>
+                                    @endunless
+                                @endif
+                            </li>
                             @php
                                 $docsValidatedTop = (isset($candidate['documentos_validados']) && ($candidate['documentos_validados'] == 1 || $candidate['documentos_validados'] === true)) || (isset($candidate['status']) && (mb_stripos($candidate['status'], 'valid', 0, 'UTF-8') !== false || mb_stripos($candidate['status'], 'apto', 0, 'UTF-8') !== false));
                                 $isIngressadoTop = isset($candidate['status']) && mb_strtolower(trim($candidate['status']), 'UTF-8') === 'apto para encaminhamento';
                             @endphp
-
-                            <div class="dropdown-divider"></div>
-
-                            @if($docsValidatedTop && ! $isIngressadoTop)
-                                <a id="btn-validar-ingresso" class="dropdown-item btn btn-success btn-sm" style="display:flex;align-items:center;gap:8px;text-transform:uppercase;font-size:0.7rem;color:#57b657!important;" {{ ($isNaoAssumiu ?? false) ? 'disabled' : '' }}>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-check"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h4" /><path d="M15 19l2 2l4 -4" /></svg>
-                                    APTO PARA ENCAMINHAMENTO</a>
-                            @endif
-
-                            @if($docsValidatedTop && $isIngressadoTop)
-                                <a id="btn-retirar-validacao-ingresso" class="dropdown-item btn text-danger btn-sm" style="display:flex;align-items:center;gap:8px;text-transform:uppercase;font-size:0.7rem;color:#dc3545!important;" {{ ($isNaoAssumiu ?? false) ? 'disabled' : '' }}>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-cancel"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h3.5" /><path d="M16 19a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /><path d="M17 21l4 -4" /></svg>
-                                    RETIRAR VALIDAÇÃO DE APTO
-                                </a>
-                            @endif
-                        </div>
+                            <li class="mb-2">
+                                @if ($docsValidatedTop && !$isIngressadoTop && !($isNaoAssumiu ?? false))
+                                    <a class="bg-success text-white dropdown-item" id="btn-validar-ingresso" type="button">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-check"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h4" /><path d="M15 19l2 2l4 -4" /></svg>
+                                        Apto para Encaminhamento
+                                    </a>
+                                @endif
+                            </li>
+                            <li>
+                                @if ($docsValidatedTop && $isIngressadoTop && !($isNaoAssumiu ?? false))
+                                    <a class="dropdown-item bg-danger text-white" id="btn-retirar-validacao-ingresso" type="button">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-cancel"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h3.5" /><path d="M16 19a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /><path d="M17 21l4 -4" /></svg>
+                                        Retirar Validação de Apto
+                                    </a>
+                                @endif
+                            </li>
+                        </ul>
                     </div>
                 @endif
-                
+
             </div>
         </div>
 
@@ -493,16 +580,38 @@
                     <div class="d-flex align-items-center justify-content-between">
                         <div class="section-title">Dados Principais</div>
                         @php
-                            $isIngressadoForButtons = isset($candidate['status']) && mb_strtolower(trim($candidate['status']), 'UTF-8') === 'apto para encaminhamento';
+                            $isIngressadoForButtons =
+                                isset($candidate['status']) &&
+                                mb_strtolower(trim($candidate['status']), 'UTF-8') === 'apto para encaminhamento';
                         @endphp
                         <div>
-                            <button id="btn-edit-dados" type="button" class="btn btn-sm btn-primary" style="border-radius:5px; display:inline-flex; align-items:center; justify-content:center; padding:5px !important;" {{ ($isIngressadoForButtons || ($isNaoAssumiu ?? false)) ? 'disabled' : '' }}>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-edit"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" /><path d="M16 5l3 3" /></svg>
+                            <button id="btn-edit-dados" type="button" class="btn btn-sm btn-primary"
+                                style="border-radius:5px; display:inline-flex; align-items:center; justify-content:center; padding:5px !important;"
+                                {{ $isIngressadoForButtons || ($isNaoAssumiu ?? false) ? 'disabled' : '' }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-edit">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                    <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" />
+                                    <path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" />
+                                    <path d="M16 5l3 3" />
+                                </svg>
                             </button>
-                            <button id="btn-save-dados" type="button" class="btn btn-sm btn-primary" style="display:none; border-radius:5px; padding:5px !important; align-items:center; justify-content:center;" {{ ($isNaoAssumiu ?? false) ? 'disabled' : '' }}>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-device-floppy"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 4h10l4 4v10a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2" /><path d="M10 14a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M14 4l0 4l-6 0l0 -4" /></svg>
+                            <button id="btn-save-dados" type="button" class="btn btn-sm btn-primary"
+                                style="display:none; border-radius:5px; padding:5px !important; align-items:center; justify-content:center;"
+                                {{ $isNaoAssumiu ?? false ? 'disabled' : '' }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    class="icon icon-tabler icons-tabler-outline icon-tabler-device-floppy">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                    <path d="M6 4h10l4 4v10a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2" />
+                                    <path d="M10 14a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                                    <path d="M14 4l0 4l-6 0l0 -4" />
+                                </svg>
                             </button>
-                            <button id="btn-cancel-dados" type="button" class="btn btn-sm btn-link text-secondary" style="display:none;" {{ ($isNaoAssumiu ?? false) ? 'disabled' : '' }}>Cancelar</button>
+                            <button id="btn-cancel-dados" type="button" class="btn btn-sm btn-link text-secondary"
+                                style="display:none;" {{ $isNaoAssumiu ?? false ? 'disabled' : '' }}>Cancelar</button>
                         </div>
                     </div>
                     <div class="table-responsive">
@@ -544,13 +653,20 @@
                                         }
                                         // format common date keys to Brazilian format (d/m/Y)
                                         try {
-                                            if (preg_match('/(^|_)data/i', $key) || preg_match('/_at$/i', $key) || preg_match('/date/i', $key)) {
+                                            if (
+                                                preg_match('/(^|_)data/i', $key) ||
+                                                preg_match('/_at$/i', $key) ||
+                                                preg_match('/date/i', $key)
+                                            ) {
                                                 // try using Carbon if available
                                                 if (class_exists('\Carbon\Carbon')) {
                                                     try {
                                                         $d = \Carbon\Carbon::parse($val);
                                                         $d->setTimezone('America/Sao_Paulo');
-                                                        if ((int) $d->format('H') !== 0 || strpos((string)$val, ':') !== false) {
+                                                        if (
+                                                            (int) $d->format('H') !== 0 ||
+                                                            strpos((string) $val, ':') !== false
+                                                        ) {
                                                             return $d->format('d/m/Y H:i');
                                                         }
                                                         return $d->format('d/m/Y');
@@ -577,7 +693,8 @@
                                 @foreach ($primaryKeys as $k)
                                     @if (array_key_exists($k, $candidate))
                                         <tr data-key="{{ $k }}">
-                                            <th class="label-cell">{{ $map[$k] ?? ucwords(str_replace(['_', 'id'], [' ', ''], $k)) }}</th>
+                                            <th class="label-cell">
+                                                {{ $map[$k] ?? ucwords(str_replace(['_', 'id'], [' ', ''], $k)) }}</th>
                                             <td class="value-cell">{{ $renderField($k) }}</td>
                                         </tr>
                                         @php $rendered[] = $k; @endphp
@@ -587,11 +704,12 @@
                                 {{-- Button to toggle remaining fields --}}
                                 <tr>
                                     <td colspan="2" style="padding-top:0.25rem;padding-bottom:0.75rem;">
-                                        <button id="btnToggleMore" class="btn-more" type="button" data-toggle="collapse"
-                                            data-target="#moreFields" aria-expanded="false" aria-controls="moreFields">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon-chevron" viewBox="0 0 24 24"
-                                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                                stroke-linejoin="round">
+                                        <button id="btnToggleMore" class="btn-more" type="button"
+                                            data-toggle="collapse" data-target="#moreFields" aria-expanded="false"
+                                            aria-controls="moreFields">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon-chevron"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                 <polyline points="6 9 12 15 18 9"></polyline>
                                             </svg>
                                             <span>Ver mais informações</span>
@@ -608,14 +726,14 @@
                                                     @php
                                                         // Allow the controller/view to specify exactly which columns
                                                         // should be shown and their display names.
-                                                        $colsToShow = $visibleColumns ?? $columns ?? [];
+                                                        $colsToShow = $visibleColumns ?? ($columns ?? []);
                                                         $columnNames = $columnNames ?? [];
                                                     @endphp
                                                     @foreach ($colsToShow as $col)
                                                         @if (!in_array($col, $rendered))
                                                             <tr data-key="{{ $col }}">
                                                                 <th class="label-cell">
-                                                                    {{ $columnNames[$col] ?? $map[$col] ?? ucwords(str_replace(['_', 'id'], [' ', ''], $col)) }}
+                                                                    {{ $columnNames[$col] ?? ($map[$col] ?? ucwords(str_replace(['_', 'id'], [' ', ''], $col))) }}
                                                                 </th>
                                                                 <td class="value-cell">{{ $renderField($col) }}</td>
                                                             </tr>
@@ -644,7 +762,13 @@
                             @php
                                 $serverDocs = $documentList ?? [];
                                 $existingDocs = $existingDocuments ?? [];
-                                $docsValidated = (isset($candidate['documentos_validados']) && ($candidate['documentos_validados'] == 1 || $candidate['documentos_validados'] === true)) || (isset($candidate['status']) && (mb_stripos($candidate['status'], 'valid', 0, 'UTF-8') !== false || mb_stripos($candidate['status'], 'apto', 0, 'UTF-8') !== false));
+                                $docsValidated =
+                                    (isset($candidate['documentos_validados']) &&
+                                        ($candidate['documentos_validados'] == 1 ||
+                                            $candidate['documentos_validados'] === true)) ||
+                                    (isset($candidate['status']) &&
+                                        (mb_stripos($candidate['status'], 'valid', 0, 'UTF-8') !== false ||
+                                            mb_stripos($candidate['status'], 'apto', 0, 'UTF-8') !== false));
                             @endphp
                             @if (is_array($serverDocs) && count($serverDocs))
                                 @foreach ($serverDocs as $doc)
@@ -654,14 +778,18 @@
                                         $isChecked =
                                             isset($existingDocs[$k]) &&
                                             (!empty($existingDocs[$k]['validated']) || $existingDocs[$k] === true);
-                                        $sexoRaw = $candidate['sexo'] ?? $candidate['sex'] ?? '';
+                                        $sexoRaw = $candidate['sexo'] ?? ($candidate['sex'] ?? '');
                                         $sexo = is_string($sexoRaw) ? mb_strtolower(trim($sexoRaw), 'UTF-8') : '';
                                         $isMale = $sexo !== '' && mb_substr($sexo, 0, 1, 'UTF-8') === 'm';
                                         // detect if candidate is registered in PIS/PASEP
-                                        $hasPis = !empty($candidate['pis_pasep'] ?? $candidate['pis'] ?? null);
+                                        $hasPis = !empty($candidate['pis_pasep'] ?? ($candidate['pis'] ?? null));
 
                                         // Skip reservista item for non-male candidates
-                                        if ((mb_stripos($lbl, 'reservista', 0, 'UTF-8') !== false || mb_stripos((string)$k, 'certificado_militar', 0, 'UTF-8') !== false) && !$isMale) {
+                                        if (
+                                            (mb_stripos($lbl, 'reservista', 0, 'UTF-8') !== false ||
+                                                mb_stripos((string) $k, 'certificado_militar', 0, 'UTF-8') !== false) &&
+                                            !$isMale
+                                        ) {
                                             continue;
                                         }
 
@@ -673,67 +801,119 @@
                                             mb_stripos($lbl, 'cpf', 0, 'UTF-8') !== false ||
                                             mb_stripos($lbl, 'rg', 0, 'UTF-8') !== false ||
                                             mb_stripos($lbl, 'certid', 0, 'UTF-8') !== false ||
-                                            mb_stripos((string)$k, 'diploma', 0, 'UTF-8') !== false ||
-                                            mb_stripos((string)$k, 'historico', 0, 'UTF-8') !== false ||
-                                            mb_stripos((string)$k, 'cpf', 0, 'UTF-8') !== false ||
-                                            mb_stripos((string)$k, 'rg', 0, 'UTF-8') !== false ||
-                                            mb_stripos((string)$k, 'certidao', 0, 'UTF-8') !== false ||
+                                            mb_stripos((string) $k, 'diploma', 0, 'UTF-8') !== false ||
+                                            mb_stripos((string) $k, 'historico', 0, 'UTF-8') !== false ||
+                                            mb_stripos((string) $k, 'cpf', 0, 'UTF-8') !== false ||
+                                            mb_stripos((string) $k, 'rg', 0, 'UTF-8') !== false ||
+                                            mb_stripos((string) $k, 'certidao', 0, 'UTF-8') !== false ||
                                             // specifically require Banco do Brasil comprovante
                                             mb_stripos($lbl, 'banco do brasil', 0, 'UTF-8') !== false ||
-                                            (mb_stripos($lbl, 'comprovante', 0, 'UTF-8') !== false && mb_stripos($lbl, 'banco', 0, 'UTF-8') !== false && mb_stripos($lbl, 'brasil', 0, 'UTF-8') !== false) ||
-                                            (mb_stripos((string)$k, 'banco', 0, 'UTF-8') !== false && mb_stripos((string)$k, 'brasil', 0, 'UTF-8') !== false) ||
+                                            (mb_stripos($lbl, 'comprovante', 0, 'UTF-8') !== false &&
+                                                mb_stripos($lbl, 'banco', 0, 'UTF-8') !== false &&
+                                                mb_stripos($lbl, 'brasil', 0, 'UTF-8') !== false) ||
+                                            (mb_stripos((string) $k, 'banco', 0, 'UTF-8') !== false &&
+                                                mb_stripos((string) $k, 'brasil', 0, 'UTF-8') !== false) ||
                                             // require Comprovante de Residência explicitly
-                                            mb_stripos($lbl, 'comprovante de resid', 0, 'UTF-8') !== false || mb_stripos((string)$k, 'comprovante_residencia', 0, 'UTF-8') !== false ||
+                                            mb_stripos($lbl, 'comprovante de resid', 0, 'UTF-8') !== false ||
+                                            mb_stripos((string) $k, 'comprovante_residencia', 0, 'UTF-8') !== false ||
                                             // require comprovante de votação dos dois últimos pleitos
                                             mb_stripos($lbl, 'vot', 0, 'UTF-8') !== false ||
                                             mb_stripos($lbl, 'pleit', 0, 'UTF-8') !== false ||
-                                            mb_stripos((string)$k, 'vot', 0, 'UTF-8') !== false ||
-                                            mb_stripos((string)$k, 'pleit', 0, 'UTF-8') !== false
+                                            mb_stripos((string) $k, 'vot', 0, 'UTF-8') !== false ||
+                                            mb_stripos((string) $k, 'pleit', 0, 'UTF-8') !== false ||
                                             // require PIS/PASEP (original + copy) only if candidate is inscrito
-                                            || ((mb_stripos($lbl, 'pis', 0, 'UTF-8') !== false || mb_stripos($lbl, 'pasep', 0, 'UTF-8') !== false || mb_stripos((string)$k, 'pis', 0, 'UTF-8') !== false || mb_stripos((string)$k, 'pasep', 0, 'UTF-8') !== false) && $hasPis)
+                                            ((mb_stripos($lbl, 'pis', 0, 'UTF-8') !== false ||
+                                                mb_stripos($lbl, 'pasep', 0, 'UTF-8') !== false ||
+                                                mb_stripos((string) $k, 'pis', 0, 'UTF-8') !== false ||
+                                                mb_stripos((string) $k, 'pasep', 0, 'UTF-8') !== false) &&
+                                                $hasPis) ||
                                             // require Carteira de Trabalho (original + copy)
-                                            || mb_stripos($lbl, 'carteira', 0, 'UTF-8') !== false || mb_stripos($lbl, 'carteira de trabalho', 0, 'UTF-8') !== false || mb_stripos((string)$k, 'carteira', 0, 'UTF-8') !== false || mb_stripos((string)$k, 'ctps', 0, 'UTF-8') !== false
+                                            mb_stripos($lbl, 'carteira', 0, 'UTF-8') !== false ||
+                                            mb_stripos($lbl, 'carteira de trabalho', 0, 'UTF-8') !== false ||
+                                            mb_stripos((string) $k, 'carteira', 0, 'UTF-8') !== false ||
+                                            mb_stripos((string) $k, 'ctps', 0, 'UTF-8') !== false ||
                                             // require Ficha de Cadastro (original)
-                                            || mb_stripos($lbl, 'ficha de cadastro', 0, 'UTF-8') !== false || mb_stripos((string)$k, 'ficha_cadastro', 0, 'UTF-8') !== false || mb_stripos($lbl, 'etnia', 0, 'UTF-8') !== false || mb_stripos((string)$k, 'declaracao_etnia', 0, 'UTF-8') !== false || mb_stripos($lbl, 'benefic', 0, 'UTF-8') !== false || mb_stripos($lbl, 'inss', 0, 'UTF-8') !== false || mb_stripos((string)$k, 'declaracao_beneficio', 0, 'UTF-8') !== false || mb_stripos((string)$k, 'declaracao_beneficio_inss', 0, 'UTF-8') !== false || mb_stripos($lbl, 'bens', 0, 'UTF-8') !== false || mb_stripos((string)$k, 'declaracao_bens', 0, 'UTF-8') !== false || mb_stripos($lbl, 'acumul', 0, 'UTF-8') !== false || mb_stripos((string)$k, 'declaracao_acumulacao', 0, 'UTF-8') !== false || mb_stripos($lbl, 'aso', 0, 'UTF-8') !== false || mb_stripos($lbl, 'atestado', 0, 'UTF-8') !== false || mb_stripos($lbl, 'saude ocup', 0, 'UTF-8') !== false || mb_stripos((string)$k, 'aso', 0, 'UTF-8') !== false || mb_stripos((string)$k, 'atestado', 0, 'UTF-8') !== false || mb_stripos((string)$k, 'atestado_saude', 0, 'UTF-8') !== false
+                                            mb_stripos($lbl, 'ficha de cadastro', 0, 'UTF-8') !== false ||
+                                            mb_stripos((string) $k, 'ficha_cadastro', 0, 'UTF-8') !== false ||
+                                            mb_stripos($lbl, 'etnia', 0, 'UTF-8') !== false ||
+                                            mb_stripos((string) $k, 'declaracao_etnia', 0, 'UTF-8') !== false ||
+                                            mb_stripos($lbl, 'benefic', 0, 'UTF-8') !== false ||
+                                            mb_stripos($lbl, 'inss', 0, 'UTF-8') !== false ||
+                                            mb_stripos((string) $k, 'declaracao_beneficio', 0, 'UTF-8') !== false ||
+                                            mb_stripos((string) $k, 'declaracao_beneficio_inss', 0, 'UTF-8') !==
+                                                false ||
+                                            mb_stripos($lbl, 'bens', 0, 'UTF-8') !== false ||
+                                            mb_stripos((string) $k, 'declaracao_bens', 0, 'UTF-8') !== false ||
+                                            mb_stripos($lbl, 'acumul', 0, 'UTF-8') !== false ||
+                                            mb_stripos((string) $k, 'declaracao_acumulacao', 0, 'UTF-8') !== false ||
+                                            mb_stripos($lbl, 'aso', 0, 'UTF-8') !== false ||
+                                            mb_stripos($lbl, 'atestado', 0, 'UTF-8') !== false ||
+                                            mb_stripos($lbl, 'saude ocup', 0, 'UTF-8') !== false ||
+                                            mb_stripos((string) $k, 'aso', 0, 'UTF-8') !== false ||
+                                            mb_stripos((string) $k, 'atestado', 0, 'UTF-8') !== false ||
+                                            mb_stripos((string) $k, 'atestado_saude', 0, 'UTF-8') !== false
                                         ) {
                                             $isRequired = true;
                                             // but exclude documents clearly about dependents (e.g., 'dependente', 'filho')
-                                            if (mb_stripos($lbl, 'depend', 0, 'UTF-8') !== false || mb_stripos($lbl, 'filho', 0, 'UTF-8') !== false || mb_stripos((string)$k, 'depend', 0, 'UTF-8') !== false) {
+                                            if (
+                                                mb_stripos($lbl, 'depend', 0, 'UTF-8') !== false ||
+                                                mb_stripos($lbl, 'filho', 0, 'UTF-8') !== false ||
+                                                mb_stripos((string) $k, 'depend', 0, 'UTF-8') !== false
+                                            ) {
                                                 $isRequired = false;
                                             }
                                         }
 
                                         // Additional required document check: Certidão Negativa do Cadastro Nacional de Condenações Civeis
-                                        if (! $isRequired) {
+                                        if (!$isRequired) {
                                             if (
                                                 mb_stripos($lbl, 'negativa', 0, 'UTF-8') !== false ||
                                                 mb_stripos($lbl, 'condena', 0, 'UTF-8') !== false ||
-                                                mb_stripos((string)$k, 'certidao_negativa', 0, 'UTF-8') !== false ||
-                                                mb_stripos((string)$k, 'condenacoes', 0, 'UTF-8') !== false ||
-                                                mb_stripos((string)$k, 'certidao_negativa_condenacoes', 0, 'UTF-8') !== false ||
+                                                mb_stripos((string) $k, 'certidao_negativa', 0, 'UTF-8') !== false ||
+                                                mb_stripos((string) $k, 'condenacoes', 0, 'UTF-8') !== false ||
+                                                mb_stripos((string) $k, 'certidao_negativa_condenacoes', 0, 'UTF-8') !==
+                                                    false ||
                                                 mb_stripos($lbl, 'eleitoral', 0, 'UTF-8') !== false ||
-                                                mb_stripos((string)$k, 'justica_eleitoral', 0, 'UTF-8') !== false ||
-                                                mb_stripos((string)$k, 'certidao_negativa_justica_eleitoral', 0, 'UTF-8') !== false ||
+                                                mb_stripos((string) $k, 'justica_eleitoral', 0, 'UTF-8') !== false ||
+                                                mb_stripos(
+                                                    (string) $k,
+                                                    'certidao_negativa_justica_eleitoral',
+                                                    0,
+                                                    'UTF-8',
+                                                ) !== false ||
                                                 mb_stripos($lbl, 'militar', 0, 'UTF-8') !== false ||
                                                 mb_stripos($lbl, 'militar federal', 0, 'UTF-8') !== false ||
-                                                mb_stripos((string)$k, 'justica_militar', 0, 'UTF-8') !== false ||
-                                                mb_stripos((string)$k, 'justica_militar_federal', 0, 'UTF-8') !== false ||
-                                                mb_stripos((string)$k, 'certidao_negativa_justica_militar_federal', 0, 'UTF-8') !== false
+                                                mb_stripos((string) $k, 'justica_militar', 0, 'UTF-8') !== false ||
+                                                mb_stripos((string) $k, 'justica_militar_federal', 0, 'UTF-8') !==
+                                                    false ||
+                                                mb_stripos(
+                                                    (string) $k,
+                                                    'certidao_negativa_justica_militar_federal',
+                                                    0,
+                                                    'UTF-8',
+                                                ) !== false
                                             ) {
                                                 $isRequired = true;
                                             }
                                         }
-                                            // Título de Eleitor / Quitação Eleitoral intentionally ignored for required-check
-
+                                        // Título de Eleitor / Quitação Eleitoral intentionally ignored for required-check
 
                                         // Additional required document check: Antecedentes Polícia Federal (estados últimos 8 anos)
-                                        if (! $isRequired) {
+                                        if (!$isRequired) {
                                             if (
-                                                (mb_stripos($lbl, 'antecedentes', 0, 'UTF-8') !== false && (mb_stripos($lbl, 'polic', 0, 'UTF-8') !== false || mb_stripos($lbl, 'federal', 0, 'UTF-8') !== false)) ||
-                                                mb_stripos((string)$k, 'antecedentes_pf', 0, 'UTF-8') !== false ||
-                                                mb_stripos((string)$k, 'policia_federal', 0, 'UTF-8') !== false ||
-                                                mb_stripos((string)$k, 'antecedentes_policia_federal', 0, 'UTF-8') !== false ||
-                                                mb_stripos((string)$k, 'antecedentes_pf_estados_8_anos', 0, 'UTF-8') !== false
+                                                (mb_stripos($lbl, 'antecedentes', 0, 'UTF-8') !== false &&
+                                                    (mb_stripos($lbl, 'polic', 0, 'UTF-8') !== false ||
+                                                        mb_stripos($lbl, 'federal', 0, 'UTF-8') !== false)) ||
+                                                mb_stripos((string) $k, 'antecedentes_pf', 0, 'UTF-8') !== false ||
+                                                mb_stripos((string) $k, 'policia_federal', 0, 'UTF-8') !== false ||
+                                                mb_stripos((string) $k, 'antecedentes_policia_federal', 0, 'UTF-8') !==
+                                                    false ||
+                                                mb_stripos(
+                                                    (string) $k,
+                                                    'antecedentes_pf_estados_8_anos',
+                                                    0,
+                                                    'UTF-8',
+                                                ) !== false
                                             ) {
                                                 $isRequired = true;
                                             }
@@ -742,22 +922,20 @@
 
                                     @php
                                         // Additional required document check: Certidões de Foros Criminais (Federal / Estadual)
-                                        if (! $isRequired) {
+                                        if (!$isRequired) {
                                             if (
-                                                (
-                                                    mb_stripos($lbl, 'foro', 0, 'UTF-8') !== false ||
+                                                (mb_stripos($lbl, 'foro', 0, 'UTF-8') !== false ||
                                                     mb_stripos($lbl, 'foros', 0, 'UTF-8') !== false ||
                                                     mb_stripos($lbl, 'foro criminal', 0, 'UTF-8') !== false ||
                                                     mb_stripos($lbl, 'foros criminais', 0, 'UTF-8') !== false ||
                                                     mb_stripos($lbl, 'distribu', 0, 'UTF-8') !== false ||
-                                                    mb_stripos($lbl, 'criminal', 0, 'UTF-8') !== false
-                                                ) && (
-                                                    mb_stripos($lbl, 'federal', 0, 'UTF-8') !== false ||
+                                                    mb_stripos($lbl, 'criminal', 0, 'UTF-8') !== false) &&
+                                                (mb_stripos($lbl, 'federal', 0, 'UTF-8') !== false ||
                                                     mb_stripos($lbl, 'estadual', 0, 'UTF-8') !== false ||
-                                                    mb_stripos((string)$k, 'foros_federal', 0, 'UTF-8') !== false ||
-                                                    mb_stripos((string)$k, 'foros_estadual', 0, 'UTF-8') !== false ||
-                                                    mb_stripos((string)$k, 'certidao_negativa_foros', 0, 'UTF-8') !== false
-                                                )
+                                                    mb_stripos((string) $k, 'foros_federal', 0, 'UTF-8') !== false ||
+                                                    mb_stripos((string) $k, 'foros_estadual', 0, 'UTF-8') !== false ||
+                                                    mb_stripos((string) $k, 'certidao_negativa_foros', 0, 'UTF-8') !==
+                                                        false)
                                             ) {
                                                 $isRequired = true;
                                             }
@@ -767,34 +945,82 @@
                                     <div class="form-check mb-1 d-flex align-items-center justify-content-between">
                                         <div class="d-flex align-items-center">
                                             <input class="form-check-input" type="checkbox" value=""
-                                                id="doc_{{ $k }}" data-key="{{ $k }}" data-required="{{ $isRequired ? '1' : '0' }}"
-                                                {{ $isChecked ? 'checked' : '' }} {{ ($docsValidated || ($isNaoAssumiu ?? false)) ? 'disabled' : '' }}>
-                                            <label class="form-check-label ms-2" for="doc_{{ $k }}">{{ $lbl }}@if($isRequired) <span class="text-danger">*</span>@endif
+                                                id="doc_{{ $k }}" data-key="{{ $k }}"
+                                                data-required="{{ $isRequired ? '1' : '0' }}"
+                                                {{ $isChecked ? 'checked' : '' }}
+                                                {{ $docsValidated || ($isNaoAssumiu ?? false) ? 'disabled' : '' }}>
+                                            <label class="form-check-label ms-2"
+                                                for="doc_{{ $k }}">{{ $lbl }}@if ($isRequired)
+                                                    <span class="text-danger">*</span>
+                                                @endif
                                                 @php $rep = $existingDocs[$k] ?? null; @endphp
-                                                @if(is_array($rep) && !empty($rep['report']))
+                                                @if (is_array($rep) && !empty($rep['report']))
                                                     @php $rstatus = intval($rep['report']); @endphp
-                                                    @if($rstatus === 2)
-                                                        <span class="text-success issue-badge ms-2 small" title="{{ $rep['report_description'] ?? 'Problema resolvido pelo NTE' }}">Problema resolvido pelo NTE</span>
+                                                    @if ($rstatus === 2)
+                                                        <span class="text-success issue-badge ms-2 small"
+                                                            title="{{ $rep['report_description'] ?? 'Problema resolvido pelo NTE' }}">Problema
+                                                            resolvido pelo NTE</span>
                                                     @else
-                                                        <span class="text-danger issue-badge ms-2 small" title="{{ $rep['report_description'] ?? 'Problema reportado' }}">Problema reportado</span>
+                                                        <span class="text-danger issue-badge ms-2 small"
+                                                            title="{{ $rep['report_description'] ?? 'Problema reportado' }}">Problema
+                                                            reportado</span>
                                                     @endif
                                                 @endif
                                             </label>
                                         </div>
                                         @php
-                                            $isCpmLocal = (optional(Auth::user())->sector_id == 2 && optional(Auth::user())->profile_id == 1);
-                                            $isNteLocal = (optional(Auth::user())->sector_id == 7 && optional(Auth::user())->profile_id == 1);
+                                            $isCpmLocal =
+                                                optional(Auth::user())->sector_id == 2 &&
+                                                optional(Auth::user())->profile_id == 1;
+                                            $isNteLocal =
+                                                optional(Auth::user())->sector_id == 7 &&
+                                                optional(Auth::user())->profile_id == 1;
                                             $rep = $existingDocs[$k] ?? null;
-                                            $candidateDocsValidatedLocal = (isset($candidate['documentos_validados']) && ($candidate['documentos_validados'] == 1 || $candidate['documentos_validados'] === true)) || (isset($candidate['status']) && (mb_stripos($candidate['status'], 'valid', 0, 'UTF-8') !== false || mb_stripos($candidate['status'], 'apto', 0, 'UTF-8') !== false));
+                                            $candidateDocsValidatedLocal =
+                                                (isset($candidate['documentos_validados']) &&
+                                                    ($candidate['documentos_validados'] == 1 ||
+                                                        $candidate['documentos_validados'] === true)) ||
+                                                (isset($candidate['status']) &&
+                                                    (mb_stripos($candidate['status'], 'valid', 0, 'UTF-8') !== false ||
+                                                        mb_stripos($candidate['status'], 'apto', 0, 'UTF-8') !==
+                                                            false));
                                         @endphp
-                                        @if ($isCpmLocal && ! $candidateDocsValidatedLocal)
-                                            <button type="button" class="btn btn-sm btn-outline-danger btn-report-issue" style="border-radius:5px;" data-key="{{ $k }}" data-label="{{ e($lbl) }}" title="Reportar problema" {{ ($isNaoAssumiu ?? false) ? 'disabled' : '' }}>
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                                        @if ($isCpmLocal && !$candidateDocsValidatedLocal)
+                                            <button type="button" class="btn btn-sm btn-outline-danger btn-report-issue"
+                                                style="border-radius:5px;" data-key="{{ $k }}"
+                                                data-label="{{ e($lbl) }}" title="Reportar problema"
+                                                {{ $isNaoAssumiu ?? false ? 'disabled' : '' }}>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    style="vertical-align:middle">
+                                                    <path
+                                                        d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
+                                                    </path>
+                                                    <line x1="12" y1="9" x2="12" y2="13">
+                                                    </line>
+                                                    <line x1="12" y1="17" x2="12.01" y2="17">
+                                                    </line>
+                                                </svg>
                                             </button>
                                         @endif
                                         @if ($isNteLocal && is_array($rep) && isset($rep['report']) && intval($rep['report']) === 1)
-                                            <button type="button" class="btn btn-sm btn-outline-info btn-view-report" style="border-radius:5px;" data-key="{{ $k }}" data-label="{{ e($lbl) }}" data-desc="{{ e($rep['report_description'] ?? '') }}" title="Ver descrição do report" {{ ($isNaoAssumiu ?? false) ? 'disabled' : '' }}>
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                                            <button type="button" class="btn btn-sm btn-outline-info btn-view-report"
+                                                style="border-radius:5px;" data-key="{{ $k }}"
+                                                data-label="{{ e($lbl) }}"
+                                                data-desc="{{ e($rep['report_description'] ?? '') }}"
+                                                title="Ver descrição do report"
+                                                {{ $isNaoAssumiu ?? false ? 'disabled' : '' }}>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    style="vertical-align:middle">
+                                                    <circle cx="12" cy="12" r="10"></circle>
+                                                    <line x1="12" y1="16" x2="12" y2="12">
+                                                    </line>
+                                                    <line x1="12" y1="8" x2="12.01" y2="8">
+                                                    </line>
+                                                </svg>
                                             </button>
                                         @endif
                                     </div>
@@ -802,41 +1028,66 @@
                             @endif
                         </div>
                         @php
-                            $isNte = (optional(Auth::user())->sector_id == 7 && optional(Auth::user())->profile_id == 1);
-                            $isCpm = (optional(Auth::user())->sector_id == 2 && optional(Auth::user())->profile_id == 1);
+                            $isNte = optional(Auth::user())->sector_id == 7 && optional(Auth::user())->profile_id == 1;
+                            $isCpm = optional(Auth::user())->sector_id == 2 && optional(Auth::user())->profile_id == 1;
                             // detect if any existing document has a report
                             $hasReports = false;
                             if (is_array($existingDocs) && count($existingDocs)) {
                                 foreach ($existingDocs as $_ed) {
-                                    if (is_array($_ed) && !empty($_ed['report'])) { $hasReports = true; break; }
+                                    if (is_array($_ed) && !empty($_ed['report'])) {
+                                        $hasReports = true;
+                                        break;
+                                    }
                                 }
                             }
                         @endphp
                         @if ($isNte)
                             <div class="d-grid mb-2">
-                                <button id="nte-none-selected" class="btn btn-secondary btn-action" disabled>Nenhum Documento Selecionado</button>
+                                <button id="nte-none-selected" class="btn btn-secondary btn-action" disabled>Nenhum
+                                    Documento Selecionado</button>
                             </div>
                         @endif
                         @if ($isCpm)
                             @php
-                                $docsValidated = (isset($candidate['documentos_validados']) && ($candidate['documentos_validados'] == 1 || $candidate['documentos_validados'] === true)) || (isset($candidate['status']) && (mb_stripos($candidate['status'], 'valid', 0, 'UTF-8') !== false || mb_stripos($candidate['status'], 'apto', 0, 'UTF-8') !== false));
-                                $isIngressadoForButtons = isset($candidate['status']) && mb_strtolower(trim($candidate['status']), 'UTF-8') === 'apto para encaminhamento';
+                                $docsValidated =
+                                    (isset($candidate['documentos_validados']) &&
+                                        ($candidate['documentos_validados'] == 1 ||
+                                            $candidate['documentos_validados'] === true)) ||
+                                    (isset($candidate['status']) &&
+                                        (mb_stripos($candidate['status'], 'valid', 0, 'UTF-8') !== false ||
+                                            mb_stripos($candidate['status'], 'apto', 0, 'UTF-8') !== false));
+                                $isIngressadoForButtons =
+                                    isset($candidate['status']) &&
+                                    mb_strtolower(trim($candidate['status']), 'UTF-8') === 'apto para encaminhamento';
                             @endphp
                             <div class="d-flex gap-2 mb-2">
                                 @if ($docsValidated)
-                                    <button type="button" id="btn-validar-documentos-cpm" data-validated="1" class="btn btn-danger btn-action me-2 mr-2" {{ ($isIngressadoForButtons || ($isNaoAssumiu ?? false)) ? 'disabled' : '' }}>Retirar Validação dos Documentos</button>
-                                    <button type="button" id="btn-return-to-nte" class="btn btn-warning btn-action" style="border-radius:5px;" {{ (($hasReports && ! $isIngressadoForButtons) && !($isNaoAssumiu ?? false)) ? '' : 'disabled' }}>Retornar para o NTE</button>
+                                    <button type="button" id="btn-validar-documentos-cpm" data-validated="1"
+                                        class="btn btn-danger btn-action me-2 mr-2"
+                                        {{ $isIngressadoForButtons || ($isNaoAssumiu ?? false) ? 'disabled' : '' }}>Retirar
+                                        Validação dos Documentos</button>
+                                    <button type="button" id="btn-return-to-nte" class="btn btn-warning btn-action"
+                                        style="border-radius:5px;"
+                                        {{ $hasReports && !$isIngressadoForButtons && !($isNaoAssumiu ?? false) ? '' : 'disabled' }}>Retornar
+                                        para o NTE</button>
                                 @else
-                                    <button type="button" id="btn-validar-documentos-cpm" class="btn btn-success btn-action me-2 mr-2" {{ ($isIngressadoForButtons || ($isNaoAssumiu ?? false)) ? 'disabled' : '' }}>Validar documentação</button>
-                                    <button type="button" id="btn-return-to-nte" class="btn btn-warning btn-action" style="border-radius:5px;" {{ (($hasReports && ! $isIngressadoForButtons) && !($isNaoAssumiu ?? false)) ? '' : 'disabled' }}>Retornar para o NTE</button>
+                                    <button type="button" id="btn-validar-documentos-cpm"
+                                        class="btn btn-success btn-action me-2 mr-2"
+                                        {{ $isIngressadoForButtons || ($isNaoAssumiu ?? false) ? 'disabled' : '' }}>Validar
+                                        documentação</button>
+                                    <button type="button" id="btn-return-to-nte" class="btn btn-warning btn-action"
+                                        style="border-radius:5px;"
+                                        {{ $hasReports && !$isIngressadoForButtons && !($isNaoAssumiu ?? false) ? '' : 'disabled' }}>Retornar
+                                        para o NTE</button>
                                 @endif
                             </div>
                             <script>
                                 document.addEventListener('DOMContentLoaded', function() {
-                                        try {
+                                    try {
                                         const cpmBtn = document.getElementById('btn-validar-documentos-cpm');
                                         if (!cpmBtn) return;
-                                        const requiredChecks = Array.from(document.querySelectorAll('#document-list .form-check-input[data-required="1"]'));
+                                        const requiredChecks = Array.from(document.querySelectorAll(
+                                            '#document-list .form-check-input[data-required="1"]'));
 
                                         function updateCpmBtn() {
                                             const anyMissing = requiredChecks.length ? requiredChecks.some(chk => !chk.checked) : false;
@@ -845,7 +1096,14 @@
                                             } else {
                                                 cpmBtn.disabled = anyMissing;
                                             }
-                                            try { console.log('CPM update:', { requiredCount: requiredChecks.length, anyMissing: anyMissing, validatedFlag: cpmBtn.dataset.validated, disabled: cpmBtn.disabled }); } catch(e) {}
+                                            try {
+                                                console.log('CPM update:', {
+                                                    requiredCount: requiredChecks.length,
+                                                    anyMissing: anyMissing,
+                                                    validatedFlag: cpmBtn.dataset.validated,
+                                                    disabled: cpmBtn.disabled
+                                                });
+                                            } catch (e) {}
                                         }
 
                                         requiredChecks.forEach(chk => chk.addEventListener('change', updateCpmBtn));
@@ -858,9 +1116,10 @@
                                     try {
                                         const btnReturn = document.getElementById('btn-return-to-nte');
                                         const candidateId = '{{ $candidate['id'] ?? ($candidate['num_inscricao'] ?? '') }}';
-                                        const csrf = (document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '{{ csrf_token() }}');
+                                        const csrf = (document.querySelector('meta[name="csrf-token"]') ? document.querySelector(
+                                            'meta[name="csrf-token"]').getAttribute('content') : '{{ csrf_token() }}');
                                         if (btnReturn) {
-                                            btnReturn.addEventListener('click', async function(){
+                                            btnReturn.addEventListener('click', async function() {
                                                 if (btnReturn.disabled) return;
                                                 const confirmed = await Swal.fire({
                                                     title: 'Retornar documentação ao NTE?',
@@ -881,23 +1140,50 @@
                                                             'X-Requested-With': 'XMLHttpRequest',
                                                             'Accept': 'application/json'
                                                         },
-                                                        body: JSON.stringify({ return_to_nte: true })
+                                                        body: JSON.stringify({
+                                                            return_to_nte: true
+                                                        })
                                                     });
                                                     let j = null;
-                                                    try { j = await res.json(); } catch(e) { console.warn('Non-JSON response', e); }
+                                                    try {
+                                                        j = await res.json();
+                                                    } catch (e) {
+                                                        console.warn('Non-JSON response', e);
+                                                    }
                                                     console.log('return_to_nte response', res.status, j);
                                                     if (res.ok && j && j.success) {
-                                                        await Swal.fire({ icon: 'success', title: 'Enviado', text: j.message || 'Ingressos retornado para correção pelo NTE.' });
-                                                        try { location.reload(); } catch(e) {}
+                                                        await Swal.fire({
+                                                            icon: 'success',
+                                                            title: 'Enviado',
+                                                            text: j.message ||
+                                                                'Ingressos retornado para correção pelo NTE.'
+                                                        });
+                                                        try {
+                                                            location.reload();
+                                                        } catch (e) {}
                                                     } else {
-                                                        const msg = (j && j.message) || ('HTTP ' + res.status + ' - ' + (j && JSON.stringify(j) || res.statusText));
+                                                        const msg = (j && j.message) || ('HTTP ' + res.status + ' - ' + (j &&
+                                                            JSON.stringify(j) || res.statusText));
                                                         console.error('Failed return_to_nte', msg);
-                                                        Swal.fire({ icon: 'error', title: 'Erro', text: msg });
+                                                        Swal.fire({
+                                                            icon: 'error',
+                                                            title: 'Erro',
+                                                            text: msg
+                                                        });
                                                     }
-                                                } catch(e) { console.error('fetch error', e); Swal.fire({ icon: 'error', title: 'Erro', text: 'Erro de comunicação' }); }
+                                                } catch (e) {
+                                                    console.error('fetch error', e);
+                                                    Swal.fire({
+                                                        icon: 'error',
+                                                        title: 'Erro',
+                                                        text: 'Erro de comunicação'
+                                                    });
+                                                }
                                             });
                                         }
-                                    } catch(e) { console.error('return-to-nte init failed', e); }
+                                    } catch (e) {
+                                        console.error('return-to-nte init failed', e);
+                                    }
                                 });
                             </script>
                         @endif
@@ -908,7 +1194,9 @@
 
                         <div class="section-title">Registrar Processo SEI</div>
                         @php
-                            $isIngressadoForButtons = isset($candidate['status']) && mb_strtolower(trim($candidate['status']), 'UTF-8') === 'apto para encaminhamento';
+                            $isIngressadoForButtons =
+                                isset($candidate['status']) &&
+                                mb_strtolower(trim($candidate['status']), 'UTF-8') === 'apto para encaminhamento';
                         @endphp
                         @if (Route::has('ingresso.assign'))
                             <form id="sei-form" method="POST"
@@ -919,7 +1207,9 @@
                                         placeholder="Número do processo SEI (ex: 00000.000000/0000-00)"
                                         value="{{ $candidate['sei_number'] ?? '' }}">
                                 </div>
-                                <button type="submit" class="btn btn-primary btn-action" {{ ($isIngressadoForButtons || ($isNaoAssumiu ?? false)) ? 'disabled' : '' }}>Registrar Processo SEI</button>
+                                <button type="submit" class="btn btn-primary btn-action"
+                                    {{ $isIngressadoForButtons || ($isNaoAssumiu ?? false) ? 'disabled' : '' }}>Registrar
+                                    Processo SEI</button>
                             </form>
                         @else
                             <input class="form-control form-control-sm mb-2" disabled
@@ -927,39 +1217,50 @@
                             <button class="btn btn-primary btn-action" disabled>Registrar Processo SEI</button>
                         @endif
 
-                        
+
                         {{-- Encaminhamentos Registrados removido --}}
-                        
+
                         {{-- Ações CPM: Validar ingresso e Imprimir Ofício --}}
                         <div class="mt-3">
                             @php
-                                $isCpm = (optional(Auth::user())->sector_id == 2 && optional(Auth::user())->profile_id == 1);
-                                $docsValid = (isset($candidate['documentos_validados']) && ($candidate['documentos_validados'] == 1 || $candidate['documentos_validados'] === true)) || (isset($candidate['status']) && (mb_stripos($candidate['status'], 'valid', 0, 'UTF-8') !== false || mb_stripos($candidate['status'], 'apto', 0, 'UTF-8') !== false));
+                                $isCpm =
+                                    optional(Auth::user())->sector_id == 2 && optional(Auth::user())->profile_id == 1;
+                                $docsValid =
+                                    (isset($candidate['documentos_validados']) &&
+                                        ($candidate['documentos_validados'] == 1 ||
+                                            $candidate['documentos_validados'] === true)) ||
+                                    (isset($candidate['status']) &&
+                                        (mb_stripos($candidate['status'], 'valid', 0, 'UTF-8') !== false ||
+                                            mb_stripos($candidate['status'], 'apto', 0, 'UTF-8') !== false));
                                 $hasSei = !empty($candidate['sei_number']);
                                 $hasEnc = isset($encaminhamentos) && count($encaminhamentos) > 0;
                                 // show print button only when DB status equals exactly 'Apto para encaminhamento'
-                                $showPrintFromStatus = isset($candidate['status']) && mb_strtolower(trim($candidate['status']), 'UTF-8') === 'apto para encaminhamento';
+                                $showPrintFromStatus =
+                                    isset($candidate['status']) &&
+                                    mb_strtolower(trim($candidate['status']), 'UTF-8') === 'apto para encaminhamento';
                             @endphp
                             @if ($isCpm)
                                 @php $showFlags = request()->query('show_flags') == 1; @endphp
-                                @if($showFlags)
+                                @if ($showFlags)
                                     <div class="mb-2 p-2 border rounded bg-light small text-dark">
                                         <strong>Debug flags:</strong>
                                         <div>isCpm: {{ $isCpm ? 'true' : 'false' }}</div>
                                         <div>docsValid: {{ $docsValid ? 'true' : 'false' }}</div>
-                                        <div>hasEncaminhamentos: {{ (isset($encaminhamentos) ? (is_countable($encaminhamentos) ? count($encaminhamentos) : (is_object($encaminhamentos) && method_exists($encaminhamentos,'count') ? $encaminhamentos->count() : 0)) : 0) }}</div>
+                                        <div>hasEncaminhamentos:
+                                            {{ isset($encaminhamentos) ? (is_countable($encaminhamentos) ? count($encaminhamentos) : (is_object($encaminhamentos) && method_exists($encaminhamentos, 'count') ? $encaminhamentos->count() : 0)) : 0 }}
+                                        </div>
                                         <div>status: {{ $candidate['status'] ?? '' }}</div>
                                     </div>
                                 @endif
                                 {{-- Show validate button when documents are validated (encaminhamentos not required) --}}
                                 @if ($docsValid)
-                                        @php $isIngressado = isset($candidate['status']) && mb_strtolower(trim($candidate['status']), 'UTF-8') === 'apto para encaminhamento'; @endphp
-                                                    @if (! $isIngressado)
-                                                                {{-- botão movido para o dropdown no header --}}
-                                                                @endif
+                                    @php $isIngressado = isset($candidate['status']) && mb_strtolower(trim($candidate['status']), 'UTF-8') === 'apto para encaminhamento'; @endphp
+                                    @if (!$isIngressado)
+                                        {{-- botão movido para o dropdown no header --}}
                                     @endif
+                                @endif
                                 {{-- CPM document validation button is rendered below the document checklist; removed duplicate here --}}
-                                    {{-- botão Imprimir Ofício removido --}}
+                                {{-- botão Imprimir Ofício removido --}}
                             @elseif ($showPrintFromStatus && $hasSei)
                                 {{-- botão Imprimir Ofício removido --}}
                             @endif
@@ -976,59 +1277,93 @@
 
 @push('scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', function(){
+        document.addEventListener('DOMContentLoaded', function() {
             try {
                 const srv = @json($candidate['status'] ?? '');
                 const s = srv ? String(srv).toLowerCase() : '';
-                if (s.indexOf('nao assumiu') !== -1 || s.indexOf('não assumiu') !== -1 || s.indexOf('nao-assumiu') !== -1) {
+                if (s.indexOf('nao assumiu') !== -1 || s.indexOf('não assumiu') !== -1 || s.indexOf(
+                    'nao-assumiu') !== -1) {
                     // disable all document checklist inputs and related buttons for everyone
-                    try { document.querySelectorAll('#document-list .form-check-input').forEach(cb => cb.disabled = true); } catch(e) {}
-                    try { document.querySelectorAll('#document-list button, #btn-validar-documentos-cpm, #btn-return-to-nte, #nte-none-selected').forEach(el => { if (el) el.disabled = true; }); } catch(e) {}
+                    try {
+                        document.querySelectorAll('#document-list .form-check-input').forEach(cb => cb.disabled =
+                            true);
+                    } catch (e) {}
+                    try {
+                        document.querySelectorAll(
+                            '#document-list button, #btn-validar-documentos-cpm, #btn-return-to-nte, #nte-none-selected'
+                            ).forEach(el => {
+                            if (el) el.disabled = true;
+                        });
+                    } catch (e) {}
                     // add a blocking class to prevent clicks via pointer-events in case some script re-enables inputs
-                    try { var dl = document.getElementById('document-list'); if (dl) dl.classList.add('checklist-blocked'); } catch(e) {}
+                    try {
+                        var dl = document.getElementById('document-list');
+                        if (dl) dl.classList.add('checklist-blocked');
+                    } catch (e) {}
                 }
                 // Extra hard-block: capture clicks/keys on checklist area and prevent toggles (shows alert once)
                 try {
                     var naoAssumiuAlertShown = false;
                     var dl2 = document.getElementById('document-list');
                     if (dl2) {
-                        dl2.addEventListener('click', function(ev){
+                        dl2.addEventListener('click', function(ev) {
                             try {
                                 const srv2 = @json($candidate['status'] ?? '');
                                 const ss = srv2 ? String(srv2).toLowerCase() : '';
-                                if (ss.indexOf('nao assumiu') !== -1 || ss.indexOf('não assumiu') !== -1 || ss.indexOf('nao-assumiu') !== -1) {
+                                if (ss.indexOf('nao assumiu') !== -1 || ss.indexOf('não assumiu') !== -1 ||
+                                    ss.indexOf('nao-assumiu') !== -1) {
                                     const target = ev.target || ev.srcElement;
                                     if (!target) return;
                                     // if click on checkbox or associated label/button, block it
-                                    if (target.matches && (target.matches('.form-check-input') || target.closest('.form-check') || target.matches('label') || target.closest('#document-list'))) {
-                                        ev.preventDefault(); ev.stopPropagation();
-                                        try { dl2.querySelectorAll('.form-check-input').forEach(cb => { cb.disabled = true; cb.setAttribute('disabled','disabled'); }); } catch(e) {}
-                                        if (!naoAssumiuAlertShown && typeof Swal !== 'undefined') { naoAssumiuAlertShown = true; Swal.fire({ icon: 'warning', title: 'Ação bloqueada', text: 'Este candidato está marcado como Não Assumiu. Contate a CPM para reativação.' }); }
+                                    if (target.matches && (target.matches('.form-check-input') || target
+                                            .closest('.form-check') || target.matches('label') || target
+                                            .closest('#document-list'))) {
+                                        ev.preventDefault();
+                                        ev.stopPropagation();
+                                        try {
+                                            dl2.querySelectorAll('.form-check-input').forEach(cb => {
+                                                cb.disabled = true;
+                                                cb.setAttribute('disabled', 'disabled');
+                                            });
+                                        } catch (e) {}
+                                        if (!naoAssumiuAlertShown && typeof Swal !== 'undefined') {
+                                            naoAssumiuAlertShown = true;
+                                            Swal.fire({
+                                                icon: 'warning',
+                                                title: 'Ação bloqueada',
+                                                text: 'Este candidato está marcado como Não Assumiu. Contate a CPM para reativação.'
+                                            });
+                                        }
                                         return;
                                     }
                                 }
-                            } catch(e) {}
+                            } catch (e) {}
                         }, true);
                         // keyboard prevention (space/enter)
-                        dl2.addEventListener('keydown', function(ev){
+                        dl2.addEventListener('keydown', function(ev) {
                             try {
                                 const srv3 = @json($candidate['status'] ?? '');
                                 const sss = srv3 ? String(srv3).toLowerCase() : '';
-                                if (sss.indexOf('nao assumiu') !== -1 || sss.indexOf('não assumiu') !== -1 || sss.indexOf('nao-assumiu') !== -1) {
-                                    if (ev.key === ' ' || ev.key === 'Enter') { ev.preventDefault(); ev.stopPropagation(); }
+                                if (sss.indexOf('nao assumiu') !== -1 || sss.indexOf('não assumiu') !== -
+                                    1 || sss.indexOf('nao-assumiu') !== -1) {
+                                    if (ev.key === ' ' || ev.key === 'Enter') {
+                                        ev.preventDefault();
+                                        ev.stopPropagation();
+                                    }
                                 }
-                            } catch(e) {}
+                            } catch (e) {}
                         }, true);
                     }
-                } catch(e) {}
-            } catch(e) {}
+                } catch (e) {}
+            } catch (e) {}
         });
         // global flags used across multiple script blocks
         var candidateValidated = {!! json_encode(
-            (
-                (isset($candidate['documentos_validados']) && ($candidate['documentos_validados'] == 1 || $candidate['documentos_validados'] === true))
-                || (isset($candidate['status']) && is_string($candidate['status']) && (mb_stripos($candidate['status'], 'valid') !== false))
-            )
+            (isset($candidate['documentos_validados']) &&
+                ($candidate['documentos_validados'] == 1 || $candidate['documentos_validados'] === true)) ||
+                (isset($candidate['status']) &&
+                    is_string($candidate['status']) &&
+                    mb_stripos($candidate['status'], 'valid') !== false),
         ) !!};
         var isCpmUser = {!! json_encode(optional(Auth::user())->sector_id == 2 && optional(Auth::user())->profile_id == 1) !!};
     </script>
@@ -1040,7 +1375,7 @@
             const candidateId = '{{ $candidate['id'] ?? ($candidate['num_inscricao'] ?? '') }}';
             const naoAssumiuBtn = document.getElementById('btn-nao-assumiu');
             if (naoAssumiuBtn) {
-                naoAssumiuBtn.addEventListener('click', function(e){
+                naoAssumiuBtn.addEventListener('click', function(e) {
                     e.preventDefault();
                     Swal.fire({
                         title: 'Confirmação',
@@ -1050,9 +1385,10 @@
                         confirmButtonText: 'Sim, marcar',
                         cancelButtonText: 'Cancelar',
                         confirmButtonColor: '#d33'
-                    }).then(function(result){
+                    }).then(function(result) {
                         if (!result.isConfirmed) return;
-                        var url = '{{ url('/ingresso') }}' + '/' + encodeURIComponent(candidateId) + '/nao-assumiu';
+                        var url = '{{ url('/ingresso') }}' + '/' + encodeURIComponent(
+                            candidateId) + '/nao-assumiu';
                         fetch(url, {
                             method: 'POST',
                             headers: {
@@ -1062,18 +1398,38 @@
                                 'Content-Type': 'application/json'
                             },
                             credentials: 'same-origin'
-                        }).then(function(res){
-                            return res.json().catch(function(){ return { success: false, message: 'Resposta inválida' }; });
-                        }).then(function(json){
+                        }).then(function(res) {
+                            return res.json().catch(function() {
+                                return {
+                                    success: false,
+                                    message: 'Resposta inválida'
+                                };
+                            });
+                        }).then(function(json) {
                             if (json && json.success) {
-                                Swal.fire({ icon: 'success', title: 'Marcado', text: 'Candidato marcado como Não assumiu', timer: 1400, showConfirmButton: false }).then(function(){
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Marcado',
+                                    text: 'Candidato marcado como Não assumiu',
+                                    timer: 1400,
+                                    showConfirmButton: false
+                                }).then(function() {
                                     window.location.reload();
                                 });
                             } else {
-                                Swal.fire({ icon: 'error', title: 'Erro', text: json && json.message ? json.message : 'Erro ao processar' });
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Erro',
+                                    text: json && json.message ? json.message :
+                                        'Erro ao processar'
+                                });
                             }
-                        }).catch(function(){
-                            Swal.fire({ icon: 'error', title: 'Erro', text: 'Erro de rede ao marcar Não assumiu' });
+                        }).catch(function() {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro',
+                                text: 'Erro de rede ao marcar Não assumiu'
+                            });
                         });
                     });
                 });
@@ -1081,7 +1437,7 @@
             // Handler for reativar (restore) action
             const reativarBtn = document.getElementById('btn-reativar-candidato');
             if (reativarBtn) {
-                reativarBtn.addEventListener('click', function(e){
+                reativarBtn.addEventListener('click', function(e) {
                     e.preventDefault();
                     Swal.fire({
                         title: 'Confirmação',
@@ -1090,9 +1446,10 @@
                         showCancelButton: true,
                         confirmButtonText: 'Sim, reativar',
                         cancelButtonText: 'Cancelar'
-                    }).then(function(result){
+                    }).then(function(result) {
                         if (!result.isConfirmed) return;
-                        var url = '{{ url('/ingresso') }}' + '/' + encodeURIComponent(candidateId) + '/retirar-nao-assumiu';
+                        var url = '{{ url('/ingresso') }}' + '/' + encodeURIComponent(
+                            candidateId) + '/retirar-nao-assumiu';
                         fetch(url, {
                             method: 'POST',
                             headers: {
@@ -1102,52 +1459,80 @@
                                 'Content-Type': 'application/json'
                             },
                             credentials: 'same-origin'
-                        }).then(function(res){
-                            return res.json().catch(function(){ return { success: false, message: 'Resposta inválida' }; });
-                        }).then(function(json){
+                        }).then(function(res) {
+                            return res.json().catch(function() {
+                                return {
+                                    success: false,
+                                    message: 'Resposta inválida'
+                                };
+                            });
+                        }).then(function(json) {
                             if (json && json.success) {
-                                Swal.fire({ icon: 'success', title: 'Reativado', text: json.message || 'Status restaurado', timer: 1300, showConfirmButton: false }).then(function(){
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Reativado',
+                                    text: json.message || 'Status restaurado',
+                                    timer: 1300,
+                                    showConfirmButton: false
+                                }).then(function() {
                                     window.location.reload();
                                 });
                             } else {
-                                Swal.fire({ icon: 'error', title: 'Erro', text: json && json.message ? json.message : 'Erro ao processar' });
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Erro',
+                                    text: json && json.message ? json.message :
+                                        'Erro ao processar'
+                                });
                             }
-                        }).catch(function(){
-                            Swal.fire({ icon: 'error', title: 'Erro', text: 'Erro de rede ao restaurar status' });
+                        }).catch(function() {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro',
+                                text: 'Erro de rede ao restaurar status'
+                            });
                         });
                     });
                 });
             }
 
             // Block editing UI when candidate is marked as 'Não Assumiu'
-            (function blockUiWhenNaoAssumiu(){
+            (function blockUiWhenNaoAssumiu() {
                 try {
                     const s = serverStatus ? String(serverStatus).toLowerCase() : '';
-                    if (s.indexOf('nao assumiu') === -1 && s.indexOf('não assumiu') === -1 && s.indexOf('nao-assumiu') === -1) return;
+                    if (s.indexOf('nao assumiu') === -1 && s.indexOf('não assumiu') === -1 && s.indexOf(
+                            'nao-assumiu') === -1) return;
 
                     // Disable common header edit controls
-                    ['btn-edit-dados','btn-save-dados','btn-cancel-dados'].forEach(function(id){
-                        var b = document.getElementById(id); if (b) b.disabled = true;
+                    ['btn-edit-dados', 'btn-save-dados', 'btn-cancel-dados'].forEach(function(id) {
+                        var b = document.getElementById(id);
+                        if (b) b.disabled = true;
                     });
 
                     // Disable validation / encaminhamento / SEI buttons if present
-                    ['btn-validar-ingresso','btn-retirar-validacao-ingresso','btnEncaminhar','btn-retirar-validacao-ingresso'].forEach(function(id){
-                        var b = document.getElementById(id); if (b) b.disabled = true;
+                    ['btn-validar-ingresso', 'btn-retirar-validacao-ingresso', 'btnEncaminhar',
+                        'btn-retirar-validacao-ingresso'
+                    ].forEach(function(id) {
+                        var b = document.getElementById(id);
+                        if (b) b.disabled = true;
                     });
 
                     // Disable SEI form submit inside #sei-form
-                    var seiBtn = document.querySelector('#sei-form button[type=submit]'); if (seiBtn) seiBtn.disabled = true;
+                    var seiBtn = document.querySelector('#sei-form button[type=submit]');
+                    if (seiBtn) seiBtn.disabled = true;
 
                     // Disable inputs, selects and textareas inside candidate body and document checklist
-                    const container = document.querySelector('.candidate-body') || document.querySelector('.card');
+                    const container = document.querySelector('.candidate-body') || document.querySelector(
+                        '.card');
                     if (container) {
-                        container.querySelectorAll('button, a, input, select, textarea').forEach(function(el){
+                        container.querySelectorAll('button, a, input, select, textarea').forEach(function(el) {
                             try {
                                 // keep the reativar button active
                                 if (el.id === 'btn-reativar-candidato') return;
                                 if (el.tagName === 'A') el.style.pointerEvents = 'none';
-                                if (el.tagName === 'BUTTON' || el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.tagName === 'TEXTAREA') el.disabled = true;
-                            } catch(e) {}
+                                if (el.tagName === 'BUTTON' || el.tagName === 'INPUT' || el.tagName ===
+                                    'SELECT' || el.tagName === 'TEXTAREA') el.disabled = true;
+                            } catch (e) {}
                         });
 
                         // add semi-transparent overlay with message
@@ -1161,14 +1546,20 @@
                         overlay.style.display = 'flex';
                         overlay.style.alignItems = 'center';
                         overlay.style.justifyContent = 'center';
-                        overlay.innerHTML = '<div style="text-align:center;color:#b91c1c;font-weight:700;">Candidato marcado como Não Assumiu — apenas reativação é permitida</div>';
+                        overlay.innerHTML =
+                            '<div style="text-align:center;color:#b91c1c;font-weight:700;">Candidato marcado como Não Assumiu — apenas reativação é permitida</div>';
                         container.style.position = 'relative';
                         container.appendChild(overlay);
                         // Ensure reativar button is above the overlay and still clickable
                         var reativar = document.getElementById('btn-reativar-candidato');
-                        if (reativar) { reativar.style.position = 'relative'; reativar.style.zIndex = '10001'; }
+                        if (reativar) {
+                            reativar.style.position = 'relative';
+                            reativar.style.zIndex = '10001';
+                        }
                     }
-                } catch(e){ console.warn('blockUiWhenNaoAssumiu failed', e); }
+                } catch (e) {
+                    console.warn('blockUiWhenNaoAssumiu failed', e);
+                }
             })();
             const getUrl = '{{ url('/ingresso') }}' + '/' + encodeURIComponent(candidateId) + '/documentos';
             const postUrl = '{{ url('/ingresso') }}' + '/' + encodeURIComponent(candidateId) + '/documentos';
@@ -1176,10 +1567,11 @@
                 'meta[name="csrf-token"]').getAttribute('content') : '';
             // initial validated state from server (true if candidate already has documents validated)
             let candidateValidated = {!! json_encode(
-                (
-                    (isset($candidate['documentos_validados']) && ($candidate['documentos_validados'] == 1 || $candidate['documentos_validados'] === true))
-                    || (isset($candidate['status']) && is_string($candidate['status']) && (mb_stripos($candidate['status'], 'valid') !== false))
-                )
+                (isset($candidate['documentos_validados']) &&
+                    ($candidate['documentos_validados'] == 1 || $candidate['documentos_validados'] === true)) ||
+                    (isset($candidate['status']) &&
+                        is_string($candidate['status']) &&
+                        mb_stripos($candidate['status'], 'valid') !== false),
             ) !!};
             // current user role info (used to decide CPM/NTE behavior)
             const currentUserSector = @json(optional(Auth::user())->sector_id);
@@ -1193,10 +1585,13 @@
             let serverStatus = candidateStatus ? String(candidateStatus).trim() : null;
             let serverStatusLock = serverStatus && serverStatus !== '';
             // explicit documentos_validados flag from server (used to decide strict locking)
-            const initialDocsValid = {!! json_encode(isset($candidate['documentos_validados']) && ($candidate['documentos_validados'] == 1 || $candidate['documentos_validados'] === true)) !!};
+            const initialDocsValid = {!! json_encode(
+                isset($candidate['documentos_validados']) &&
+                    ($candidate['documentos_validados'] == 1 || $candidate['documentos_validados'] === true),
+            ) !!};
 
             // Normalize candidateValidated: only true when DB flag is set or status clearly indicates final validation
-                try {
+            try {
                 const s = serverStatus ? String(serverStatus).toLowerCase() : '';
                 // if status contains 'valid' or 'apto' but also contains 'aguard', treat as not-yet-finalized
                 if ((s.indexOf('valid') !== -1 || s.indexOf('apto') !== -1) && s.indexOf('aguard') === -1) {
@@ -1207,62 +1602,77 @@
             } catch (e) {}
 
             // show a centered SweetAlert2 modal with current candidate status on load
-                try {
-                    if (typeof Swal !== 'undefined') {
-                        const s = candidateStatus ? String(candidateStatus).trim() : 'Sem status';
-                        const low = s.toLowerCase();
-                        let icon = 'info';
-                        if (low.indexOf('valid') !== -1 || low.indexOf('apto') !== -1) icon = 'success';
-                        else if (low.indexOf('pendente') !== -1 || low.indexOf('aguard') !== -1) icon = 'warning';
-                        Swal.fire({
-                            title: 'Status do Candidato',
-                            text: s,
-                            icon: icon,
-                            confirmButtonText: 'OK'
-                        });
-                    }
-                } catch (e) {}
+            try {
+                if (typeof Swal !== 'undefined') {
+                    const s = candidateStatus ? String(candidateStatus).trim() : 'Sem status';
+                    const low = s.toLowerCase();
+                    let icon = 'info';
+                    if (low.indexOf('valid') !== -1 || low.indexOf('apto') !== -1) icon = 'success';
+                    else if (low.indexOf('pendente') !== -1 || low.indexOf('aguard') !== -1) icon = 'warning';
+                    Swal.fire({
+                        title: 'Status do Candidato',
+                        text: s,
+                        icon: icon,
+                        confirmButtonText: 'OK'
+                    });
+                }
+            } catch (e) {}
 
             // If this user is NTE and the candidate is validated by CPM, lock the UI (disable actions)
             // NOTE: only disable controls inside the candidate panel to avoid blocking navbar/user menu
-            (function lockUiForNteIfValidated(){
+            (function lockUiForNteIfValidated() {
                 try {
                     if (!isNteUser) return;
                     const srv = serverStatus ? String(serverStatus).toLowerCase().trim() : '';
                     const shouldLock = (srv === 'apto para encaminhamento');
                     if (!shouldLock) return;
                     // scope to candidate area (prefer .candidate-body, fallback to .card)
-                    const container = document.querySelector('.candidate-body') || document.querySelector('.card');
+                    const container = document.querySelector('.candidate-body') || document.querySelector(
+                        '.card');
                     const except = [];
                     if (container) {
                         container.querySelectorAll('button').forEach(b => {
                             // keep collapse toggles and 'Ver mais informações' interactive
-                            const isCollapseToggle = b.getAttribute('data-toggle') === 'collapse' || b.getAttribute('data-bs-toggle') === 'collapse' || b.classList.contains('btn-more') || b.getAttribute('aria-controls') === 'moreFields' || (b.getAttribute('data-target') || '').indexOf('#moreFields') !== -1;
+                            const isCollapseToggle = b.getAttribute('data-toggle') === 'collapse' || b
+                                .getAttribute('data-bs-toggle') === 'collapse' || b.classList.contains(
+                                    'btn-more') || b.getAttribute('aria-controls') === 'moreFields' || (
+                                    b.getAttribute('data-target') || '').indexOf('#moreFields') !== -1;
                             if (except.indexOf(b.id) === -1 && !isCollapseToggle) b.disabled = true;
                         });
                         container.querySelectorAll('input, select, textarea').forEach(el => el.disabled = true);
                         // Hide the encaminhar trigger inside container
-                        const encBtn = container.querySelector('#btnEncaminhar'); if (encBtn) encBtn.style.display = 'none';
+                        const encBtn = container.querySelector('#btnEncaminhar');
+                        if (encBtn) encBtn.style.display = 'none';
                         // Hide any add/remove discipline controls if present inside container
-                        container.querySelectorAll('#add-discipline, .remove-discipline').forEach(el => el.style.display = 'none');
+                        container.querySelectorAll('#add-discipline, .remove-discipline').forEach(el => el.style
+                            .display = 'none');
                         // Disable SEI form submission button (if present) inside container
-                        const seiFormBtn = container.querySelector('#sei-form button[type=submit]'); if (seiFormBtn) seiFormBtn.disabled = true;
+                        const seiFormBtn = container.querySelector('#sei-form button[type=submit]');
+                        if (seiFormBtn) seiFormBtn.disabled = true;
                     } else {
                         // conservative fallback: only disable known candidate-local elements, but keep collapse toggles
-                        document.querySelectorAll('#document-list button, .card-panel form button, .card-panel input, .card-panel select, .card-panel textarea').forEach(el => {
+                        document.querySelectorAll(
+                            '#document-list button, .card-panel form button, .card-panel input, .card-panel select, .card-panel textarea'
+                            ).forEach(el => {
                             const b = el;
                             if (b && b.tagName === 'BUTTON') {
-                                const isCollapseToggle = b.getAttribute('data-toggle') === 'collapse' || b.getAttribute('data-bs-toggle') === 'collapse' || b.classList.contains('btn-more') || b.getAttribute('aria-controls') === 'moreFields' || (b.getAttribute('data-target') || '').indexOf('#moreFields') !== -1;
+                                const isCollapseToggle = b.getAttribute('data-toggle') === 'collapse' ||
+                                    b.getAttribute('data-bs-toggle') === 'collapse' || b.classList
+                                    .contains('btn-more') || b.getAttribute('aria-controls') ===
+                                    'moreFields' || (b.getAttribute('data-target') || '').indexOf(
+                                        '#moreFields') !== -1;
                                 if (!isCollapseToggle) b.disabled = true;
                             } else {
                                 el.disabled = true;
                             }
                         });
-                        const encBtn = document.getElementById('btnEncaminhar'); if (encBtn) encBtn.style.display = 'none';
-                        const seiFormBtn = document.querySelector('#sei-form button[type=submit]'); if (seiFormBtn) seiFormBtn.disabled = true;
+                        const encBtn = document.getElementById('btnEncaminhar');
+                        if (encBtn) encBtn.style.display = 'none';
+                        const seiFormBtn = document.querySelector('#sei-form button[type=submit]');
+                        if (seiFormBtn) seiFormBtn.disabled = true;
                     }
                     // print button removed; no-op
-                } catch(e){}
+                } catch (e) {}
             })();
 
             // Document checklist rendering and immediate-action helpers removed.
@@ -1322,10 +1732,12 @@
                                 if (seiBadge) {
                                     seiBadge.textContent = 'SEI: ' + seiValue;
                                 } else {
-                                    const leftInfo = document.querySelector('.candidate-info');
+                                    const leftInfo = document.querySelector(
+                                        '.candidate-info');
                                     if (leftInfo) {
                                         const div = document.createElement('div');
-                                        div.innerHTML = '<span class="sei-badge">SEI: ' + seiValue + '</span>';
+                                        div.innerHTML = '<span class="sei-badge">SEI: ' +
+                                            seiValue + '</span>';
                                         leftInfo.appendChild(div);
                                     }
                                 }
@@ -1334,16 +1746,21 @@
                             Swal.fire({
                                 icon: 'error',
                                 title: 'Erro',
-                                text: (json && json.message) || 'Erro ao registrar o processo SEI.'
+                                text: (json && json.message) ||
+                                    'Erro ao registrar o processo SEI.'
                             });
                         }
                     }).catch(function() {
-                        Swal.fire({ icon: 'error', title: 'Erro', text: 'Erro ao comunicar com o servidor.' });
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erro',
+                            text: 'Erro ao comunicar com o servidor.'
+                        });
                     });
                 });
             }
 
-            
+
 
             // Use SweetAlert2 for notifications. Ensure the library is loaded (CDN included below).
             function showToast(message, type = 'info', duration = 4200) {
@@ -1364,25 +1781,31 @@
                     return;
                 }
                 // always use SweetAlert2 for notifications
-                Swal.fire({ icon: type === 'error' ? 'error' : (type === 'success' ? 'success' : 'info'), title: message });
+                Swal.fire({
+                    icon: type === 'error' ? 'error' : (type === 'success' ? 'success' : 'info'),
+                    title: message
+                });
             }
 
             // Document checklist bulk-save handler removed — implement fresh logic as needed.
             // debug handler removed
             // Edit Dados Principais -----------------------------------------------------
-            (function(){
+            (function() {
                 const btnEdit = document.getElementById('btn-edit-dados');
                 const btnSave = document.getElementById('btn-save-dados');
                 const btnCancel = document.getElementById('btn-cancel-dados');
                 const candidateId = '{{ $candidate['id'] ?? ($candidate['num_inscricao'] ?? '') }}';
                 if (!btnEdit || !btnSave || !btnCancel) return;
 
-                function enterEditMode(){
+                function enterEditMode() {
                     btnEdit.style.display = 'none';
                     btnSave.style.display = 'inline-flex';
                     btnCancel.style.display = 'inline-block';
-                    const nonEditable = ['num_inscricao','name','nome','cpf','data_nascimento','nota','classificacao_ampla','classificacao_quota_pne','classificacao_quota_racial','classificacao'];
-                    document.querySelectorAll('tr[data-key]').forEach(function(row){
+                    const nonEditable = ['num_inscricao', 'name', 'nome', 'cpf', 'data_nascimento', 'nota',
+                        'classificacao_ampla', 'classificacao_quota_pne', 'classificacao_quota_racial',
+                        'classificacao'
+                    ];
+                    document.querySelectorAll('tr[data-key]').forEach(function(row) {
                         const key = row.dataset.key;
                         // do not make certain fields editable
                         if (nonEditable.indexOf(key) !== -1) return;
@@ -1396,11 +1819,17 @@
                             input.type = 'date';
                             // try to parse dd/mm/yyyy to yyyy-mm-dd
                             const m = txt.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-                            input.value = m ? (m[3] + '-' + m[2] + '-' + m[1]) : (txt === '-' ? '' : txt);
-                        } else if (key === 'nota' || key.toLowerCase().includes('nota') ) {
-                            input = document.createElement('input'); input.type = 'number'; input.step='any'; input.value = (txt === '-' ? '' : txt);
+                            input.value = m ? (m[3] + '-' + m[2] + '-' + m[1]) : (txt === '-' ? '' :
+                                txt);
+                        } else if (key === 'nota' || key.toLowerCase().includes('nota')) {
+                            input = document.createElement('input');
+                            input.type = 'number';
+                            input.step = 'any';
+                            input.value = (txt === '-' ? '' : txt);
                         } else {
-                            input = document.createElement('input'); input.type = 'text'; input.value = (txt === '-' ? '' : txt);
+                            input = document.createElement('input');
+                            input.type = 'text';
+                            input.value = (txt === '-' ? '' : txt);
                         }
                         input.className = 'form-control form-control-sm';
                         td.dataset.original = txt;
@@ -1409,11 +1838,11 @@
                     });
                 }
 
-                function exitEditMode(revert){
+                function exitEditMode(revert) {
                     btnEdit.style.display = '';
                     btnSave.style.display = 'none';
                     btnCancel.style.display = 'none';
-                    document.querySelectorAll('tr[data-key]').forEach(function(row){
+                    document.querySelectorAll('tr[data-key]').forEach(function(row) {
                         const td = row.querySelector('.value-cell');
                         if (!td) return;
                         const inp = td.querySelector('input');
@@ -1422,7 +1851,8 @@
                             const key = row.dataset.key;
                             if (key === 'data_nascimento' && inp.value) {
                                 const d = inp.value.split('-');
-                                td.textContent = d.length===3 ? (d[2] + '/' + d[1] + '/' + d[0]) : inp.value;
+                                td.textContent = d.length === 3 ? (d[2] + '/' + d[1] + '/' + d[0]) : inp
+                                    .value;
                             } else {
                                 td.textContent = inp.value || '-';
                             }
@@ -1433,14 +1863,21 @@
                     });
                 }
 
-                btnEdit.addEventListener('click', function(){ enterEditMode(); });
-                btnCancel.addEventListener('click', function(){ exitEditMode(true); });
+                btnEdit.addEventListener('click', function() {
+                    enterEditMode();
+                });
+                btnCancel.addEventListener('click', function() {
+                    exitEditMode(true);
+                });
 
-                btnSave.addEventListener('click', async function(){
+                btnSave.addEventListener('click', async function() {
                     // collect values
                     const payload = {};
-                    const nonEditablePayload = ['num_inscricao','name','nome','cpf','data_nascimento','nota','classificacao_ampla','classificacao_quota_pne','classificacao_quota_racial','classificacao'];
-                    document.querySelectorAll('tr[data-key]').forEach(function(row){
+                    const nonEditablePayload = ['num_inscricao', 'name', 'nome', 'cpf',
+                        'data_nascimento', 'nota', 'classificacao_ampla',
+                        'classificacao_quota_pne', 'classificacao_quota_racial', 'classificacao'
+                    ];
+                    document.querySelectorAll('tr[data-key]').forEach(function(row) {
                         const key = row.dataset.key;
                         // skip non-editable fields when building payload
                         if (nonEditablePayload.indexOf(key) !== -1) return;
@@ -1460,7 +1897,8 @@
                             credentials: 'same-origin',
                             headers: {
                                 'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                'X-CSRF-TOKEN': document.querySelector(
+                                    'meta[name="csrf-token"]').getAttribute('content'),
                                 'X-Requested-With': 'XMLHttpRequest',
                                 'Accept': 'application/json'
                             },
@@ -1471,27 +1909,34 @@
                             // update UI from returned candidate if present
                             if (j.candidate) {
                                 const cand = j.candidate;
-                                document.querySelectorAll('tr[data-key]').forEach(function(row){
+                                document.querySelectorAll('tr[data-key]').forEach(function(row) {
                                     const key = row.dataset.key;
                                     const td = row.querySelector('.value-cell');
                                     if (!td) return;
-                                    let val = cand[key] ?? cand[Object.keys(cand).find(k=>k===key)] ?? null;
+                                    let val = cand[key] ?? cand[Object.keys(cand).find(k =>
+                                        k === key)] ?? null;
                                     if (val === null || val === '') {
                                         td.textContent = '-';
                                     } else {
-                                        const isDateKey = /(^|_)data/i.test(key) || /_at$/i.test(key) || /date/i.test(key);
+                                        const isDateKey = /(^|_)data/i.test(key) || /_at$/i
+                                            .test(key) || /date/i.test(key);
                                         if (isDateKey) {
                                             try {
                                                 const d = new Date(val);
                                                 if (!isNaN(d)) {
-                                                    const dd = ('0'+d.getDate()).slice(-2);
-                                                    const mm = ('0'+(d.getMonth()+1)).slice(-2);
+                                                    const dd = ('0' + d.getDate()).slice(-
+                                                    2);
+                                                    const mm = ('0' + (d.getMonth() + 1))
+                                                        .slice(-2);
                                                     const yyyy = d.getFullYear();
-                                                    td.textContent = dd + '/' + mm + '/' + yyyy;
+                                                    td.textContent = dd + '/' + mm + '/' +
+                                                        yyyy;
                                                 } else {
                                                     td.textContent = val;
                                                 }
-                                            } catch(e) { td.textContent = val; }
+                                            } catch (e) {
+                                                td.textContent = val;
+                                            }
                                         } else {
                                             td.textContent = val;
                                         }
@@ -1500,14 +1945,37 @@
                             } else {
                                 exitEditMode(false);
                             }
-                            try { await Swal.fire({ icon: 'success', title: 'Sucesso', text: j.message || 'Dados atualizados', confirmButtonText: 'OK' }); } catch(e){}
+                            try {
+                                await Swal.fire({
+                                    icon: 'success',
+                                    title: 'Sucesso',
+                                    text: j.message || 'Dados atualizados',
+                                    confirmButtonText: 'OK'
+                                });
+                            } catch (e) {}
                             // reload so server-side state is authoritative
-                            try { location.reload(); } catch(e) {}
+                            try {
+                                location.reload();
+                            } catch (e) {}
                         } else {
-                            try { Swal.fire({ icon: 'error', title: 'Erro', text: (j && j.message) || 'Falha ao salvar', confirmButtonText: 'OK' }); } catch(e){}
+                            try {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Erro',
+                                    text: (j && j.message) || 'Falha ao salvar',
+                                    confirmButtonText: 'OK'
+                                });
+                            } catch (e) {}
                         }
-                    } catch(err) {
-                        try { Swal.fire({ icon: 'error', title: 'Erro', text: 'Erro de comunicação', confirmButtonText: 'OK' }); } catch(e){}
+                    } catch (err) {
+                        try {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro',
+                                text: 'Erro de comunicação',
+                                confirmButtonText: 'OK'
+                            });
+                        } catch (e) {}
                     }
                 });
             })();
@@ -1524,16 +1992,18 @@
                     btn.id = 'btn-retirar-validacao-ingresso';
                     btn.className = 'btn btn-danger btn-sm';
                     btn.style.borderRadius = '5px';
-                    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-cancel" style="margin-right:6px;vertical-align:middle;width:16px;height:16px;"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h3.5" /><path d="M16 19a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /><path d="M17 21l4 -4" /></svg><span>Retirar Validação do Ingresso</span>';
+                    btn.innerHTML =
+                        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-cancel" style="margin-right:6px;vertical-align:middle;width:16px;height:16px;"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h3.5" /><path d="M16 19a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /><path d="M17 21l4 -4" /></svg><span>Retirar Validação do Ingresso</span>';
                     // replace element (removes existing event listeners)
                     parent.replaceChild(btn, old);
-                } catch (e) { /* ignore */ }
+                } catch (e) {
+                    /* ignore */ }
             };
 
         });
     </script>
     <script>
-        document.addEventListener('DOMContentLoaded', function(){
+        document.addEventListener('DOMContentLoaded', function() {
             const btnVal = document.getElementById('btn-validar-ingresso');
             const candidateId = '{{ $candidate['id'] ?? ($candidate['num_inscricao'] ?? '') }}';
             const btnConfirmDocsCpm = document.getElementById('btn-validar-documentos-cpm');
@@ -1548,9 +2018,10 @@
                         btnCpmInit.disabled = true;
                     }
                 }
-            } catch(e) { /* ignore */ }
+            } catch (e) {
+                /* ignore */ }
             if (btnVal) {
-                btnVal.addEventListener('click', async function(){
+                btnVal.addEventListener('click', async function() {
                     const confirmed = await Swal.fire({
                         title: 'Confirma validação final do ingresso?',
                         text: 'Esta ação será registrada.',
@@ -1561,48 +2032,79 @@
                     });
                     if (!confirmed.isConfirmed) return;
                     try {
-                        const res = await fetch(`/ingresso/${candidateId}/validar`, { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'X-Requested-With':'XMLHttpRequest' }});
+                        const res = await fetch(`/ingresso/${candidateId}/validar`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector(
+                                    'meta[name="csrf-token"]').getAttribute('content'),
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
                         const j = await res.json();
                         if (j.success) {
-                                await Swal.fire({ icon: 'success', title: 'Sucesso', text: j.message || 'Apto para encaminhamento' });
-                                // if controller returned the updated candidate, update UI state immediately
-                                if (j.candidate) {
+                            await Swal.fire({
+                                icon: 'success',
+                                title: 'Sucesso',
+                                text: j.message || 'Apto para encaminhamento'
+                            });
+                            // if controller returned the updated candidate, update UI state immediately
+                            if (j.candidate) {
+                                try {
+                                    const cand = j.candidate;
+                                    // prefer explicit server status; update local state so other code doesn't overwrite
+                                    const statusText = cand.status ? String(cand.status).trim() : '';
+                                    candidateValidated = (cand.documentos_validados == 1 || cand
+                                        .documentos_validados === true);
+                                    candidateStatus = statusText || (candidateValidated ?
+                                        'Documentos Validados' : candidateStatus);
+                                    // update badge using the server-provided status (avoid fallback that overwrites final status)
                                     try {
-                                                const cand = j.candidate;
-                                                // prefer explicit server status; update local state so other code doesn't overwrite
-                                                const statusText = cand.status ? String(cand.status).trim() : '';
-                                                candidateValidated = (cand.documentos_validados == 1 || cand.documentos_validados === true);
-                                                candidateStatus = statusText || (candidateValidated ? 'Documentos Validados' : candidateStatus);
-                                                // update badge using the server-provided status (avoid fallback that overwrites final status)
-                                                try {
-                                                    if (statusText && statusText !== '') {
-                                                        serverStatus = statusText; serverStatusLock = true;
-                                                        setBadgeStatus(statusText, true);
-                                                    } else if (candidateValidated) {
-                                                        serverStatus = 'Documentos Validados'; serverStatusLock = true;
-                                                        setBadgeStatus('Documentos Validados', true);
-                                                    }
-                                                } catch(e) {}
-                                                // if SEI present on returned candidate, ensure badge shows SEI
-                                                if (cand.sei_number) {
-                                                    const seiBadge = document.querySelector('.sei-badge');
-                                                    if (seiBadge) seiBadge.textContent = 'SEI: ' + cand.sei_number;
-                                                }
-                                    } catch (e) { /* ignore UI update errors */ }
-                                }
-                                // swap validate button UI for a danger 'Retirar Validação' button (no action implemented)
-                                try { if (typeof window.replaceValidateWithRetirar === 'function') window.replaceValidateWithRetirar(); } catch(e){}
-                                if (btnPrint) btnPrint.style.display = 'inline-block';
-                                // reload page so server-side state is authoritative after CPM validation
-                                try { location.reload(); } catch(e) {}
-                            } else {
-                                Swal.fire({ icon: 'error', title: 'Erro', text: j.message || 'Erro ao validar' });
+                                        if (statusText && statusText !== '') {
+                                            serverStatus = statusText;
+                                            serverStatusLock = true;
+                                            setBadgeStatus(statusText, true);
+                                        } else if (candidateValidated) {
+                                            serverStatus = 'Documentos Validados';
+                                            serverStatusLock = true;
+                                            setBadgeStatus('Documentos Validados', true);
+                                        }
+                                    } catch (e) {}
+                                    // if SEI present on returned candidate, ensure badge shows SEI
+                                    if (cand.sei_number) {
+                                        const seiBadge = document.querySelector('.sei-badge');
+                                        if (seiBadge) seiBadge.textContent = 'SEI: ' + cand.sei_number;
+                                    }
+                                } catch (e) {
+                                    /* ignore UI update errors */ }
                             }
-                    } catch (e) { Swal.fire({ icon: 'error', title: 'Erro', text: 'Erro de comunicação' }); }
+                            // swap validate button UI for a danger 'Retirar Validação' button (no action implemented)
+                            try {
+                                if (typeof window.replaceValidateWithRetirar === 'function') window
+                                    .replaceValidateWithRetirar();
+                            } catch (e) {}
+                            if (btnPrint) btnPrint.style.display = 'inline-block';
+                            // reload page so server-side state is authoritative after CPM validation
+                            try {
+                                location.reload();
+                            } catch (e) {}
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro',
+                                text: j.message || 'Erro ao validar'
+                            });
+                        }
+                    } catch (e) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erro',
+                            text: 'Erro de comunicação'
+                        });
+                    }
                 });
             }
             // Delegate handler for 'Retirar Validação do Ingresso' (may be dynamically swapped)
-            document.addEventListener('click', async function(ev){
+            document.addEventListener('click', async function(ev) {
                 const btn = ev.target.closest('#btn-retirar-validacao-ingresso');
                 if (!btn) return;
                 ev.preventDefault();
@@ -1619,25 +2121,43 @@
                     const res = await fetch(`/ingresso/${candidateId}/retirar-validacao`, {
                         method: 'POST',
                         headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
+                                .getAttribute('content'),
                             'X-Requested-With': 'XMLHttpRequest',
                             'Accept': 'application/json'
                         }
                     });
                     const j = await res.json();
                     if (j && j.success) {
-                        await Swal.fire({ icon: 'success', title: 'Sucesso', text: j.message || 'Validação do ingresso removida.' });
-                        try { location.reload(); } catch(e) {}
+                        await Swal.fire({
+                            icon: 'success',
+                            title: 'Sucesso',
+                            text: j.message || 'Validação do ingresso removida.'
+                        });
+                        try {
+                            location.reload();
+                        } catch (e) {}
                     } else {
-                        Swal.fire({ icon: 'error', title: 'Erro', text: j.message || 'Falha ao remover validação' });
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erro',
+                            text: j.message || 'Falha ao remover validação'
+                        });
                     }
-                } catch(e) { Swal.fire({ icon: 'error', title: 'Erro', text: 'Erro de comunicação' }); }
+                } catch (e) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro',
+                        text: 'Erro de comunicação'
+                    });
+                }
             });
             if (btnConfirmDocsCpm) {
-                btnConfirmDocsCpm.addEventListener('click', async function(){
+                btnConfirmDocsCpm.addEventListener('click', async function() {
                     // if server status indicates validated, perform unvalidate action
                     const s = serverCandidateStatus ? String(serverCandidateStatus).toLowerCase() : '';
-                    if (s.indexOf('valid') !== -1 || s.indexOf('apto') !== -1 || s.indexOf('documentos validados') !== -1) {
+                    if (s.indexOf('valid') !== -1 || s.indexOf('apto') !== -1 || s.indexOf(
+                            'documentos validados') !== -1) {
                         const confirmed = await Swal.fire({
                             title: 'Retirar validação?',
                             text: 'Confirma que deseja retirar a validação dos documentos para este ingresso?',
@@ -1652,20 +2172,39 @@
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                    'X-CSRF-TOKEN': document.querySelector(
+                                        'meta[name="csrf-token"]').getAttribute('content'),
                                     'X-Requested-With': 'XMLHttpRequest',
                                     'Accept': 'application/json'
                                 },
-                                body: JSON.stringify({ unvalidate: true })
+                                body: JSON.stringify({
+                                    unvalidate: true
+                                })
                             });
                             const j = await res.json();
                             if (j && j.success) {
-                                await Swal.fire({ icon: 'success', title: 'Sucesso', text: j.message || 'Validação removida.' });
-                                try { location.reload(); } catch(e) {}
+                                await Swal.fire({
+                                    icon: 'success',
+                                    title: 'Sucesso',
+                                    text: j.message || 'Validação removida.'
+                                });
+                                try {
+                                    location.reload();
+                                } catch (e) {}
                             } else {
-                                Swal.fire({ icon: 'error', title: 'Erro', text: j.message || 'Falha ao remover validação' });
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Erro',
+                                    text: j.message || 'Falha ao remover validação'
+                                });
                             }
-                        } catch(e) { Swal.fire({ icon: 'error', title: 'Erro', text: 'Erro de comunicação' }); }
+                        } catch (e) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro',
+                                text: 'Erro de comunicação'
+                            });
+                        }
                         return;
                     }
                     // otherwise proceed with CPM validation flow
@@ -1682,34 +2221,52 @@
                         const res = await fetch(`/ingresso/${candidateId}/documentos/confirmar_cpm`, {
                             method: 'POST',
                             headers: {
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                'X-CSRF-TOKEN': document.querySelector(
+                                    'meta[name="csrf-token"]').getAttribute('content'),
                                 'X-Requested-With': 'XMLHttpRequest',
                                 'Accept': 'application/json'
                             }
                         });
                         const j = await res.json();
                         if (j && j.success) {
-                            await Swal.fire({ icon: 'success', title: 'Sucesso', text: j.message || 'Documentos validados.' });
-                            try { location.reload(); } catch(e) { }
+                            await Swal.fire({
+                                icon: 'success',
+                                title: 'Sucesso',
+                                text: j.message || 'Documentos validados.'
+                            });
+                            try {
+                                location.reload();
+                            } catch (e) {}
                         } else {
-                            Swal.fire({ icon: 'error', title: 'Erro', text: j.message || 'Falha ao validar' });
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro',
+                                text: j.message || 'Falha ao validar'
+                            });
                         }
-                    } catch(e) { Swal.fire({ icon: 'error', title: 'Erro', text: 'Erro de comunicação' }); }
+                    } catch (e) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erro',
+                            text: 'Erro de comunicação'
+                        });
+                    }
                 });
             }
             if (btnPrint) {
-                btnPrint.addEventListener('click', function(){
+                btnPrint.addEventListener('click', function() {
                     window.open(`/ingresso/${candidateId}/oficio?print=1`, '_blank');
                 });
             }
             // Encaminhamento deletion (CPM only)
-            (function(){
+            (function() {
                 const docListEl = document.getElementById('document-list');
-                const table = (docListEl && typeof docListEl.closest === 'function') ? docListEl.closest('div').previousElementSibling : null;
+                const table = (docListEl && typeof docListEl.closest === 'function') ? docListEl.closest('div')
+                    .previousElementSibling : null;
                 // use event delegation within the encaminhamentos table area
                 const encTable = document.querySelector('table.table-sm.table-striped');
                 if (!encTable) return;
-                encTable.addEventListener('click', async function(ev){
+                encTable.addEventListener('click', async function(ev) {
                     const btn = ev.target.closest('.btn-delete-enc');
                     if (!btn) return;
                     const id = btn.dataset.id;
@@ -1724,35 +2281,66 @@
                     });
                     if (!confirmed.isConfirmed) return;
                     try {
-                        const res = await fetch(`/ingresso/${candidateId}/encaminhar/${encodeURIComponent(id)}`, {
-                            method: 'DELETE',
-                            headers: {
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                                'X-Requested-With': 'XMLHttpRequest',
-                                'Accept': 'application/json'
-                            }
-                        });
+                        const res = await fetch(
+                            `/ingresso/${candidateId}/encaminhar/${encodeURIComponent(id)}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRF-TOKEN': document.querySelector(
+                                        'meta[name="csrf-token"]').getAttribute('content'),
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'Accept': 'application/json'
+                                }
+                            });
                         const j = await res.json();
-                            if (j && j.success) {
+                        if (j && j.success) {
                             // remove row
                             const row = btn.closest('tr');
                             if (row) row.remove();
                             // show SweetAlert2 success modal
                             try {
-                                Swal.fire({ icon: 'success', title: 'Excluído', text: j.message || 'Encaminhamento excluído', confirmButtonText: 'OK' });
-                            } catch(e) { /* fallback to toast */ showToast(j.message || 'Encaminhamento excluído', 'success'); }
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Excluído',
+                                    text: j.message || 'Encaminhamento excluído',
+                                    confirmButtonText: 'OK'
+                                });
+                            } catch (e) {
+                                /* fallback to toast */
+                                showToast(j.message || 'Encaminhamento excluído', 'success');
+                            }
                             // if no encaminhamentos left, show fallback message and hide validate button
                             const encRows = encTable.querySelectorAll('tbody tr');
                             if (!encRows.length) {
                                 const container = encTable.parentElement;
-                                if (container) container.innerHTML = '<div class="text-muted">Nenhum encaminhamento registrado para este candidato.</div>';
+                                if (container) container.innerHTML =
+                                    '<div class="text-muted">Nenhum encaminhamento registrado para este candidato.</div>';
                                 const valBtn = document.getElementById('btn-validar-ingresso');
                                 if (valBtn) valBtn.style.display = 'none';
                             }
                         } else {
-                            try { Swal.fire({ icon: 'error', title: 'Erro', text: (j && j.message) || 'Erro ao excluir', confirmButtonText: 'OK' }); } catch(e) { showToast((j && j.message) || 'Erro ao excluir', 'error'); }
+                            try {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Erro',
+                                    text: (j && j.message) || 'Erro ao excluir',
+                                    confirmButtonText: 'OK'
+                                });
+                            } catch (e) {
+                                showToast((j && j.message) || 'Erro ao excluir', 'error');
+                            }
                         }
-                    } catch(e) { try { Swal.fire({ icon: 'error', title: 'Erro', text: 'Erro de comunicação', confirmButtonText: 'OK' }); } catch(err) { showToast('Erro de comunicação', 'error'); } }
+                    } catch (e) {
+                        try {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro',
+                                text: 'Erro de comunicação',
+                                confirmButtonText: 'OK'
+                            });
+                        } catch (err) {
+                            showToast('Erro de comunicação', 'error');
+                        }
+                    }
                 });
             })();
         });
@@ -1762,21 +2350,30 @@
 @push('scripts')
     <script>
         // Simple autosave: when a document checkbox is toggled, persist change to server
-        document.addEventListener('DOMContentLoaded', function(){
+        document.addEventListener('DOMContentLoaded', function() {
             try {
                 const candidateId = '{{ $candidate['id'] ?? ($candidate['num_inscricao'] ?? '') }}';
                 if (!candidateId) return;
                 const postUrl = '{{ url('/ingresso') }}' + '/' + encodeURIComponent(candidateId) + '/documentos';
-                const csrf = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '';
+                const csrf = document.querySelector('meta[name="csrf-token"]') ? document.querySelector(
+                    'meta[name="csrf-token"]').getAttribute('content') : '';
                 const checkboxes = Array.from(document.querySelectorAll('#document-list .form-check-input'));
                 if (!checkboxes.length) return;
 
-                checkboxes.forEach(function(cb){
-                    cb.addEventListener('change', async function(){
+                checkboxes.forEach(function(cb) {
+                    cb.addEventListener('change', async function() {
                         if (cb.disabled) return;
                         const key = cb.dataset.key;
                         if (!key) return;
-                        const payload = { items: [{ key: key, label: (cb.nextElementSibling ? cb.nextElementSibling.textContent.trim() : key), validated: !!cb.checked }] };
+                        const payload = {
+                            items: [{
+                                key: key,
+                                label: (cb.nextElementSibling ? cb
+                                    .nextElementSibling.textContent.trim() : key
+                                    ),
+                                validated: !!cb.checked
+                            }]
+                        };
                         try {
                             const res = await fetch(postUrl, {
                                 method: 'POST',
@@ -1789,36 +2386,61 @@
                                 },
                                 body: JSON.stringify(payload)
                             });
-                            const j = await res.json().catch(()=>null);
+                            const j = await res.json().catch(() => null);
                             if (j && j.success) {
                                 try {
                                     if (typeof Swal !== 'undefined') {
-                                        const title = (cb.checked) ? 'Documento salvo' : 'Documento removido';
-                                        Swal.fire({ toast: false, position: 'center', icon: 'success', title: j.message || title, showConfirmButton: false, timer: 1100 });
+                                        const title = (cb.checked) ? 'Documento salvo' :
+                                            'Documento removido';
+                                        Swal.fire({
+                                            toast: false,
+                                            position: 'center',
+                                            icon: 'success',
+                                            title: j.message || title,
+                                            showConfirmButton: false,
+                                            timer: 1100
+                                        });
                                     }
-                                } catch (e) { /* ignore UI errors */ }
+                                } catch (e) {
+                                    /* ignore UI errors */ }
                             } else {
                                 console.error('Failed to save document state', j);
-                                if (typeof Swal !== 'undefined') Swal.fire({ icon: 'error', title: 'Erro', text: (j && j.message) ? j.message : 'Falha ao salvar documento' });
+                                if (typeof Swal !== 'undefined') Swal.fire({
+                                    icon: 'error',
+                                    title: 'Erro',
+                                    text: (j && j.message) ? j.message :
+                                        'Falha ao salvar documento'
+                                });
                             }
                         } catch (e) {
                             console.error('Autosave error', e);
-                            if (typeof Swal !== 'undefined') Swal.fire({ icon: 'error', title: 'Erro', text: 'Erro de comunicação' });
+                            if (typeof Swal !== 'undefined') Swal.fire({
+                                icon: 'error',
+                                title: 'Erro',
+                                text: 'Erro de comunicação'
+                            });
                         }
                     });
                 });
-            } catch (e) { console.error('Autosave setup failed', e); }
+            } catch (e) {
+                console.error('Autosave setup failed', e);
+            }
         });
     </script>
 @endpush
 
 @push('scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', function(){
+        document.addEventListener('DOMContentLoaded', function() {
             const candidateId = '{{ $candidate['id'] ?? ($candidate['num_inscricao'] ?? '') }}';
             try {
-                fetch(`/ingresso/debug-status/${encodeURIComponent(candidateId)}`, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-                    .then(r => r.json()).then(function(json){
+                fetch(`/ingresso/debug-status/${encodeURIComponent(candidateId)}`, {
+                        credentials: 'same-origin',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(r => r.json()).then(function(json) {
                         if (json && json.success && json.candidate) {
                             const cand = json.candidate;
                             const status = cand.status ? String(cand.status).trim() : '';
@@ -1835,35 +2457,39 @@
                                     setBadgeStatus(status, true);
                                 }
                             }
-                                // If NTE button exists, ensure it reflects server state (validated / awaiting)
+                            // If NTE button exists, ensure it reflects server state (validated / awaiting)
                             try {
                                 const btnNte = document.getElementById('nte-none-selected');
                                 if (btnNte) {
-                                        // if already validated, allow removal: show red button to unvalidate
-                                        if (low.indexOf('valid') !== -1 || low.indexOf('apto') !== -1 || low.indexOf('documentos validados') !== -1) {
-                                            if (isCpmUser) {
-                                                btnNte.disabled = false;
-                                                btnNte.className = 'btn btn-danger btn-action';
-                                                btnNte.textContent = 'Retirar Validação dos Documentos';
-                                            } else {
-                                                btnNte.disabled = true;
-                                                btnNte.className = 'btn btn-secondary btn-action';
-                                                btnNte.textContent = 'Documentos Validados';
-                                            }
-                                            try {
-                                                const cbs = Array.from(document.querySelectorAll('#document-list .form-check-input'));
-                                                cbs.forEach(cb => cb.disabled = true);
-                                            } catch(e) {}
-                                        } else if (low.indexOf('aguard') !== -1 || low.indexOf('aguardando confirma') !== -1) {
+                                    // if already validated, allow removal: show red button to unvalidate
+                                    if (low.indexOf('valid') !== -1 || low.indexOf('apto') !== -1 || low
+                                        .indexOf('documentos validados') !== -1) {
+                                        if (isCpmUser) {
+                                            btnNte.disabled = false;
+                                            btnNte.className = 'btn btn-danger btn-action';
+                                            btnNte.textContent = 'Retirar Validação dos Documentos';
+                                        } else {
                                             btnNte.disabled = true;
                                             btnNte.className = 'btn btn-secondary btn-action';
-                                            btnNte.textContent = 'Aguardando Confirmação pela CPM';
-                                            // also disable all document checkboxes to prevent changes
-                                            try {
-                                                const cbs = Array.from(document.querySelectorAll('#document-list .form-check-input'));
-                                                cbs.forEach(cb => cb.disabled = true);
-                                            } catch(e) {}
+                                            btnNte.textContent = 'Documentos Validados';
                                         }
+                                        try {
+                                            const cbs = Array.from(document.querySelectorAll(
+                                                '#document-list .form-check-input'));
+                                            cbs.forEach(cb => cb.disabled = true);
+                                        } catch (e) {}
+                                    } else if (low.indexOf('aguard') !== -1 || low.indexOf(
+                                            'aguardando confirma') !== -1) {
+                                        btnNte.disabled = true;
+                                        btnNte.className = 'btn btn-secondary btn-action';
+                                        btnNte.textContent = 'Aguardando Confirmação pela CPM';
+                                        // also disable all document checkboxes to prevent changes
+                                        try {
+                                            const cbs = Array.from(document.querySelectorAll(
+                                                '#document-list .form-check-input'));
+                                            cbs.forEach(cb => cb.disabled = true);
+                                        } catch (e) {}
+                                    }
                                 }
                                 // Update CPM button appearance: red when validated, green otherwise.
                                 // If the overall ingresso is already final ('Apto para encaminhamento'), keep the CPM button disabled.
@@ -1874,7 +2500,8 @@
                                             btnCpm.disabled = true;
                                             btnCpm.className = 'btn btn-danger btn-action';
                                             btnCpm.textContent = 'Retirar Validação dos Documentos';
-                                        } else if (low.indexOf('valid') !== -1 || low.indexOf('documentos validados') !== -1) {
+                                        } else if (low.indexOf('valid') !== -1 || low.indexOf(
+                                                'documentos validados') !== -1) {
                                             btnCpm.disabled = false;
                                             btnCpm.className = 'btn btn-danger btn-action';
                                             btnCpm.textContent = 'Retirar Validação dos Documentos';
@@ -1884,209 +2511,376 @@
                                             btnCpm.textContent = 'Validar documentação';
                                         }
                                     }
-                                        try { console.log('debug-status set CPM:', { low: low, btnDisabled: btnCpm ? btnCpm.disabled : null, text: btnCpm ? btnCpm.textContent : null }); } catch(e) {}
+                                    try {
+                                        console.log('debug-status set CPM:', {
+                                            low: low,
+                                            btnDisabled: btnCpm ? btnCpm.disabled : null,
+                                            text: btnCpm ? btnCpm.textContent : null
+                                        });
+                                    } catch (e) {}
                                     // If the candidate status is 'Apto para encaminhamento', replace the validate-ingresso button with a danger 'Retirar Validação' UI-only button
                                     try {
                                         const btnValNow = document.getElementById('btn-validar-ingresso');
-                                        if (btnValNow && (low.indexOf('apto para encaminhamento') !== -1 || low.indexOf('apto') !== -1)) {
-                                            if (typeof window.replaceValidateWithRetirar === 'function') window.replaceValidateWithRetirar();
+                                        if (btnValNow && (low.indexOf('apto para encaminhamento') !== -1 || low
+                                                .indexOf('apto') !== -1)) {
+                                            if (typeof window.replaceValidateWithRetirar === 'function') window
+                                                .replaceValidateWithRetirar();
                                         }
-                                    } catch(e) {}
-                                } catch(e) {}
-                            } catch(e) {}
+                                    } catch (e) {}
+                                } catch (e) {}
+                            } catch (e) {}
                             // CPM document-confirmation handler removed — will re-implement server-backed flow.
                             // print button removed; no-op
                         }
-                    }).catch(()=>{});
-            } catch(e){}
+                    }).catch(() => {});
+            } catch (e) {}
         });
     </script>
-            <script>
-                document.addEventListener('DOMContentLoaded', function(){
-                    // NTE: view report description handler
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // NTE: view report description handler
+            try {
+                // helper to escape HTML
+                function _escHtml(s) {
+                    if (!s && s !== '') return '';
+                    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(
+                        /"/g, '&quot;').replace(/'/g, '&#039;');
+                }
+                document.addEventListener('click', function(ev) {
+                    const btn = ev.target.closest('.btn-view-report');
+                    if (!btn) return;
+                    ev.preventDefault();
+                    const label = btn.dataset.label || 'Descrição do relatório';
+                    const desc = btn.dataset.desc || '';
                     try {
-                        // helper to escape HTML
-                        function _escHtml(s) {
-                            if (!s && s !== '') return '';
-                            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-                        }
-                        document.addEventListener('click', function(ev){
-                            const btn = ev.target.closest('.btn-view-report');
-                            if (!btn) return;
-                            ev.preventDefault();
-                            const label = btn.dataset.label || 'Descrição do relatório';
-                            const desc = btn.dataset.desc || '';
-                            try {
-                                if (typeof Swal !== 'undefined') {
-                                    Swal.fire({
-                                        title: label,
-                                        html: '<div style="white-space:pre-wrap; text-align:left; margin-top:0.15rem;">' + _escHtml(desc || 'Sem descrição') + '</div>',
-                                        icon: 'info',
-                                        customClass: {
-                                            popup: 'swal2-custom-popup',
-                                            title: 'swal2-custom-title',
-                                            htmlContainer: 'swal2-custom-text'
-                                        },
-                                        showCloseButton: true,
-                                        confirmButtonText: 'Fechar',
-                                        allowOutsideClick: true,
-                                    });
-                                } else {
-                                    alert(label + '\n\n' + (desc || 'Sem descrição'));
-                                }
-                            } catch(e) { console.error('show report failed', e); }
-                        });
-                    } catch(e) { console.error('view-report init failed', e); }
-                    const btn = document.getElementById('nte-none-selected');
-                    if (!btn) return; // not an NTE user or button removed
-                    const candidateId = '{{ $candidate['id'] ?? ($candidate['num_inscricao'] ?? '') }}';
-                    const postUrl = '{{ url('/ingresso') }}' + '/' + encodeURIComponent(candidateId) + '/documentos';
-                    const csrf = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '';
-                    const serverCandidateStatus = @json($candidate['status'] ?? null);
-                    const checkboxes = Array.from(document.querySelectorAll('#document-list .form-check-input'));
-                    // initial lock flag: if server status already indicates awaiting CPM confirmation,
-                    // ensure the NTE button is disabled and labeled accordingly on load.
-                    let nteLocked = false;
-                    try {
-                        const s = serverCandidateStatus ? String(serverCandidateStatus).toLowerCase() : '';
-                        if (s.indexOf('aguard') !== -1 || s.indexOf('aguardando confirma') !== -1) {
-                            nteLocked = true;
-                            btn.disabled = true;
-                            btn.className = 'btn btn-secondary btn-action';
-                            btn.textContent = 'Aguardando Confirmação pela CPM';
-                            // disable checkboxes as well
-                            try { checkboxes.forEach(cb => cb.disabled = true); } catch(e) {}
-                        }
-                    } catch(e) {}
-                    // ensure CPM button is active and styled as success for CPM users, but disable if ingresso already validated
-                    try {
-                        const btnCpm = document.getElementById('btn-validar-documentos-cpm');
-                        const s = serverCandidateStatus ? String(serverCandidateStatus).toLowerCase() : '';
-                            if (btnCpm) {
-                            if (s.indexOf('apto para encaminhamento') !== -1) {
-                                btnCpm.disabled = true;
-                                btnCpm.className = 'btn btn-danger btn-action';
-                                btnCpm.textContent = 'Retirar Validação dos Documentos';
-                            } else {
-                                btnCpm.disabled = false;
-                                btnCpm.className = 'btn btn-success btn-action';
-                            }
-                        }
-                    } catch(e) {}
-                    function updateNteButton() {
-                        // Respect server-side final states first
-                        try {
-                            const s = serverCandidateStatus ? String(serverCandidateStatus).toLowerCase() : '';
-                            if (s.indexOf('valid') !== -1 || s.indexOf('apto') !== -1 || s.indexOf('documentos validados') !== -1 || candidateValidated) {
-                                if (isCpmUser) {
-                                    btn.disabled = false;
-                                    btn.className = 'btn btn-danger btn-action';
-                                    btn.textContent = 'Retirar Validação dos Documentos';
-                                } else {
-                                    btn.disabled = true;
-                                    btn.className = 'btn btn-secondary btn-action';
-                                    btn.textContent = 'Documentos Validados';
-                                }
-                                try { checkboxes.forEach(cb => cb.disabled = true); } catch(e) {}
-                                return;
-                            }
-                            // If server explicitly requested corrections to NTE, do not bypass required-docs check;
-                            // leave enforcement to the required-docs logic below so reported/unchecked docs keep button disabled.
-                            if (s.indexOf('aguardando confirma') !== -1 || s.indexOf('aguard') !== -1) {
-                                btn.disabled = true;
-                                btn.className = 'btn btn-secondary btn-action';
-                                btn.textContent = 'Aguardando Confirmação pela CPM';
-                                return;
-                            }
-                        } catch(e) {}
-
-                        // Require that ALL required documents are checked before allowing NTE validation
-                        const requiredChecks = Array.from(document.querySelectorAll('#document-list .form-check-input[data-required="1"]'));
-                        const allRequiredChecked = requiredChecks.length ? requiredChecks.every(cb => cb.checked) : true;
-
-                        if (!allRequiredChecked) {
-                            // Some required documents are missing -> disable NTE action
-                            try { checkboxes.forEach(cb => cb.disabled = !!nteLocked); } catch(e) {}
-                            btn.disabled = true;
-                            btn.className = 'btn btn-secondary btn-action';
-                            btn.textContent = 'Faltam Documentos Obrigatórios';
-                            return;
-                        }
-
-                        // If required docs are satisfied, proceed to previous selection-based logic
-                        const anyChecked = checkboxes.length && checkboxes.some(cb => cb.checked);
-                        if (anyChecked) {
-                            if (nteLocked) {
-                                try { checkboxes.forEach(cb => cb.disabled = true); } catch(e) {}
-                                btn.disabled = true;
-                                btn.className = 'btn btn-secondary btn-action';
-                                btn.textContent = 'Aguardando Confirmação pela CPM';
-                                return;
-                            }
-                            try {
-                                const s2 = serverCandidateStatus ? String(serverCandidateStatus).toLowerCase() : '';
-                                if (s2.indexOf('nao assumiu') === -1 && s2.indexOf('não assumiu') === -1 && s2.indexOf('nao-assumiu') === -1) {
-                                    checkboxes.forEach(cb => cb.disabled = false);
-                                }
-                            } catch(e) {}
-                            btn.disabled = false;
-                            btn.className = 'btn btn-success btn-action';
-                            btn.textContent = 'Validar pelo NTE';
-                        } else {
-                            try { checkboxes.forEach(cb => cb.disabled = !!nteLocked); } catch(e) {}
-                            btn.disabled = true;
-                            btn.className = 'btn btn-secondary btn-action';
-                            btn.textContent = nteLocked ? 'Aguardando Confirmação pela CPM' : 'Nenhum Documento Selecionado';
-                        }
-                    }
-                    checkboxes.forEach(cb => cb.addEventListener('change', updateNteButton));
-                    // initialize
-                    updateNteButton();
-
-                    // click: persist selected documents as NTE confirmation
-                    btn.addEventListener('click', async function(){
-                        if (btn.disabled) return;
-                        // if documents already validated, allow removal (unvalidate)
-                        const s = serverCandidateStatus ? String(serverCandidateStatus).toLowerCase() : '';
-                        if (isCpmUser && (candidateValidated || s.indexOf('valid') !== -1 || s.indexOf('apto') !== -1 || s.indexOf('documentos validados') !== -1 || (btn.textContent || '').toLowerCase().indexOf('retirar') !== -1)) {
-                            const confirmed = await Swal.fire({
-                                title: 'Retirar validação?',
-                                text: 'Confirma que deseja retirar a validação dos documentos para este ingresso?',
-                                icon: 'warning',
-                                showCancelButton: true,
-                                confirmButtonText: 'Sim, retirar',
-                                cancelButtonText: 'Cancelar'
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                title: label,
+                                html: '<div style="white-space:pre-wrap; text-align:left; margin-top:0.15rem;">' +
+                                    _escHtml(desc || 'Sem descrição') + '</div>',
+                                icon: 'info',
+                                customClass: {
+                                    popup: 'swal2-custom-popup',
+                                    title: 'swal2-custom-title',
+                                    htmlContainer: 'swal2-custom-text'
+                                },
+                                showCloseButton: true,
+                                confirmButtonText: 'Fechar',
+                                allowOutsideClick: true,
                             });
-                            if (!confirmed.isConfirmed) return;
-                            try {
-                                const res = await fetch(postUrl, {
-                                    method: 'POST',
-                                    credentials: 'same-origin',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': csrf,
-                                        'X-Requested-With': 'XMLHttpRequest',
-                                        'Accept': 'application/json'
-                                    },
-                                    body: JSON.stringify({ unvalidate: true })
-                                });
-                                const j = await res.json();
-                                if (j && j.success) {
-                                    try { await Swal.fire({ icon: 'success', title: 'Sucesso', text: j.message || 'Validação removida.' }); } catch(e){}
-                                    try { setTimeout(() => location.reload(), 700); } catch(e) { location.reload(); }
-                                } else {
-                                    try { Swal.fire({ icon: 'error', title: 'Erro', text: j.message || 'Erro ao remover validação' }); } catch(e){}
-                                }
-                            } catch (e) {
-                                try { Swal.fire({ icon: 'error', title: 'Erro', text: 'Erro de comunicação' }); } catch(err){}
-                            }
-                            return;
+                        } else {
+                            alert(label + '\n\n' + (desc || 'Sem descrição'));
                         }
+                    } catch (e) {
+                        console.error('show report failed', e);
+                    }
+                });
+            } catch (e) {
+                console.error('view-report init failed', e);
+            }
+            const btn = document.getElementById('nte-none-selected');
+            if (!btn) return; // not an NTE user or button removed
+            const candidateId = '{{ $candidate['id'] ?? ($candidate['num_inscricao'] ?? '') }}';
+            const postUrl = '{{ url('/ingresso') }}' + '/' + encodeURIComponent(candidateId) + '/documentos';
+            const csrf = document.querySelector('meta[name="csrf-token"]') ? document.querySelector(
+                'meta[name="csrf-token"]').getAttribute('content') : '';
+            const serverCandidateStatus = @json($candidate['status'] ?? null);
+            const checkboxes = Array.from(document.querySelectorAll('#document-list .form-check-input'));
+            // initial lock flag: if server status already indicates awaiting CPM confirmation,
+            // ensure the NTE button is disabled and labeled accordingly on load.
+            let nteLocked = false;
+            try {
+                const s = serverCandidateStatus ? String(serverCandidateStatus).toLowerCase() : '';
+                if (s.indexOf('aguard') !== -1 || s.indexOf('aguardando confirma') !== -1) {
+                    nteLocked = true;
+                    btn.disabled = true;
+                    btn.className = 'btn btn-secondary btn-action';
+                    btn.textContent = 'Aguardando Confirmação pela CPM';
+                    // disable checkboxes as well
+                    try {
+                        checkboxes.forEach(cb => cb.disabled = true);
+                    } catch (e) {}
+                }
+            } catch (e) {}
+            // ensure CPM button is active and styled as success for CPM users, but disable if ingresso already validated
+            try {
+                const btnCpm = document.getElementById('btn-validar-documentos-cpm');
+                const s = serverCandidateStatus ? String(serverCandidateStatus).toLowerCase() : '';
+                if (btnCpm) {
+                    if (s.indexOf('apto para encaminhamento') !== -1) {
+                        btnCpm.disabled = true;
+                        btnCpm.className = 'btn btn-danger btn-action';
+                        btnCpm.textContent = 'Retirar Validação dos Documentos';
+                    } else {
+                        btnCpm.disabled = false;
+                        btnCpm.className = 'btn btn-success btn-action';
+                    }
+                }
+            } catch (e) {}
 
-                        const selected = checkboxes.filter(cb => cb.checked);
-                        if (!selected.length) return;
-                        const items = selected.map(cb => ({ key: cb.dataset.key, label: (cb.nextElementSibling ? cb.nextElementSibling.textContent.trim() : cb.dataset.key), validated: true }));
+            function updateNteButton() {
+                // Respect server-side final states first
+                try {
+                    const s = serverCandidateStatus ? String(serverCandidateStatus).toLowerCase() : '';
+                    if (s.indexOf('valid') !== -1 || s.indexOf('apto') !== -1 || s.indexOf(
+                        'documentos validados') !== -1 || candidateValidated) {
+                        if (isCpmUser) {
+                            btn.disabled = false;
+                            btn.className = 'btn btn-danger btn-action';
+                            btn.textContent = 'Retirar Validação dos Documentos';
+                        } else {
+                            btn.disabled = true;
+                            btn.className = 'btn btn-secondary btn-action';
+                            btn.textContent = 'Documentos Validados';
+                        }
                         try {
+                            checkboxes.forEach(cb => cb.disabled = true);
+                        } catch (e) {}
+                        return;
+                    }
+                    // If server explicitly requested corrections to NTE, do not bypass required-docs check;
+                    // leave enforcement to the required-docs logic below so reported/unchecked docs keep button disabled.
+                    if (s.indexOf('aguardando confirma') !== -1 || s.indexOf('aguard') !== -1) {
+                        btn.disabled = true;
+                        btn.className = 'btn btn-secondary btn-action';
+                        btn.textContent = 'Aguardando Confirmação pela CPM';
+                        return;
+                    }
+                } catch (e) {}
+
+                // Require that ALL required documents are checked before allowing NTE validation
+                const requiredChecks = Array.from(document.querySelectorAll(
+                    '#document-list .form-check-input[data-required="1"]'));
+                const allRequiredChecked = requiredChecks.length ? requiredChecks.every(cb => cb.checked) : true;
+
+                if (!allRequiredChecked) {
+                    // Some required documents are missing -> disable NTE action
+                    try {
+                        checkboxes.forEach(cb => cb.disabled = !!nteLocked);
+                    } catch (e) {}
+                    btn.disabled = true;
+                    btn.className = 'btn btn-secondary btn-action';
+                    btn.textContent = 'Faltam Documentos Obrigatórios';
+                    return;
+                }
+
+                // If required docs are satisfied, proceed to previous selection-based logic
+                const anyChecked = checkboxes.length && checkboxes.some(cb => cb.checked);
+                if (anyChecked) {
+                    if (nteLocked) {
+                        try {
+                            checkboxes.forEach(cb => cb.disabled = true);
+                        } catch (e) {}
+                        btn.disabled = true;
+                        btn.className = 'btn btn-secondary btn-action';
+                        btn.textContent = 'Aguardando Confirmação pela CPM';
+                        return;
+                    }
+                    try {
+                        const s2 = serverCandidateStatus ? String(serverCandidateStatus).toLowerCase() : '';
+                        if (s2.indexOf('nao assumiu') === -1 && s2.indexOf('não assumiu') === -1 && s2.indexOf(
+                                'nao-assumiu') === -1) {
+                            checkboxes.forEach(cb => cb.disabled = false);
+                        }
+                    } catch (e) {}
+                    btn.disabled = false;
+                    btn.className = 'btn btn-success btn-action';
+                    btn.textContent = 'Validar pelo NTE';
+                } else {
+                    try {
+                        checkboxes.forEach(cb => cb.disabled = !!nteLocked);
+                    } catch (e) {}
+                    btn.disabled = true;
+                    btn.className = 'btn btn-secondary btn-action';
+                    btn.textContent = nteLocked ? 'Aguardando Confirmação pela CPM' :
+                    'Nenhum Documento Selecionado';
+                }
+            }
+            checkboxes.forEach(cb => cb.addEventListener('change', updateNteButton));
+            // initialize
+            updateNteButton();
+
+            // click: persist selected documents as NTE confirmation
+            btn.addEventListener('click', async function() {
+                if (btn.disabled) return;
+                // if documents already validated, allow removal (unvalidate)
+                const s = serverCandidateStatus ? String(serverCandidateStatus).toLowerCase() : '';
+                if (isCpmUser && (candidateValidated || s.indexOf('valid') !== -1 || s.indexOf(
+                        'apto') !== -1 || s.indexOf('documentos validados') !== -1 || (btn
+                            .textContent || '').toLowerCase().indexOf('retirar') !== -1)) {
+                    const confirmed = await Swal.fire({
+                        title: 'Retirar validação?',
+                        text: 'Confirma que deseja retirar a validação dos documentos para este ingresso?',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Sim, retirar',
+                        cancelButtonText: 'Cancelar'
+                    });
+                    if (!confirmed.isConfirmed) return;
+                    try {
+                        const res = await fetch(postUrl, {
+                            method: 'POST',
+                            credentials: 'same-origin',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrf,
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                unvalidate: true
+                            })
+                        });
+                        const j = await res.json();
+                        if (j && j.success) {
+                            try {
+                                await Swal.fire({
+                                    icon: 'success',
+                                    title: 'Sucesso',
+                                    text: j.message || 'Validação removida.'
+                                });
+                            } catch (e) {}
+                            try {
+                                setTimeout(() => location.reload(), 700);
+                            } catch (e) {
+                                location.reload();
+                            }
+                        } else {
+                            try {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Erro',
+                                    text: j.message || 'Erro ao remover validação'
+                                });
+                            } catch (e) {}
+                        }
+                    } catch (e) {
+                        try {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro',
+                                text: 'Erro de comunicação'
+                            });
+                        } catch (err) {}
+                    }
+                    return;
+                }
+
+                const selected = checkboxes.filter(cb => cb.checked);
+                if (!selected.length) return;
+                const items = selected.map(cb => ({
+                    key: cb.dataset.key,
+                    label: (cb.nextElementSibling ? cb.nextElementSibling.textContent
+                    .trim() : cb.dataset.key),
+                    validated: true
+                }));
+                try {
+                    const res = await fetch(postUrl, {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrf,
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            items: items,
+                            confirm: true
+                        })
+                    });
+                    const j = await res.json();
+                    if (j && j.success) {
+                        try {
+                            await Swal.fire({
+                                icon: 'success',
+                                title: 'Sucesso',
+                                text: j.message ||
+                                    'Validação registrada. Aguardando Confirmação pela CPM.'
+                            });
+                        } catch (e) {}
+                        btn.disabled = true;
+                        btn.className = 'btn btn-secondary btn-action';
+                        btn.textContent = 'Aguardando Confirmação pela CPM';
+                        try {
+                            setTimeout(() => location.reload(), 700);
+                        } catch (e) {
+                            location.reload();
+                        }
+                    } else {
+                        try {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro',
+                                text: j.message || 'Erro ao salvar seleção'
+                            });
+                        } catch (e) {}
+                    }
+                } catch (e) {
+                    try {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erro',
+                            text: 'Erro de comunicação'
+                        });
+                    } catch (err) {}
+                }
+            });
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                const candidateId = '{{ $candidate['id'] ?? ($candidate['num_inscricao'] ?? '') }}';
+                const postUrl = '{{ url('/ingresso') }}' + '/' + encodeURIComponent(candidateId) + '/documentos';
+                const csrf = document.querySelector('meta[name="csrf-token"]') ? document.querySelector(
+                    'meta[name="csrf-token"]').getAttribute('content') : '';
+                const buttons = Array.from(document.querySelectorAll('.btn-report-issue'));
+                if (!buttons.length) return;
+
+                buttons.forEach(function(btn) {
+                    btn.addEventListener('click', async function() {
+                        const key = btn.dataset.key;
+                        const label = btn.dataset.label || key;
+                        if (!key) return;
+                        try {
+                            const {
+                                value: reason
+                            } = await Swal.fire({
+                                title: 'Reportar problema em: ' + label,
+                                input: 'textarea',
+                                inputPlaceholder: 'Descreva o problema (ex: documento ilegível, dados inconsistentes)',
+                                inputAttributes: {
+                                    'aria-label': 'Motivo do problema',
+                                    rows: 6,
+                                    maxlength: 1000,
+                                    autocapitalize: 'sentences',
+                                    style: 'min-height:140px;'
+                                },
+                                showCancelButton: true,
+                                confirmButtonText: 'Enviar',
+                                cancelButtonText: 'Cancelar',
+                                allowOutsideClick: false,
+                                showLoaderOnConfirm: true,
+                                backdrop: true,
+                                customClass: {
+                                    popup: 'swal2-custom-popup',
+                                    title: 'swal2-custom-title',
+                                    htmlContainer: 'swal2-custom-text',
+                                    input: 'swal2-custom-textarea'
+                                },
+                                footer: '<small>Por favor descreva claramente o problema. Máx. 1000 caracteres.</small>',
+                                preConfirm: (val) => {
+                                    if (!val || !val.trim()) {
+                                        Swal.showValidationMessage(
+                                            'O motivo é obrigatório');
+                                        return false;
+                                    }
+                                    return val.trim();
+                                }
+                            });
+                            if (!reason) return;
+
                             const res = await fetch(postUrl, {
                                 method: 'POST',
                                 credentials: 'same-origin',
@@ -2096,117 +2890,72 @@
                                     'X-Requested-With': 'XMLHttpRequest',
                                     'Accept': 'application/json'
                                 },
-                                body: JSON.stringify({ items: items, confirm: true })
+                                body: JSON.stringify({
+                                    issue: true,
+                                    key: key,
+                                    reason: reason
+                                })
                             });
-                            const j = await res.json();
+                            const j = await res.json().catch(() => null);
                             if (j && j.success) {
-                                try { await Swal.fire({ icon: 'success', title: 'Sucesso', text: j.message || 'Validação registrada. Aguardando Confirmação pela CPM.' }); } catch(e){}
-                                btn.disabled = true;
-                                btn.className = 'btn btn-secondary btn-action';
-                                btn.textContent = 'Aguardando Confirmação pela CPM';
-                                try { setTimeout(() => location.reload(), 700); } catch(e) { location.reload(); }
+                                await Swal.fire({
+                                    icon: 'success',
+                                    title: 'Reportado',
+                                    text: j.message || 'Problema reportado ao NTE.'
+                                });
+                                // append or update small badge to label; if already marked as resolved change to reported
+                                try {
+                                    const labelEl = document.querySelector('#doc_' + CSS.escape(
+                                        key) + ' + label') || document.querySelector(
+                                        'label[for="doc_' + key + '"]');
+                                    if (labelEl) {
+                                        const existing = labelEl.querySelector('.issue-badge');
+                                        const badgeText = 'Problema reportado';
+                                        if (existing) {
+                                            existing.className =
+                                                'text-danger issue-badge ms-2 small';
+                                            existing.textContent = badgeText;
+                                            existing.title = j.message || reason || badgeText;
+                                        } else {
+                                            const span = document.createElement('span');
+                                            span.className =
+                                                'text-danger issue-badge ms-2 small';
+                                            span.textContent = badgeText;
+                                            span.title = j.message || reason || badgeText;
+                                            labelEl.appendChild(span);
+                                        }
+                                    }
+                                    // ensure 'Retornar para o NTE' button is enabled for CPM when reports exist
+                                    try {
+                                        const btnReturn = document.getElementById(
+                                            'btn-return-to-nte');
+                                        if (btnReturn) {
+                                            btnReturn.disabled = false;
+                                            btnReturn.className =
+                                                'btn btn-outline-warning btn-action';
+                                        }
+                                    } catch (e) {}
+                                } catch (e) {
+                                    /* ignore UI badge errors */ }
                             } else {
-                                try { Swal.fire({ icon: 'error', title: 'Erro', text: j.message || 'Erro ao salvar seleção' }); } catch(e){}
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Erro',
+                                    text: (j && j.message) || 'Falha ao reportar'
+                                });
                             }
                         } catch (e) {
-                            try { Swal.fire({ icon: 'error', title: 'Erro', text: 'Erro de comunicação' }); } catch(err){}
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro',
+                                text: 'Erro de comunicação'
+                            });
                         }
                     });
                 });
-            </script>
-            <script>
-                document.addEventListener('DOMContentLoaded', function(){
-                    try {
-                        const candidateId = '{{ $candidate['id'] ?? ($candidate['num_inscricao'] ?? '') }}';
-                        const postUrl = '{{ url('/ingresso') }}' + '/' + encodeURIComponent(candidateId) + '/documentos';
-                        const csrf = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '';
-                        const buttons = Array.from(document.querySelectorAll('.btn-report-issue'));
-                        if (!buttons.length) return;
-
-                        buttons.forEach(function(btn){
-                            btn.addEventListener('click', async function(){
-                                const key = btn.dataset.key;
-                                const label = btn.dataset.label || key;
-                                if (!key) return;
-                                    try {
-                                    const { value: reason } = await Swal.fire({
-                                        title: 'Reportar problema em: ' + label,
-                                        input: 'textarea',
-                                        inputPlaceholder: 'Descreva o problema (ex: documento ilegível, dados inconsistentes)',
-                                        inputAttributes: { 'aria-label': 'Motivo do problema', rows: 6, maxlength: 1000, autocapitalize: 'sentences', style: 'min-height:140px;'},
-                                        showCancelButton: true,
-                                        confirmButtonText: 'Enviar',
-                                        cancelButtonText: 'Cancelar',
-                                        allowOutsideClick: false,
-                                        showLoaderOnConfirm: true,
-                                        backdrop: true,
-                                        customClass: {
-                                            popup: 'swal2-custom-popup',
-                                            title: 'swal2-custom-title',
-                                            htmlContainer: 'swal2-custom-text',
-                                            input: 'swal2-custom-textarea'
-                                        },
-                                        footer: '<small>Por favor descreva claramente o problema. Máx. 1000 caracteres.</small>',
-                                        preConfirm: (val) => {
-                                            if (!val || !val.trim()) {
-                                                Swal.showValidationMessage('O motivo é obrigatório');
-                                                return false;
-                                            }
-                                            return val.trim();
-                                        }
-                                    });
-                                    if (!reason) return;
-
-                                    const res = await fetch(postUrl, {
-                                        method: 'POST',
-                                        credentials: 'same-origin',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                            'X-CSRF-TOKEN': csrf,
-                                            'X-Requested-With': 'XMLHttpRequest',
-                                            'Accept': 'application/json'
-                                        },
-                                        body: JSON.stringify({ issue: true, key: key, reason: reason })
-                                    });
-                                    const j = await res.json().catch(()=>null);
-                                        if (j && j.success) {
-                                        await Swal.fire({ icon: 'success', title: 'Reportado', text: j.message || 'Problema reportado ao NTE.' });
-                                        // append or update small badge to label; if already marked as resolved change to reported
-                                        try {
-                                            const labelEl = document.querySelector('#doc_' + CSS.escape(key) + ' + label') || document.querySelector('label[for="doc_' + key + '"]');
-                                            if (labelEl) {
-                                                const existing = labelEl.querySelector('.issue-badge');
-                                                const badgeText = 'Problema reportado';
-                                                if (existing) {
-                                                    existing.className = 'text-danger issue-badge ms-2 small';
-                                                    existing.textContent = badgeText;
-                                                    existing.title = j.message || reason || badgeText;
-                                                } else {
-                                                    const span = document.createElement('span');
-                                                    span.className = 'text-danger issue-badge ms-2 small';
-                                                    span.textContent = badgeText;
-                                                    span.title = j.message || reason || badgeText;
-                                                    labelEl.appendChild(span);
-                                                }
-                                            }
-                                            // ensure 'Retornar para o NTE' button is enabled for CPM when reports exist
-                                            try {
-                                                const btnReturn = document.getElementById('btn-return-to-nte');
-                                                if (btnReturn) {
-                                                    btnReturn.disabled = false;
-                                                    btnReturn.className = 'btn btn-outline-warning btn-action';
-                                                }
-                                            } catch(e) {}
-                                        } catch(e) { /* ignore UI badge errors */ }
-                                    } else {
-                                        Swal.fire({ icon: 'error', title: 'Erro', text: (j && j.message) || 'Falha ao reportar' });
-                                    }
-                                } catch (e) {
-                                    Swal.fire({ icon: 'error', title: 'Erro', text: 'Erro de comunicação' });
-                                }
-                            });
-                        });
-                    } catch (e) { console.error('Report issue setup failed', e); }
-                });
-            </script>
+            } catch (e) {
+                console.error('Report issue setup failed', e);
+            }
+        });
+    </script>
 @endpush
