@@ -22,7 +22,20 @@ class IngressoController extends Controller
     {
         $user = Auth::user();
         // Allow users with profile_id == 1 in either sector 7 (NTE) or sector 2 (CPM)
-        return $user && isset($user->profile_id) && $user->profile_id == 1 && in_array($user->sector_id, [7, 2]);
+        // Also allow profile_id == 4 in sector 3 (e.g., specific admin/ope role)
+        if (! $user || ! isset($user->profile_id) || ! isset($user->sector_id)) {
+            return false;
+        }
+
+        if ($user->profile_id == 1 && in_array($user->sector_id, [7, 2])) {
+            return true;
+        }
+
+        if ($user->profile_id == 4 && $user->sector_id == 3) {
+            return true;
+        }
+
+        return false;
     }
 
     public function index()
