@@ -519,10 +519,7 @@
                     $conv = is_null($conv) ? '' : $conv;
                     $backUrl = url('/ingresso') . ($conv !== '' ? '?filter_convocacao=' . urlencode($conv) : '');
                 @endphp
-                {{-- <a href="{{ $backUrl }}" class="btn btn-primary btn-sm" title="Voltar" aria-label="Voltar" style="border-radius:6px;padding:4px 8px;display:inline-flex;align-items:center;justify-content:center;margin-right:6px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icon-tabler-arrow-left" aria-hidden="true" style="vertical-align:middle;margin-right:6px;"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12h14" /><path d="M5 12l6 6" /><path d="M5 12l6 -6" /></svg>
-                    <span style="vertical-align:middle;"></span>
-                </a> --}}
+                
                 @php $isIngressadoTop = isset($candidate['status']) && mb_strtolower(trim($candidate['status']), 'UTF-8') === 'apto para encaminhamento'; @endphp
                 @php $isCpm = isset($isCpm) ? $isCpm : (optional(Auth::user())->sector_id == 2 && optional(Auth::user())->profile_id == 1); @endphp
                 @php $isNte = isset($isNte) ? $isNte : (optional(Auth::user())->sector_id == 7 && optional(Auth::user())->profile_id == 1); @endphp
@@ -582,7 +579,11 @@
                         </ul>
                     </div>
                 @endif
-
+                <a href="{{ url('/ingresso') . (session('filter_convocacao') ? '?filter_convocacao=' . urlencode(session('filter_convocacao')) : '') }}"
+                    class="btn btn-primary btn-sm btn-options" title="Voltar" aria-label="Voltar"
+                    style="display:inline-flex;align-items:center;border-radius:6px;padding:6px 10px;margin-right:6px;font-size:0.85rem;">
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-back-up"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 14l-4 -4l4 -4" /><path d="M5 10h11a4 4 0 1 1 0 8h-1" /></svg>                    <span style="vertical-align:middle;"></span>
+                </a>
             </div>
         </div>
 
@@ -1055,7 +1056,7 @@
                         @endphp
                         @if ($isNte)
                             <div class="d-grid mb-2">
-                                <button id="nte-none-selected" class="btn btn-secondary btn-action" disabled>Nenhum
+                                <button id="nte-none-selected" class="btn btn-secondary btn-action" @if(empty($candidate['sei_number'])) disabled @endif>Nenhum
                                     Documento Selecionado</button>
                             </div>
                         @endif
@@ -1614,21 +1615,21 @@
             } catch (e) {}
 
             // show a centered SweetAlert2 modal with current candidate status on load
-            try {
-                if (typeof Swal !== 'undefined') {
-                    const s = candidateStatus ? String(candidateStatus).trim() : 'Sem status';
-                    const low = s.toLowerCase();
-                    let icon = 'info';
-                    if (low.indexOf('valid') !== -1 || low.indexOf('apto') !== -1) icon = 'success';
-                    else if (low.indexOf('pendente') !== -1 || low.indexOf('aguard') !== -1) icon = 'warning';
-                    Swal.fire({
-                        title: 'Status do Candidato',
-                        text: s,
-                        icon: icon,
-                        confirmButtonText: 'OK'
-                    });
-                }
-            } catch (e) {}
+            // try {
+            //     if (typeof Swal !== 'undefined') {
+            //         const s = candidateStatus ? String(candidateStatus).trim() : 'Sem status';
+            //         const low = s.toLowerCase();
+            //         let icon = 'info';
+            //         if (low.indexOf('valid') !== -1 || low.indexOf('apto') !== -1) icon = 'success';
+            //         else if (low.indexOf('pendente') !== -1 || low.indexOf('aguard') !== -1) icon = 'warning';
+            //         Swal.fire({
+            //             title: 'Status do Candidato',
+            //             text: s,
+            //             icon: icon,
+            //             confirmButtonText: 'OK'
+            //         });
+            //     }
+            // } catch (e) {}
 
             // If this user is NTE and the candidate is validated by CPM, lock the UI (disable actions)
             // NOTE: only disable controls inside the candidate panel to avoid blocking navbar/user menu
@@ -1753,6 +1754,10 @@
                                         leftInfo.appendChild(div);
                                     }
                                 }
+                                try {
+                                    // refresh page so server-side state (and permissions) update
+                                    location.reload();
+                                } catch (e) {}
                             });
                         } else {
                             Swal.fire({
