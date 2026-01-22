@@ -175,6 +175,8 @@
                         <th scope="col">NOME</th>
                         <th scope="col">CPF</th>
                         <th scope="col">NTE</th>
+                        <th scope="col">DISCIPLINA</th>
+                        <th scope="col">MUNICÍPIO CONVOCAÇÃO</th>
                         <th scope="col">Class. Ampla</th>
                         <th scope="col">Class. PNE</th>
                         <th scope="col">Class. Racial</th>
@@ -227,6 +229,18 @@
                     }
                 },
                 {
+                    data: 'disciplina', name: 'disciplina',
+                    render: function(data, type, row) {
+                        return (data === null || data === undefined || data === '') ? '-' : data;
+                    }
+                },
+                {
+                    data: 'municipio_convocacao', name: 'municipio_convocacao',
+                    render: function(data, type, row) {
+                        return (data === null || data === undefined || data === '') ? '-' : data;
+                    }
+                },
+                {
                     data: 'classificacao_ampla', name: 'classificacao_ampla',
                     render: function(data, type, row) {
                         if (data === null || data === undefined || data === '') return '-';
@@ -248,7 +262,7 @@
                     }
                 },
                 {
-                    data: 'classificacao_racial', name: 'classificacao_racial',
+                    data: 'classificacao_quota_racial', name: 'classificacao_quota_racial',
                     render: function(data, type, row) {
                         if (data === null || data === undefined || data === '') return '-';
                         var s = String(data).trim();

@@ -525,7 +525,8 @@
                 </a> --}}
                 @php $isIngressadoTop = isset($candidate['status']) && mb_strtolower(trim($candidate['status']), 'UTF-8') === 'apto para encaminhamento'; @endphp
                 @php $isCpm = isset($isCpm) ? $isCpm : (optional(Auth::user())->sector_id == 2 && optional(Auth::user())->profile_id == 1); @endphp
-                @if ($isCpm)
+                @php $isNte = isset($isNte) ? $isNte : (optional(Auth::user())->sector_id == 7 && optional(Auth::user())->profile_id == 1); @endphp
+                @if ($isCpm || $isNte)
                     <div class="dropdown">
                          <button class="btn btn-primary btn-sm btn-options dropdown-toggle" type="button" id="candidateOptionsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="display:inline-flex;align-items:center;border-radius:6px;padding:8px 12px;">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;opacity:0.95;vertical-align:middle;"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
@@ -533,13 +534,22 @@
                         </button>
                         <ul class="dropdown-menu">
                             <li class="mb-2">
-                                @if ($isNaoAssumiu)
-                                    <a class="bg-success text-white dropdown-item" id="btn-reativar-candidato" type="button">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-share"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h3" /><path d="M16 22l5 -5" /><path d="M21 21.5v-4.5h-4.5" /></svg>
-                                        Reativar Candidato
-                                    </a>
-                                @else
-                                    @unless ($isIngressadoTop)
+                                @if ($isCpm)
+                                    @if ($isNaoAssumiu)
+                                        <a class="bg-success text-white dropdown-item" id="btn-reativar-candidato" type="button">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-share"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h3" /><path d="M16 22l5 -5" /><path d="M21 21.5v-4.5h-4.5" /></svg>
+                                            Reativar Candidato
+                                        </a>
+                                    @else
+                                        @unless ($isIngressadoTop)
+                                            <a class="bg-danger text-white dropdown-item" id="btn-nao-assumiu" type="button">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-off"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8.18 8.189a4.01 4.01 0 0 0 2.616 2.627m3.507 -.545a4 4 0 1 0 -5.59 -5.552" /><path d="M6 21v-2a4 4 0 0 1 4 -4h4c.412 0 .81 .062 1.183 .178m2.633 2.618c.12 .38 .184 .785 .184 1.204v2" /><path d="M3 3l18 18" /></svg>
+                                                Não Assumiu
+                                            </a>
+                                        @endunless
+                                    @endif
+                                @elseif ($isNte)
+                                    @unless ($isIngressadoTop || ($isNaoAssumiu ?? false))
                                         <a class="bg-danger text-white dropdown-item" id="btn-nao-assumiu" type="button">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-off"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8.18 8.189a4.01 4.01 0 0 0 2.616 2.627m3.507 -.545a4 4 0 1 0 -5.59 -5.552" /><path d="M6 21v-2a4 4 0 0 1 4 -4h4c.412 0 .81 .062 1.183 .178m2.633 2.618c.12 .38 .184 .785 .184 1.204v2" /><path d="M3 3l18 18" /></svg>
                                             Não Assumiu
@@ -547,26 +557,28 @@
                                     @endunless
                                 @endif
                             </li>
-                            @php
-                                $docsValidatedTop = (isset($candidate['documentos_validados']) && ($candidate['documentos_validados'] == 1 || $candidate['documentos_validados'] === true)) || (isset($candidate['status']) && (mb_stripos($candidate['status'], 'valid', 0, 'UTF-8') !== false || mb_stripos($candidate['status'], 'apto', 0, 'UTF-8') !== false));
-                                $isIngressadoTop = isset($candidate['status']) && mb_strtolower(trim($candidate['status']), 'UTF-8') === 'apto para encaminhamento';
-                            @endphp
-                            <li class="mb-2">
-                                @if ($docsValidatedTop && !$isIngressadoTop && !($isNaoAssumiu ?? false))
-                                    <a class="bg-success text-white dropdown-item" id="btn-validar-ingresso" type="button">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-check"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h4" /><path d="M15 19l2 2l4 -4" /></svg>
-                                        Apto para Encaminhamento
-                                    </a>
-                                @endif
-                            </li>
-                            <li>
-                                @if ($docsValidatedTop && $isIngressadoTop && !($isNaoAssumiu ?? false))
-                                    <a class="dropdown-item bg-danger text-white" id="btn-retirar-validacao-ingresso" type="button">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-cancel"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h3.5" /><path d="M16 19a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /><path d="M17 21l4 -4" /></svg>
-                                        Retirar Validação de Apto
-                                    </a>
-                                @endif
-                            </li>
+                            @if ($isCpm)
+                                @php
+                                    $docsValidatedTop = (isset($candidate['documentos_validados']) && ($candidate['documentos_validados'] == 1 || $candidate['documentos_validados'] === true)) || (isset($candidate['status']) && (mb_stripos($candidate['status'], 'valid', 0, 'UTF-8') !== false || mb_stripos($candidate['status'], 'apto', 0, 'UTF-8') !== false));
+                                    $isIngressadoTop = isset($candidate['status']) && mb_strtolower(trim($candidate['status']), 'UTF-8') === 'apto para encaminhamento';
+                                @endphp
+                                <li class="mb-2">
+                                    @if ($docsValidatedTop && !$isIngressadoTop && !($isNaoAssumiu ?? false))
+                                        <a class="bg-success text-white dropdown-item" id="btn-validar-ingresso" type="button">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-check"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h4" /><path d="M15 19l2 2l4 -4" /></svg>
+                                            Apto para Encaminhamento
+                                        </a>
+                                    @endif
+                                </li>
+                                <li>
+                                    @if ($docsValidatedTop && $isIngressadoTop && !($isNaoAssumiu ?? false))
+                                        <a class="dropdown-item bg-danger text-white" id="btn-retirar-validacao-ingresso" type="button">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-cancel"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h3.5" /><path d="M16 19a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /><path d="M17 21l4 -4" /></svg>
+                                            Retirar Validação de Apto
+                                        </a>
+                                    @endif
+                                </li>
+                            @endif
                         </ul>
                     </div>
                 @endif

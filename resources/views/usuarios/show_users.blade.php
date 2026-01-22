@@ -76,15 +76,15 @@
                 <td class="text-center">{{ $user->id }}</td>
                 <td class="text-center">{{ $user->name }}</td>
                 <td class="text-center">{{ $user->email }}</td>
-                <td class="text-center">{{ $user->setor }}</td>
-                <td class="text-center">{{ $user->profile }}</td>
+                <td class="text-center">{{ optional($user->sector)->name ?? $user->setor ?? $user->sector_id }}</td>
+                <td class="text-center">{{ optional($user->profile)->name ?? $user->profile ?? $user->profile_id }}</td>
                 <td class="text-center">{{ $user->last_login ? \Carbon\Carbon::parse($user->last_login)->format('d/m/Y') : 'N/A' }}</td>
                 <td class="text-center">
                     <div class="btn-group dropleft">
                         <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         </button>
                         <div class="dropdown-menu">
-                            <a class="text-primary dropdown-item" href="/detalhar_user/{{ $user -> id }}"><i class="fas fa-edit"></i> Editar</a>
+                            <a class="text-primary dropdown-item edit-user" href="#" data-id="{{ $user->id }}" data-sector="{{ $user->sector_id }}" data-profile="{{ $user->profile_id }}"><i class="fas fa-edit"></i> Editar</a>
                             <a class="text-info dropdown-item" onclick="resetPass('<?php echo $user->id; ?>')"><i class="fas fa-key"></i> Resetar Senha</a>
                             <a class="text-danger dropdown-item" href="#"><i class="far fa-trash-alt"></i> Excluir</a>
                         </div>
@@ -94,6 +94,49 @@
             @endforeach
         </tbody>
     </table>
+</div>
+<!-- Edit User Modal -->
+<div class="modal fade" id="editUserModal" tabindex="-1" role="dialog" aria-labelledby="editUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editUserModalLabel">Editar Usuário</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editUserForm">
+                    @csrf
+                    <input type="hidden" id="edit_user_id" name="id">
+
+                    <div class="form-group">
+                        <label for="edit_sector_id">Setor</label>
+                        <select id="edit_sector_id" name="sector_id" class="form-control form-control-sm" required>
+                            <option value="">Selecione...</option>
+                            @foreach($sectors as $s)
+                                <option value="{{ $s->id }}">{{ $s->name ?? $s->descricao ?? 'ID '.$s->id }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit_profile_id">Perfil</label>
+                        <select id="edit_profile_id" name="profile_id" class="form-control form-control-sm" required>
+                            <option value="">Selecione...</option>
+                            @foreach($profiles as $p)
+                                <option value="{{ $p->id }}">{{ $p->name ?? $p->descricao ?? 'ID '.$p->id }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer d-flex justify-content-center">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                <button type="button" id="saveEditUser" class="btn btn-primary">Salvar</button>
+            </div>
+        </div>
+    </div>
 </div>
 <div class="modal fade" id="addNewUser" tabindex="-1" role="dialog" aria-labelledby="addNewUser" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
@@ -127,15 +170,20 @@
                         <div class="form-group">
                             <div class="col-md-12">
                                 <div class="form-group_disciplina">
-                                    <label class="control-label" for="user_sector">SETOR</label>
-                                    <select name="user_sector" id="user_sector" class="form-control form-control-sm" required>
-                                        <option>Selecione....</option>
-                                        <option value="PROGRAMAÇÂO - CPG">PROGRAMAÇÂO - CPG</option>
-                                        <option value="PROVIMENTO - CPM">PROVIMENTO - CPM</option>
-                                        <option value="ADMINISTRADOR - ADM">ADMINISTRADOR - ADM</option>
-                                        <option value="GESTÃO DE INFORMAÇÃO - CGI">GESTÃO DE INFORMAÇÃO - CGI</option>
-                                        <option value="AFASTAMENTO DEFINITIVO - CAD">AFASTAMENTO DEFINITIVO - CAD</option>
-                                        <option value="CONSULTA">CONSULTA</option>
+                                    <label class="control-label" for="nte">NTE</label>
+                                    <input value="" name="nte" id="nte" type="text" class="form-control form-control-sm" placeholder="Código ou nome do NTE (opcional)">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-md-12">
+                                <div class="form-group_disciplina">
+                                    <label class="control-label" for="sector_id">SETOR</label>
+                                    <select name="sector_id" id="sector_id" class="form-control form-control-sm" required>
+                                        <option value="">Selecione....</option>
+                                        @foreach($sectors as $s)
+                                            <option value="{{ $s->id }}">{{ $s->name ?? $s->descricao ?? 'ID '.$s->id }}</option>
+                                        @endforeach
                                     </select>
                                 </div>
                             </div>
@@ -143,16 +191,12 @@
                         <div class="form-group">
                             <div class="col-md-12">
                                 <div class="form-group_disciplina">
-                                    <label class="control-label" for="user_profile">PERFIL</label required>
-                                    <select name="user_profile" id="user_profile" class="form-control form-control-sm">
-                                        <option>Selecione....</option>
-                                        <option value="administrador">ADMINISTRADOR</option>
-                                        <option value="cpg_tecnico">TÉCNICO CPG</option>
-                                        <option value="cpm_tecnico">TÉCNICO CPM</option>
-                                        <option value="cad_tecnico">TÉCNICO CAD</option>
-                                        <option value="cgi_tecnico">TÉCNICO CGI</option>
-                                        <option value="cpm_coordenador">COORDENADOR CPM</option>
-                                        <option value="consulta">CONSULTA</option>
+                                    <label class="control-label" for="profile_id">PERFIL</label>
+                                    <select name="profile_id" id="profile_id" class="form-control form-control-sm" required>
+                                        <option value="">Selecione....</option>
+                                        @foreach($profiles as $p)
+                                            <option value="{{ $p->id }}">{{ $p->name ?? $p->descricao ?? 'ID '.$p->id }}</option>
+                                        @endforeach
                                     </select>
                                 </div>
                             </div>
@@ -241,4 +285,49 @@
             });
         });
     }
+</script>
+<script>
+    // Edit user modal handling
+    document.addEventListener('DOMContentLoaded', function(){
+        document.querySelectorAll('.edit-user').forEach(function(btn){
+            btn.addEventListener('click', function(ev){
+                ev.preventDefault();
+                var id = this.dataset.id;
+                var sector = this.dataset.sector || '';
+                var profile = this.dataset.profile || '';
+                document.getElementById('edit_user_id').value = id;
+                var selSector = document.getElementById('edit_sector_id');
+                if (selSector) selSector.value = sector;
+                var selProfile = document.getElementById('edit_profile_id');
+                if (selProfile) selProfile.value = profile;
+                $('#editUserModal').modal('show');
+            });
+        });
+
+        document.getElementById('saveEditUser').addEventListener('click', function(){
+            var id = document.getElementById('edit_user_id').value;
+            var sector_id = document.getElementById('edit_sector_id').value;
+            var profile_id = document.getElementById('edit_profile_id').value;
+            var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            fetch('/users/update/' + id, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': token,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ id: id, sector_id: sector_id, profile_id: profile_id })
+            }).then(function(resp){
+                if (resp.ok) {
+                    return resp.text();
+                }
+                return resp.text().then(function(t){ throw new Error(t || 'Erro'); });
+            }).then(function(){
+                location.reload();
+            }).catch(function(err){
+                Swal.fire({ icon: 'error', title: 'Erro', text: 'Não foi possível atualizar o usuário.' });
+            });
+        });
+    });
 </script>

@@ -4,14 +4,18 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Profile;
+use App\Models\Sector;
 
 class UsersController extends Controller
 {
     public function showUsers()
     {
         $users = User::orderBy('id', 'asc')->get();
+        $profiles = Profile::orderBy('id','asc')->get();
+        $sectors = Sector::orderBy('id','asc')->get();
 
-        return view('usuarios.show_users', compact('users'));
+        return view('usuarios.show_users', compact('users','profiles','sectors'));
     }
     
 
@@ -53,10 +57,15 @@ class UsersController extends Controller
     public function create(Request $request){
 
         $user = new User;
-        $user->name = $request->user_name;
-        $user->setor = $request->user_sector;
-        $user->profile = $request->user_profile;
-        $user->email = $request->user_email;
+        $user->name = $request->input('user_name');
+        $user->email = $request->input('user_email');
+
+        // Prefer explicit foreign keys when creating users
+        $user->sector_id = $request->input('sector_id') ?: null;
+        $user->profile_id = $request->input('profile_id') ?: null;
+        // Optional NTE value for the user
+        $user->nte = $request->input('nte') ?: null;
+
         // Assign plain password; the User model's mutator will hash it on save.
         $user->password = '123456789';
 

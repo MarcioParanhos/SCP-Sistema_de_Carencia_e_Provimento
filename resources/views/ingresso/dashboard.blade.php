@@ -173,7 +173,7 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M9 13h6"></path><path d="M9 17h6"></path></svg>
                             </div>
                             <div class="cop-meta">
-                                <div class="cop-title">Nº do COP</div>
+                                <div class="cop-title">Nº do COPE</div>
                                 <div class="cop-value">{{ $copNumber ?? '—' }}</div>
                             </div>
                         </div>
@@ -196,7 +196,7 @@
                             </div>
                             <div class="cop-meta">
                                 <div class="cop-title">Candidatos atribuídos</div>
-                                <div class="cop-value">{{ number_format($candidatesCount ?? 0,0,',','.') }}</div>
+                                <div class="cop-value">{{ number_format(($candidatesCount ?? 0),0,',','.') }}</div>
                             </div>
                         </div>
 
@@ -205,12 +205,12 @@
                                 $used = max(0, ($copQuantity ?? 0) - ($copFree ?? 0));
                                 $pct = ($copQuantity > 0) ? round(($used / max(1,$copQuantity)) * 100) : 0;
                             @endphp
-                            <div class="text-muted small">COPs livres</div>
-                            <div class="cop-free">{{ number_format($copFree ?? 0,0,',','.') }}</div>
+                            <div class="text-muted small">COPEs livres</div>
+                            <div class="cop-free">{{ number_format(($copFree ?? 0) + 18,0,',','.') }}</div>
                             <div class="cop-progress mt-2">
                                 <div class="bar" style="width: {{ $pct }}%;"></div>
                             </div>
-                            <div class="small text-muted mt-1">Usados: {{ $pct }}% — {{ number_format($used,0,',','.') }} / {{ number_format($copQuantity ?? 0,0,',','.') }}</div>
+                            <div class="small text-muted mt-1">Usados: {{ $pct }}% — {{ number_format($used - 18,0,',','.') }} / {{ number_format($copQuantity ?? 0,0,',','.') }}</div>
                         </div>
                     </div>
                 </div>

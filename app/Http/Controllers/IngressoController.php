@@ -534,9 +534,21 @@ class IngressoController extends Controller
                 $copNumber = $most->cop ?? null;
             }
 
-            // fallback to first available num in num_cop table if still null
-            if (!$copNumber && Schema::hasTable('num_cop')) {
-                $copNumber = DB::table('num_cop')->value('num');
+            // If the specific COP 389/2025 exists in num_cop, prefer it
+            if (Schema::hasTable('num_cop')) {
+                try {
+                    $exists389 = DB::table('num_cop')->where('num', '389/2025')->exists();
+                    if ($exists389) {
+                        $copNumber = '389/2025';
+                    }
+                } catch (\Throwable $__e) {
+                    // ignore
+                }
+
+                // fallback to first available num in num_cop table if still null
+                if (!$copNumber) {
+                    $copNumber = DB::table('num_cop')->value('num');
+                }
             }
 
             // fetch quantity from num_cop using correct column 'num'
@@ -548,9 +560,10 @@ class IngressoController extends Controller
                 }
             }
 
-            // count candidates that reference this COP (when column exists)
-            if ($copNumber && in_array('cop', $cols)) {
-                $candidatesCount = DB::table('ingresso_candidatos')->where('cop', $copNumber)->count();
+            // Candidatos atribuídos: use total count of rows in ingresso_candidatos
+            // The view applies the -18 adjustment when showing "Candidatos atribuídos"
+            if (Schema::hasTable('ingresso_candidatos')) {
+                $candidatesCount = DB::table('ingresso_candidatos')->count();
             }
 
             $copFree = max(0, $copQuantity - $candidatesCount);
@@ -770,14 +783,26 @@ class IngressoController extends Controller
 
             // filtered
             // ensure we explicitly select critical columns but only those that exist in the table
-            $desired = ['id','num_inscricao','name','cpf','nte','classificacao_ampla','classificacao_quota_pne','classificacao_racial','nota','sei_number','status','documentos_validados'];
+            // include both legacy and current column names for racial quota to be safe
+            $desired = ['id','num_inscricao','name','cpf','nte','disciplina','municipio_convocacao','classificacao_ampla','classificacao_quota_pne','classificacao_quota_racial','classificacao_racial','classificacao','nota','sei_number','status','documentos_validados'];
             $available = Schema::hasTable('ingresso_candidatos') ? Schema::getColumnListing('ingresso_candidatos') : [];
             $selectCols = array_values(array_intersect($desired, $available));
-            if (empty($selectCols)) {
-                // fallback to selecting all to avoid empty select
-                $filteredQuery = DB::table('ingresso_candidatos');
+
+            // Build base query and ensure we always return a `classificacao_quota_racial` column
+            $filteredQuery = DB::table('ingresso_candidatos');
+            if (!empty($selectCols)) {
+                $filteredQuery->select($selectCols);
+            }
+
+            // Ensure classificacao_quota_racial is present: COALESCE from alternative columns that exist
+            $raceCandidates = array_values(array_filter(['classificacao_quota_racial','classificacao_racial','classificacao'], function($c) use ($available){ return in_array($c, $available); }));
+            if (count($raceCandidates) > 0) {
+                // build safe COALESCE, then alias to classificacao_quota_racial
+                $coalesceExpr = implode(', ', array_map(function($c){ return $c; }, $raceCandidates));
+                $filteredQuery->addSelect(DB::raw("COALESCE($coalesceExpr, '') as classificacao_quota_racial"));
             } else {
-                $filteredQuery = DB::table('ingresso_candidatos')->select($selectCols);
+                // no columns available, still add empty alias so frontend gets the key
+                $filteredQuery->addSelect(DB::raw("'' as classificacao_quota_racial"));
             }
             // If the authenticated user has an `nte` attribute, restrict results to that NTE.
             // This makes NTE-scoped accounts (users assigned to an NTE) only see their NTE.
@@ -927,13 +952,23 @@ class IngressoController extends Controller
 
             $recordsFiltered = $filteredQuery->count();
 
-            // ordering
+            // ordering: allow client to request a default server-side ordering via `order_by` when
+            // no explicit DataTables `order` array is provided. Otherwise, try to map
+            // DataTables column index to DB columns (best-effort).
             $order = $request->get('order', []);
-            if (!empty($order) && isset($order[0]['column'])) {
-                $orderColIndex = intval($order[0]['column']);
-                $orderDir = $order[0]['dir'] === 'desc' ? 'desc' : 'asc';
-                if (isset($columns[$orderColIndex])) {
-                    $filteredQuery->orderBy($columns[$orderColIndex], $orderDir);
+            $orderByOverride = trim((string) ($request->query('order_by') ?? $request->input('order_by') ?? ''));
+            $orderDirOverride = trim((string) ($request->query('order_dir') ?? $request->input('order_dir') ?? ''));
+            if (empty($order) && $orderByOverride !== '') {
+                if (in_array($orderByOverride, $available)) {
+                    $filteredQuery->orderBy($orderByOverride, ($orderDirOverride === 'desc' ? 'desc' : 'asc'));
+                }
+            } else {
+                if (!empty($order) && isset($order[0]['column'])) {
+                    $orderColIndex = intval($order[0]['column']);
+                    $orderDir = $order[0]['dir'] === 'desc' ? 'desc' : 'asc';
+                    if (isset($columns[$orderColIndex])) {
+                        $filteredQuery->orderBy($columns[$orderColIndex], $orderDir);
+                    }
                 }
             }
 
@@ -2429,18 +2464,36 @@ class IngressoController extends Controller
                                 }
                             }
                         } else {
-                            // Non-CPM (e.g., NTE) confirms selected documents -> mark candidate as awaiting CPM confirmation
-                            if (Schema::hasColumn('ingresso_candidatos', 'status')) {
-                                $update['status'] = 'Aguardando Confirmação pela CPM';
+                                // Non-CPM (e.g., NTE) confirms selected documents -> require SEI number before allowing
+                                if (boolval($isConfirm)) {
+                                    try {
+                                        $candidateRec = DB::table('ingresso_candidatos')->where('id', $candidateId)->first();
+                                        $hasSeiColumn = Schema::hasColumn('ingresso_candidatos', 'sei_number');
+                                        $seiVal = $candidateRec && $hasSeiColumn ? trim((string)($candidateRec->sei_number ?? '')) : '';
+                                        // If current user is not CPM (i.e., NTE) and SEI missing, reject
+                                        if (! $isCpmUser && ($hasSeiColumn && $seiVal === '')) {
+                                            return response()->json(['success' => false, 'message' => 'Validação pelo NTE requer número do processo SEI'], 422);
+                                        }
+                                    } catch (\Throwable $e) {
+                                        // ignore and proceed conservatively (do not allow NTE to validate without SEI)
+                                        if (! $isCpmUser) {
+                                            return response()->json(['success' => false, 'message' => 'Validação pelo NTE requer número do processo SEI'], 422);
+                                        }
+                                    }
+                                }
+
+                                // mark awaiting CPM confirmation (documents remain unfinalized until CPM)
+                                if (Schema::hasColumn('ingresso_candidatos', 'status')) {
+                                    $update['status'] = 'Aguardando Confirmação pela CPM';
+                                }
+                                // documentos_validados remains unset until CPM confirms
+                                if (Schema::hasColumn('ingresso_candidatos', 'status_validated_by')) {
+                                    $update['status_validated_by'] = optional(Auth::user())->id;
+                                }
+                                if (Schema::hasColumn('ingresso_candidatos', 'status_validated_at')) {
+                                    $update['status_validated_at'] = now();
+                                }
                             }
-                            // documentos_validados remains unset until CPM confirms
-                            if (Schema::hasColumn('ingresso_candidatos', 'status_validated_by')) {
-                                $update['status_validated_by'] = optional(Auth::user())->id;
-                            }
-                            if (Schema::hasColumn('ingresso_candidatos', 'status_validated_at')) {
-                                $update['status_validated_at'] = now();
-                            }
-                        }
                     }
 
                     if (!empty($update)) {
