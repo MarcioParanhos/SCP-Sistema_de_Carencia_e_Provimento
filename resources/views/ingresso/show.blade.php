@@ -675,13 +675,14 @@
                                                 if (class_exists('\Carbon\Carbon')) {
                                                     try {
                                                         $d = \Carbon\Carbon::parse($val);
-                                                        $d->setTimezone('America/Sao_Paulo');
-                                                        if (
-                                                            (int) $d->format('H') !== 0 ||
-                                                            strpos((string) $val, ':') !== false
-                                                        ) {
+                                                        // Detect if the original value contains a time portion.
+                                                        $containsTime = (strpos((string) $val, ':') !== false);
+                                                        // If it contains time, convert to display timezone and show time.
+                                                        if ($containsTime || (int) $d->format('H') !== 0 || (int) $d->format('i') !== 0 || (int) $d->format('s') !== 0) {
+                                                            $d->setTimezone('America/Sao_Paulo');
                                                             return $d->format('d/m/Y H:i');
                                                         }
+                                                        // Date-only value: format as local date without timezone conversion
                                                         return $d->format('d/m/Y');
                                                     } catch (\Throwable $e) {
                                                         // fallback to raw value
@@ -1818,10 +1819,18 @@
                     btnEdit.style.display = 'none';
                     btnSave.style.display = 'inline-flex';
                     btnCancel.style.display = 'inline-block';
-                    const nonEditable = ['num_inscricao', 'name', 'nome', 'cpf', 'data_nascimento', 'nota',
+                    const isCpmUser = @json(optional(Auth::user())->profile_id == 1 && optional(Auth::user())->sector_id == 2);
+                    const nonEditable = (function(){
+                        const arr = ['num_inscricao', 'name', 'nome', 'cpf', 'data_nascimento', 'nota',
                         'classificacao_ampla', 'classificacao_quota_pne', 'classificacao_quota_racial',
                         'classificacao'
-                    ];
+                        ];
+                        // Allow CPM users to edit 'name' and 'data_nascimento'
+                        if (isCpmUser) {
+                            return arr.filter(function(x){ return x !== 'name' && x !== 'data_nascimento'; });
+                        }
+                        return arr;
+                    })();
                     document.querySelectorAll('tr[data-key]').forEach(function(row) {
                         const key = row.dataset.key;
                         // do not make certain fields editable
@@ -1890,10 +1899,17 @@
                 btnSave.addEventListener('click', async function() {
                     // collect values
                     const payload = {};
-                    const nonEditablePayload = ['num_inscricao', 'name', 'nome', 'cpf',
-                        'data_nascimento', 'nota', 'classificacao_ampla',
-                        'classificacao_quota_pne', 'classificacao_quota_racial', 'classificacao'
-                    ];
+                    const nonEditablePayload = (function(){
+                        const base = ['num_inscricao', 'name', 'nome', 'cpf',
+                            'data_nascimento', 'nota', 'classificacao_ampla',
+                            'classificacao_quota_pne', 'classificacao_quota_racial', 'classificacao'
+                        ];
+                        // If CPM, allow name and data_nascimento to be submitted
+                        if (@json(optional(Auth::user())->profile_id == 1 && optional(Auth::user())->sector_id == 2)) {
+                            return base.filter(function(x){ return x !== 'name' && x !== 'data_nascimento'; });
+                        }
+                        return base;
+                    })();
                     document.querySelectorAll('tr[data-key]').forEach(function(row) {
                         const key = row.dataset.key;
                         // skip non-editable fields when building payload

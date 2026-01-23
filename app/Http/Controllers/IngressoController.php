@@ -1217,6 +1217,19 @@ class IngressoController extends Controller
             }
             // mark missing columns as synthetic (will be filled with '-')
             $syntheticCols = $missing;
+
+            // Support requested alias 'nome' -> use DB column 'name' when present.
+            // This allows clients to request `cols=...,nome,...` while still
+            // exporting the data from the existing `name` column rather than
+            // producing a synthetic empty column.
+            if (in_array('nome', $cols) && in_array('name', $available)) {
+                // replace any occurrence of 'nome' in $cols with the real DB column 'name'
+                $cols = array_map(function($c) use ($available) {
+                    return ($c === 'nome' && in_array('name', $available)) ? 'name' : $c;
+                }, $cols);
+                // ensure 'nome' is not treated as synthetic
+                $syntheticCols = array_values(array_filter($syntheticCols, function($c){ return $c !== 'nome'; }));
+            }
         }
 
         // Always include a synthetic column `tipos_servidor` with default value 9
@@ -1346,18 +1359,9 @@ class IngressoController extends Controller
             // ignore and continue without scoping
         }
 
-        // Restrict exported rows to candidates that have been encaminhados
-        try {
-            if (Schema::hasTable('provimentos_encaminhados')) {
-                $encQuery = DB::table('provimentos_encaminhados')
-                    ->select('ingresso_candidato_id')
-                    ->whereNotNull('ingresso_candidato_id')
-                    ->distinct();
-                $query->whereIn('id', $encQuery);
-            }
-        } catch (\Throwable $e) {
-            Log::warning('Failed to apply encaminhados filter in ingresso exportCsv', ['exception' => $e->getMessage()]);
-        }
+        // Note: removed restriction to `provimentos_encaminhados` so that
+        // exportCsv returns all candidates that are considered 'apto para encaminhamento'
+        // (controlled earlier by status/documentos_validados logic).
 
         $rows = $query->orderBy('num_inscricao')->get();
 
@@ -1371,14 +1375,82 @@ class IngressoController extends Controller
             $out = fopen('php://output', 'w');
             // header (allow custom label for tipos_servidor; default to uppercased column key)
             $labelMap = [
-                'tipos_servidor' => 'Tipos do Servidor',
-                'status_do_curso' => 'Status do Curso',
-                'pais' => 'Pais',
-                'deficiencia_pne' => 'Deficiencia - PNE',
-                'profissao' => 'Profissão',
-                'raca' => 'Raça',
-                'numero_do_candidato' => 'Numero do Candidato',
+                // map DB `name` to human-friendly Portuguese lowercase label
+                'num_inscricao' => 'número de inscrição',
+                'name' => 'nome',
+                'grau_instrucao' => 'grau de instrução',
+                'cpf' => 'cpf',
+                'tipos_servidor' => 'tipos servidor',
+                'status_do_curso' => 'status do curso',
+                'profissao' => 'profissao',
+                'raca' => 'raça',
+                'deficiencia_pne' => 'deficiência pne',
+                'data_nascimento' => 'data de nascimento',
+                'rg' => 'rg',
+                'sexo' => 'sexo',
+                'uf_rg' => 'uf do rg',
+                'orgao_emissor' => 'orgão emissor',
+                'data_emissao' => 'data de emissão',
+                'zona' => 'zona',
+                'num_titulo' => 'número do título',
+                'secao' => 'seção',
+                'uf_titulo' => 'uf do título',
+                'data_emissao_titulo' => 'data de emissão do título',
+                'pis_pasep' => 'pis/pasep',
+                'nacionalidade' => 'nacionalidade',
+                'data_pis' => 'data do pis',
+                'uf_nascimento' => 'uf de nascimento',
+                'naturalidade' => 'naturalidade',
+                'cnh' => 'Carteira Nacional de Habilitação CNH',
+                'categoria_cnh' => 'categoria da cnh',
+                'data_emissao_cnh' => 'data de emissão da cnh',
+                'validade_cnh' => 'validade da cnh',
+                'estado_civil' => 'estado civil',
+                'grau_instrucao' => 'grau de instrução',
+                'formacao' => 'formação',
+                'logradouro' => 'logradouro',
+                'complemento' => 'complemento',
+                'bairro' => 'bairro',
+                'cep' => 'cep',
+                'municipio' => 'município',
+                'uf' => 'uf',
+                'pais' => 'país',
+                'tel_contato' => 'tel. contato',
+                'tel_celular' => 'tel. celular',
+                'email' => 'email',
+                'nome_mae' => 'nome da mãe',
+                'nome_pai' => 'nome do pai',
+                'num_certificado_militar' => 'número do certificado militar',
+                'especie_certificado_militar' => 'espécie do certificado militar',
+                'categoria_certificado_militar' => 'categoria do certificado militar',
+                'orgao_certificado' => 'orgão do certificado',
+                'situacao_candidato' => 'situação do candidato',
+                'nota' => 'nota',
+                'classificacao_ampla' => 'classificação ampla',
+                'classificacao_quota_pne' => 'classificação cota pne',
+                'classificacao_quota_racial' => 'classificação cota racial',
+                'cargo' => 'cargo',
             ];
+            // Ensure specific column order when present: num_inscricao, nome, data_nascimento, cpf
+            $desiredOrder = ['num_inscricao','nome','data_nascimento','cpf'];
+            $front = [];
+            foreach ($desiredOrder as $d) {
+                // prefer real DB column `name` when user requested `nome`
+                $actual = $d === 'nome' ? (in_array('name', $cols, true) ? 'name' : 'nome') : $d;
+                if (($k = array_search($actual, $cols, true)) !== false) {
+                    array_splice($cols, $k, 1);
+                    $front[] = $actual;
+                } elseif (($k2 = array_search($d, $cols, true)) !== false) {
+                    array_splice($cols, $k2, 1);
+                    $front[] = $d;
+                }
+                // ensure we don't treat requested logical names as synthetic
+                $syntheticCols = array_values(array_filter($syntheticCols, function($sc) use ($d) { return $sc !== $d; }));
+            }
+            if (!empty($front)) {
+                $cols = array_merge($front, $cols);
+            }
+
             $header = array_map(function($c) use ($labelMap) {
                 if (isset($labelMap[$c])) return $labelMap[$c];
                 return strtoupper(str_replace('_',' ', $c));
@@ -2987,8 +3059,16 @@ class IngressoController extends Controller
             $exclude = ['id', 'created_at', 'updated_at'];
             $columns = array_values(array_diff($available, $exclude));
 
+            // determine if current user is CPM (allowed to edit name and data_nascimento)
+            $u = optional(Auth::user());
+            $isCpmUser = ($u && isset($u->sector_id) && isset($u->profile_id) && $u->sector_id == 2 && $u->profile_id == 1);
+
             $updates = [];
             foreach ($columns as $k) {
+                // Protect sensitive fields: only CPM users may update `name` and `data_nascimento`.
+                if ((!$isCpmUser) && ($k === 'name' || $k === 'data_nascimento')) {
+                    continue;
+                }
                 if ($request->has($k)) {
                     $val = $request->input($k);
 

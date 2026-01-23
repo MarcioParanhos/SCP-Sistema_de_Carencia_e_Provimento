@@ -368,6 +368,47 @@
                 var ingressoTable = $('#ingressoTable').DataTable({
                 processing: true,
                 serverSide: true,
+                // Persist paging/search/length and our custom filters so returning users
+                // find the table as they left it.
+                stateSave: true,
+                stateDuration: 0,
+                stateSaveCallback: function(settings, data) {
+                    // attach our custom filter values so they are restored later
+                    data.customFilters = {
+                        filter_nte: $('#filter_nte').val(),
+                        filter_status: $('#filter_status').val(),
+                        filter_convocacao: $('#filter_convocacao').val(),
+                        panelOpen: ($('#filterPanel').is(':visible'))
+                    };
+                    try {
+                        localStorage.setItem('DataTables_ingresso_' + window.location.pathname, JSON.stringify(data));
+                    } catch (e) { console.warn('Failed to save DataTable state', e); }
+                },
+                stateLoadCallback: function(settings) {
+                    try {
+                        var raw = localStorage.getItem('DataTables_ingresso_' + window.location.pathname);
+                        if (!raw) return null;
+                        var data = JSON.parse(raw);
+                        if (data && data.customFilters) {
+                            // restore filters UI before DataTables requests data
+                            try { $('#filter_nte').val(data.customFilters.filter_nte || ''); } catch(e){}
+                            try { $('#filter_status').val(data.customFilters.filter_status || ''); } catch(e){}
+                            try { $('#filter_convocacao').val(data.customFilters.filter_convocacao || ''); } catch(e){}
+                            try {
+                                if (data.customFilters.panelOpen) {
+                                    $('#filterPanel').show();
+                                    var btn = document.getElementById('btn-toggle-filters');
+                                    if (btn) { btn.className = 'btn btn-danger btn-sm'; }
+                                } else {
+                                    $('#filterPanel').hide();
+                                    var btn = document.getElementById('btn-toggle-filters');
+                                    if (btn) { btn.className = 'btn btn-primary btn-sm'; }
+                                }
+                            } catch(e){}
+                        }
+                        return data;
+                    } catch (e) { return null; }
+                },
                 ajax: {
                     url: '{{ route('ingresso.data') }}',
                     type: 'GET',
@@ -664,14 +705,18 @@
 
                 $(document).on('click', '#applyFilters', function(e){
                     e.preventDefault();
-                    if (typeof ingressoTable !== 'undefined' && ingressoTable) ingressoTable.ajax.reload();
+                    if (typeof ingressoTable !== 'undefined' && ingressoTable) {
+                        ingressoTable.ajax.reload(function(){ try{ if (ingressoTable && ingressoTable.state) ingressoTable.state.save(); }catch(e){} });
+                    }
                 });
 
                 $(document).on('click', '#clearFilters', function(e){
                     e.preventDefault();
                     $('#filter_nte').val('');
                     $('#filter_status').val('');
-                    if (typeof ingressoTable !== 'undefined' && ingressoTable) ingressoTable.ajax.reload();
+                    if (typeof ingressoTable !== 'undefined' && ingressoTable) {
+                        ingressoTable.ajax.reload(function(){ try{ if (ingressoTable && ingressoTable.state) ingressoTable.state.save(); }catch(e){} });
+                    }
                 });
             })();
         } else {
