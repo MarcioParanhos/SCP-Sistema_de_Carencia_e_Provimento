@@ -480,8 +480,17 @@
                 exportBtn.addEventListener('click', function(e){
                     e.preventDefault();
                     var search = (typeof ingressoTable !== 'undefined' && ingressoTable) ? ingressoTable.search() : '';
-                    // Request 'cpf' and 'name' columns for this export (CPF first)
-                    var url = '{{ route('ingresso.export.csv') }}' + '?search=' + encodeURIComponent(search || '') + '&cols=cpf,name,data_nascimento,rg,orgao_emissor,data_emissao,data_emissao,uf_rg,sexo,num_titulo,zona,secao,uf_titulo,data_emissao_titulo,pis_pasep,data_pis,uf_nascimento,naturalidade,cnh,categoria_cnh,data_emissao_cnh,validade_cnh,estado_civil,nacionalidade,grau_instrução,formacao,logradouro,complemento,bairro,cep,municipio,uf,pais,tel_contato,tel_celular,email,nome_pai,nome_mae,num_certificado_militar,especie_certificado_militar,categoria_certificado_militar,orgao_certificado,num_inscricao';
+                    // Build export URL — do not send a `cols` list so the server uses the configured default
+                    var url = '{{ route('ingresso.export.csv') }}' + '?search=' + encodeURIComponent(search || '');
+                    // include current custom filters in the export request so server-side export matches the table
+                    try {
+                        var fn = document.getElementById('filter_nte') ? document.getElementById('filter_nte').value : '';
+                        var fs = document.getElementById('filter_status') ? document.getElementById('filter_status').value : '';
+                        var fc = document.getElementById('filter_convocacao') ? document.getElementById('filter_convocacao').value : '';
+                        if (fn) url += '&filter_nte=' + encodeURIComponent(fn);
+                        if (fs) url += '&filter_status=' + encodeURIComponent(fs);
+                        if (fc) url += '&filter_convocacao=' + encodeURIComponent(fc);
+                    } catch (e) {}
                     window.open(url, '_blank');
                 });
             }

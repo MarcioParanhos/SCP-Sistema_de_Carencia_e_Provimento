@@ -373,15 +373,37 @@
                     @endphp
 
                     <tbody>
-                        {{-- Espaço em branco com 7 linhas para preenchimento manual --}}
-                        @for ($i = 0; $i < 7; $i++)
-                            <tr>
-                                <td class="disciplina" title="">&nbsp;</td>
-                                <td class="turno text-center" aria-label="Matutino">&nbsp;</td>
-                                <td class="turno text-center" aria-label="Vespertino">&nbsp;</td>
-                                <td class="turno text-center" aria-label="Noturno">&nbsp;</td>
-                            </tr>
-                        @endfor
+                        @if (isset($encaminhamentos) && count($encaminhamentos))
+                            @foreach ($encaminhamentos as $enc)
+                                @php
+                                    $disc = $enc->disciplina_name ?? $enc->disciplina_nome ?? $enc->disciplina ?? '-';
+                                    $mat = intval($enc->quant_matutino ?? $enc->matutino ?? 0);
+                                    $ves = intval($enc->quant_vespertino ?? $enc->vespertino ?? 0);
+                                    $not = intval($enc->quant_noturno ?? $enc->noturno ?? 0);
+                                    $mat_total += $mat;
+                                    $vesp_total += $ves;
+                                    $not_total += $not;
+                                @endphp
+                                <tr>
+                                    <td class="disciplina" title="{{ $disc }}">{{ $disc }}</td>
+                                    <td class="turno text-center" aria-label="Matutino">{{ $mat > 0 ? $mat : '' }}</td>
+                                    <td class="turno text-center" aria-label="Vespertino">{{ $ves > 0 ? $ves : '' }}</td>
+                                    <td class="turno text-center" aria-label="Noturno">{{ $not > 0 ? $not : '' }}</td>
+                                </tr>
+                            @endforeach
+
+                            {{-- Apenas linhas com disciplinas (não acrescentar linhas vazias) --}}
+                        @else
+                            {{-- Espaço em branco com 7 linhas para preenchimento manual --}}
+                            @for ($i = 0; $i < 7; $i++)
+                                <tr>
+                                    <td class="disciplina" title="">&nbsp;</td>
+                                    <td class="turno text-center" aria-label="Matutino">&nbsp;</td>
+                                    <td class="turno text-center" aria-label="Vespertino">&nbsp;</td>
+                                    <td class="turno text-center" aria-label="Noturno">&nbsp;</td>
+                                </tr>
+                            @endfor
+                        @endif
                     </tbody>
 
                     @if (count($encaminhamentos))

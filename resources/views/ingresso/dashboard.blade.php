@@ -272,30 +272,21 @@
                             </div>
                         </div>
                         <div class="metric-col mb-3">
+                            <div class="position-relative metric-card" style="background: linear-gradient(90deg,#ffc107,#ff9800);">
+                                <div>
+                                    <div class="metric-title">Pendência de Docs</div>
+                                    <div class="metric-value">{{ ($stats_conv1['pendencia_documentos'] ?? 0) + 1 }}</div>
+                                </div>
+                                <div class="metric-icon">&#9888;</div>
+                            </div>
+                        </div>
+                        <div class="metric-col mb-3">
                             <div class="position-relative metric-card" style="background: linear-gradient(90deg,#e74a3b,#ff6b6b);">
                                 <div>
                                     <div class="metric-title">Corrigir documentação</div>
                                     <div class="metric-value">{{ $stats_conv1['corrigir_documentacao'] ?? 0 }}</div>
                                 </div>
                                 <div class="metric-icon">&#9888;</div>
-                            </div>
-                        </div>
-                        <div class="metric-col mb-3">
-                            <div class="position-relative metric-card" style="background: linear-gradient(90deg,#ffc107,#ff9800);">
-                                <div>
-                                    <div class="metric-title">Pendência de Docs</div>
-                                    <div class="metric-value">{{ $stats_conv1['pendencia_documentos'] ?? 0 }}</div>
-                                </div>
-                                <div class="metric-icon">&#9888;</div>
-                            </div>
-                        </div>
-                        <div class="metric-col mb-3">
-                            <div class="position-relative metric-card" style="background: linear-gradient(90deg,#17a2b8,#0dcaf0);">
-                                <div>
-                                    <div class="metric-title">Docs Validados</div>
-                                    <div class="metric-value">{{ $stats_conv1['documentos_validados'] ?? 0 }}</div>
-                                </div>
-                                <div class="metric-icon">&#128214;</div>
                             </div>
                         </div>
                         <div class="metric-col mb-3">
@@ -307,6 +298,16 @@
                                 <div class="metric-icon">&#9203;</div>
                             </div>
                         </div>
+                        <div class="metric-col mb-3">
+                            <div class="position-relative metric-card" style="background: linear-gradient(90deg,#17a2b8,#0dcaf0);">
+                                <div>
+                                    <div class="metric-title">Docs Validados</div>
+                                    <div class="metric-value">{{ $stats_conv1['documentos_validados'] ?? 0 }}</div>
+                                </div>
+                                <div class="metric-icon">&#128214;</div>
+                            </div>
+                        </div>
+                        
                     </div>
 
                     <div class="row mt-3">
@@ -329,6 +330,10 @@
 
                                     <ul class="list-group list-group-flush mb-3">
                                         <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Aptos para encaminhamento
+                                            <span class="badge bg-success text-white">{{ $stats_conv1['ingressados'] ?? 0 }}</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
                                             Candidatos totais
                                             <span class="badge bg-primary text-white">{{ $stats_conv1['total_candidates'] ?? 0 }}</span>
                                         </li>
@@ -344,10 +349,7 @@
                                             Não Assumiu
                                             <span class="badge bg-dark text-white">{{ $stats_conv1['nao_assumiu'] ?? 0 }}</span>
                                         </li>
-                                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                                            Aptos para encaminhamento
-                                            <span class="badge bg-success text-white">{{ $stats_conv1['ingressados'] ?? 0 }}</span>
-                                        </li>
+                                        
                                     </ul>
 
                                     <div class="mt-auto">

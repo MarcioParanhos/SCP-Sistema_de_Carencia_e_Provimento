@@ -1668,8 +1668,30 @@ class ProvimentoController extends Controller
             }
         }
 
+        // Try to load ingresso_encaminhamentos for this candidate and pass to view
+        $encaminhamentos = collect();
+        try {
+            $candidateId = $provimentos_encaminhado->ingresso_candidato_id ?? null;
+            // fallback: use related servidorEncaminhado model id if available
+            if (empty($candidateId) && isset($provimentos_encaminhado->servidorEncaminhado)) {
+                $candidateId = optional($provimentos_encaminhado->servidorEncaminhado)->id ?? $candidateId;
+            }
+            if ($candidateId) {
+                $encaminhamentos = DB::table('ingresso_encaminhamentos')
+                    ->where('ingresso_candidato_id', $candidateId)
+                    ->orderBy('created_at', 'asc')
+                    ->get();
+            }
+            // temporary debug log to help trace cases where only one row is returned
+            \Illuminate\Support\Facades\Log::info('gerarEncaminhamento: found encaminhamentos', ['enc_count' => is_object($encaminhamentos) ? count($encaminhamentos) : 0, 'candidateId' => $candidateId]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('gerarEncaminhamento: failed to load encaminhamentos', ['exception' => $e->getMessage()]);
+            $encaminhamentos = collect();
+        }
+
         return view('relatorios.termo_encaminhamento', [
             'provimentos_encaminhado' => $provimentos_encaminhado,
+            'encaminhamentos' => $encaminhamentos,
         ]);
     }
 

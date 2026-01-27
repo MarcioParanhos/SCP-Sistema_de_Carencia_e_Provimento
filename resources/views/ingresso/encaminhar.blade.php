@@ -57,7 +57,14 @@
         <div class="row justify-content-center">
             <div class="col-lg-12">
                 @php
-                    // Ensure $cardStatus exists before the header uses it (avoid undefined variable)
+                    // Compute header status from last encaminhamento or first encaminhamento rows
+                    $headerStatus = null;
+                    if (isset($last_encaminhamento) && $last_encaminhamento) {
+                        $headerStatus = $last_encaminhamento->status ?? null;
+                    } elseif (isset($encaminhamentos) && $encaminhamentos instanceof \Illuminate\Support\Collection && $encaminhamentos->isNotEmpty()) {
+                        $headerStatus = $encaminhamentos->first()->status ?? null;
+                    }
+                    // Ensure $cardStatus remains defined for later use in the card body
                     $cardStatus = $cardStatus ?? null;
                 @endphp
                 <div class="card shadow-sm border-0">
@@ -69,16 +76,13 @@
                             </div>
                             <div class="text-end">
                                 <span id="mainCardStatus">
-                                    @if (isset($cardStatus) && str_contains(mb_strtolower($cardStatus), mb_strtolower('Encaminhamento validado')))
-                                        <span
-                                            class="badge bg-success text-white fw-bold"><strong>{{ $cardStatus }}</strong></span>
-                                    @elseif(is_null($cardStatus))
-                                        <span class="badge bg-danger text-white fw-bold"><strong>Pendente
-                                                Validação</strong></span>
-                                    @else
-                                        <span
-                                            class="badge bg-danger text-white fw-bold"><strong>{{ $cardStatus }}</strong></span>
-                                    @endif
+                                    @if (isset($headerStatus) && str_contains(mb_strtolower($headerStatus), mb_strtolower('Encaminhamento validado')))
+                                            <span class="badge bg-success text-white fw-bold"><strong>{{ $headerStatus }}</strong></span>
+                                        @elseif(is_null($headerStatus))
+                                            <span class="badge bg-danger text-white fw-bold"><strong>Pendente Validação</strong></span>
+                                        @else
+                                            <span class="badge bg-danger text-white fw-bold"><strong>{{ $headerStatus }}</strong></span>
+                                        @endif
                                 </span>
                             </div>
                         </div>
@@ -323,75 +327,148 @@
 
                                         <div class="col-md-12 mt-3">
                                             <label class="form-label">Disciplina</label>
-                                            <select id="disciplina_code" name="disciplina_code"
-                                                class="form-control form-control-sm select2"
-                                                data-placeholder="Selecione a disciplina" aria-label="Disciplina" required
-                                                @if (!empty($isValidated)) disabled @endif>
-                                                <option value="">(Selecione)</option>
-                                                @foreach ($disciplinas as $d)
-                                                    @php
-                                                        $selectedDisc = false;
-                                                        if (isset($last_encaminhamento) && $last_encaminhamento) {
-                                                            $lkName = trim(
-                                                                (string) ($last_encaminhamento->disciplina_name ??
-                                                                    ($last_encaminhamento->disciplina_nome ?? '')),
-                                                            );
-                                                            $lkCode = trim(
-                                                                (string) ($last_encaminhamento->disciplina_code ??
-                                                                    ($last_encaminhamento->disciplina_id ?? '')),
-                                                            );
-                                                            // match by id/code
-                                                            if ($lkCode !== '' && (string) $d->id === $lkCode) {
-                                                                $selectedDisc = true;
-                                                            }
-                                                            // match by name (loose)
-                                                            if (!$selectedDisc && $lkName !== '') {
-                                                                if (
-                                                                    mb_stripos($d->nome ?? '', $lkName) !== false ||
-                                                                    mb_stripos($lkName, $d->nome ?? '') !== false
-                                                                ) {
-                                                                    $selectedDisc = true;
-                                                                }
-                                                            }
-                                                        }
-                                                    @endphp
-                                                    <option value="{{ $d->id }}" data-name="{{ $d->nome }}"
-                                                        @if ($selectedDisc) selected @endif>
-                                                        {{ $d->nome }}</option>
-                                                @endforeach
-                                            </select>
-                                            <input type="hidden" name="disciplina_name" id="disciplina_name"
-                                                value="{{ $cardDisciplinaName ?? '' }}">
-                                        </div>
-
-
-                                        <div class="col-md-12 mt-3" id="turnosWrap"
-                                            style="@if (isset($cardDisciplinaName) && $cardDisciplinaName) display:block; @else display:none; @endif">
-                                            <div class="row g-2">
-                                                <div class="col-4">
-                                                    <label class="form-label">Matutino</label>
-                                                    <input type="number" min="0" id="quant_matutino"
-                                                        name="quant_matutino" class="form-control form-control-sm"
-                                                        value="{{ $cardMat ?? 0 }}"
-                                                        @if (!empty($isValidated)) disabled @endif>
-                                                </div>
-                                                <div class="col-4">
-                                                    <label class="form-label">Vespertino</label>
-                                                    <input type="number" min="0" id="quant_vespertino"
-                                                        name="quant_vespertino" class="form-control form-control-sm"
-                                                        value="{{ $cardVes ?? 0 }}"
-                                                        @if (!empty($isValidated)) disabled @endif>
-                                                </div>
-                                                <div class="col-4">
-                                                    <label class="form-label">Noturno</label>
-                                                    <input type="number" min="0" id="quant_noturno"
-                                                        name="quant_noturno" class="form-control form-control-sm"
-                                                        value="{{ $cardNot ?? 0 }}"
-                                                        @if (!empty($isValidated)) disabled @endif>
-                                                </div>
+                                            <div id="disciplinasContainer">
+                                                @if(isset($encaminhamentos) && $encaminhamentos->isNotEmpty())
+                                                    @foreach($encaminhamentos as $enc)
+                                                        <div class="disciplina-row mb-2">
+                                                            <div class="row g-2 align-items-end">
+                                                                <div class="col-md-7">
+                                                                    <select name="disciplina_code[]" class="form-control form-control-sm disciplina-select select2"
+                                                                        data-placeholder="Selecione a disciplina" aria-label="Disciplina" @if (!empty($isValidated)) disabled @endif>
+                                                                        <option value="">(Selecione)</option>
+                                                                        @foreach ($disciplinas as $d)
+                                                                            @php
+                                                                                $selectedDisc = false;
+                                                                                $lkName = trim((string) ($enc->disciplina_name ?? ($enc->disciplina_nome ?? ($enc->disciplina ?? ''))));
+                                                                                $lkCode = trim((string) ($enc->disciplina_code ?? ($enc->disciplina_id ?? '')));
+                                                                                if ($lkCode !== '' && (string) $d->id === $lkCode) {
+                                                                                    $selectedDisc = true;
+                                                                                }
+                                                                                if (!$selectedDisc && $lkName !== '') {
+                                                                                    try {
+                                                                                        $dnNorm = mb_strtolower(trim(\Illuminate\Support\Str::ascii($d->nome ?? '')));
+                                                                                        $lkNorm = mb_strtolower(trim(\Illuminate\Support\Str::ascii($lkName)));
+                                                                                        if ($dnNorm === $lkNorm) {
+                                                                                            $selectedDisc = true;
+                                                                                        }
+                                                                                    } catch (\Throwable $e) {
+                                                                                        // fallback to strict case-insensitive equality without diacritics removal
+                                                                                        if (mb_strtolower(trim($d->nome ?? '')) === mb_strtolower(trim($lkName))) {
+                                                                                            $selectedDisc = true;
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            @endphp
+                                                                            <option value="{{ $d->id }}" data-name="{{ $d->nome }}" @if ($selectedDisc) selected @endif>{{ $d->nome }}</option>
+                                                                        @endforeach
+                                                                    </select>
+                                                                </div>
+                                                                <div class="col-1">
+                                                                    <label class="form-label small">Mat</label>
+                                                                    <input type="number" min="0" name="quant_matutino[]" class="form-control form-control-sm quant-matutino" value="{{ $enc->quant_matutino ?? 0 }}" @if (!empty($isValidated)) disabled @endif>
+                                                                </div>
+                                                                <div class="col-1">
+                                                                    <label class="form-label small">Ves</label>
+                                                                    <input type="number" min="0" name="quant_vespertino[]" class="form-control form-control-sm quant-vespertino" value="{{ $enc->quant_vespertino ?? 0 }}" @if (!empty($isValidated)) disabled @endif>
+                                                                </div>
+                                                                <div class="col-1">
+                                                                    <label class="form-label small">Not</label>
+                                                                    <input type="number" min="0" name="quant_noturno[]" class="form-control form-control-sm quant-noturno" value="{{ $enc->quant_noturno ?? 0 }}" @if (!empty($isValidated)) disabled @endif>
+                                                                </div>
+                                                                <div class="col-md-2 text-end">
+                                                                    <button type="button" class="btn btn-sm btn-outline-primary btn-add-disciplina" @if (!empty($isValidated)) disabled @endif>Adicionar disciplina</button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    @endforeach
+                                                @else
+                                                    <div class="disciplina-row mb-2">
+                                                        <div class="row g-2 align-items-end">
+                                                            <div class="col-md-7">
+                                                                <select name="disciplina_code[]" class="form-control form-control-sm disciplina-select select2"
+                                                                    data-placeholder="Selecione a disciplina" aria-label="Disciplina"
+                                                                    required @if (!empty($isValidated)) disabled @endif>
+                                                                    <option value="">(Selecione)</option>
+                                                                    @foreach ($disciplinas as $d)
+                                                                        @php
+                                                                            $selectedDisc = false;
+                                                                            if (isset($last_encaminhamento) && $last_encaminhamento) {
+                                                                                $lkName = trim((string) ($last_encaminhamento->disciplina_name ?? ($last_encaminhamento->disciplina_nome ?? '')));
+                                                                                $lkCode = trim((string) ($last_encaminhamento->disciplina_code ?? ($last_encaminhamento->disciplina_id ?? '')));
+                                                                                if ($lkCode !== '' && (string) $d->id === $lkCode) {
+                                                                                    $selectedDisc = true;
+                                                                                }
+                                                                                if (!$selectedDisc && $lkName !== '') {
+                                                                                    try {
+                                                                                        $dnNorm = mb_strtolower(trim(\Illuminate\Support\Str::ascii($d->nome ?? '')));
+                                                                                        $lkNorm = mb_strtolower(trim(\Illuminate\Support\Str::ascii($lkName)));
+                                                                                        if ($dnNorm === $lkNorm) {
+                                                                                            $selectedDisc = true;
+                                                                                        }
+                                                                                    } catch (\Throwable $e) {
+                                                                                        if (mb_strtolower(trim($d->nome ?? '')) === mb_strtolower(trim($lkName))) {
+                                                                                            $selectedDisc = true;
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        @endphp
+                                                                        <option value="{{ $d->id }}" data-name="{{ $d->nome }}" @if ($selectedDisc) selected @endif>{{ $d->nome }}</option>
+                                                                    @endforeach
+                                                                </select>
+                                                            </div>
+                                                            <div class="col-1">
+                                                                <label class="form-label small">Mat</label>
+                                                                <input type="number" min="0" name="quant_matutino[]" class="form-control form-control-sm quant-matutino" value="{{ $cardMat ?? 0 }}" @if (!empty($isValidated)) disabled @endif>
+                                                            </div>
+                                                            <div class="col-1">
+                                                                <label class="form-label small">Ves</label>
+                                                                <input type="number" min="0" name="quant_vespertino[]" class="form-control form-control-sm quant-vespertino" value="{{ $cardVes ?? 0 }}" @if (!empty($isValidated)) disabled @endif>
+                                                            </div>
+                                                            <div class="col-1">
+                                                                <label class="form-label small">Not</label>
+                                                                <input type="number" min="0" name="quant_noturno[]" class="form-control form-control-sm quant-noturno" value="{{ $cardNot ?? 0 }}" @if (!empty($isValidated)) disabled @endif>
+                                                            </div>
+                                                            <div class="col-md-2 text-end">
+                                                                <button type="button" class="btn btn-sm btn-outline-primary btn-add-disciplina" @if (!empty($isValidated)) disabled @endif>Adicionar disciplina</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @endif
                                             </div>
-                                        </div>
+                                            <input type="hidden" name="disciplina_name" id="disciplina_name" value="{{ $cardDisciplinaName ?? '' }}">
 
+                                            {{-- template for additional disciplina rows --}}
+                                            <template id="disciplinaRowTemplate">
+                                                <div class="disciplina-row mb-2">
+                                                    <div class="row g-2 align-items-end">
+                                                        <div class="col-md-7">
+                                                            <select name="disciplina_code[]" class="form-control form-control-sm disciplina-select select2" data-placeholder="Selecione a disciplina">
+                                                                <option value="">(Selecione)</option>
+                                                                @foreach ($disciplinas as $d)
+                                                                    <option value="{{ $d->id }}" data-name="{{ $d->nome }}">{{ $d->nome }}</option>
+                                                                @endforeach
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-1">
+                                                            <label class="form-label small">Mat</label>
+                                                            <input type="number" min="0" name="quant_matutino[]" class="form-control form-control-sm quant-matutino" value="0">
+                                                        </div>
+                                                        <div class="col-1">
+                                                            <label class="form-label small">Ves</label>
+                                                            <input type="number" min="0" name="quant_vespertino[]" class="form-control form-control-sm quant-vespertino" value="0">
+                                                        </div>
+                                                        <div class="col-1">
+                                                            <label class="form-label small">Not</label>
+                                                            <input type="number" min="0" name="quant_noturno[]" class="form-control form-control-sm quant-noturno" value="0">
+                                                        </div>
+                                                        <div class="col-md-2 text-end">
+                                                            <button type="button" class="btn btn-sm btn-outline-danger btn-remove-disciplina">Remover</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
                                         <div class="col-md-12 mt-2">
                                             <label class="form-label">Tipo de Encaminhamento</label>
                                             <select id="tipo_encaminhamento" name="tipo_encaminhamento"
@@ -537,135 +614,102 @@
                         });
                     }
                 } catch (e) {}
-                const disciplinaSelect = document.getElementById('disciplina_code');
+                const disciplinasContainer = document.getElementById('disciplinasContainer');
                 const disciplinaName = document.getElementById('disciplina_name');
 
-                function handleDisciplinaChange(el) {
-                    const opt = el.options[el.selectedIndex];
-                    disciplinaName.value = opt ? (opt.dataset.name || '') : '';
-                    const turnosWrap = document.getElementById('turnosWrap');
-                    if (turnosWrap) {
-                        if (el.value) turnosWrap.style.display = '';
-                        else turnosWrap.style.display = 'none';
-                    }
-                }
-                if (disciplinaSelect) {
-                    disciplinaSelect.addEventListener('change', function() {
-                        handleDisciplinaChange(this);
-                        updateCandidateCard();
-                    });
-                    // Support Select2 events even if Select2 initializes later
-                    if (window.jQuery) {
-                        jQuery(document).on('select2:select select2:unselect change', '#disciplina_code', function() {
-                            handleDisciplinaChange(this);
-                            updateCandidateCard();
+                function initSelect2For(el) {
+                    try {
+                        if (window.jQuery && jQuery(el).select2) {
+                            jQuery(el).select2({ width: '100%' });
+                            try {
+                                // If server rendered an <option selected>, ensure Select2 reflects it
+                                const pre = el.querySelector('option[selected]');
+                                if (pre && pre.value) {
+                                    jQuery(el).val(pre.value).trigger('change');
+                                } else if (el.value) {
+                                    // otherwise re-trigger change so Select2 picks up the current value
+                                    jQuery(el).val(el.value).trigger('change');
+                                }
+                            } catch (e) {}
+                        }
+                    } catch (e) {}
+                    if (!el) return;
+                    el.addEventListener('change', function() {
+                            updateDisciplinaState();
                         });
-                    }
                 }
 
-                // Update candidate card with current selections
+                // no-op placeholder to preserve existing call sites without overwriting server-rendered card
                 function updateCandidateCard() {
-                    // UEE
-                    const ueeEl = document.getElementById('uee_id');
-                    let ueeOpt = null;
-                    if (ueeEl) {
-                        if (ueeEl.selectedOptions && ueeEl.selectedOptions.length) ueeOpt = ueeEl.selectedOptions[0];
-                        else if (typeof ueeEl.selectedIndex === 'number' && ueeEl.selectedIndex > -1) ueeOpt = ueeEl
-                            .options[ueeEl.selectedIndex];
-                    }
-                    // prefer the data-name attribute only; do not fallback to option textContent
-                    // to avoid placeholder text like "(Selecione)" overwriting server-rendered values
-                    const ueeName = ueeOpt ? (ueeOpt.dataset.name || '') : '';
-                    let ueeNte = ueeOpt ? (ueeOpt.dataset.nte || '') : '';
-                    if (!ueeNte) {
-                        const infoNte = document.getElementById('ueeInfoNte');
-                        if (infoNte && infoNte.textContent) ueeNte = infoNte.textContent.trim();
-                    }
-                    const ueeCodigo = ueeOpt ? (ueeOpt.dataset.codigo || '') : (ueeEl ? ueeEl.value : '');
-                    const candidateUeeName = document.getElementById('candidateUeeName');
-                    const candidateUeeNte = document.getElementById('candidateUeeNte');
-                    const candidateUeeMunicipio = document.getElementById('candidateUeeMunicipio');
-                    const candidateUeeCodigo = document.getElementById('candidateUeeCodigo');
-                    if (candidateUeeName && ueeName) candidateUeeName.textContent = ueeName;
-                    if (candidateUeeNte && ueeNte) candidateUeeNte.textContent = ueeNte;
-                    // municipio: prefer option dataset, fallback to the ueeInfo display (populated by fetch)
-                    let ueeMunicipio = ueeOpt ? (ueeOpt.dataset.municipio || '') : '';
-                    if (!ueeMunicipio) {
-                        const infoMun = document.getElementById('ueeInfoMunicipio');
-                        if (infoMun && infoMun.textContent) ueeMunicipio = infoMun.textContent.trim();
-                    }
-                    if (candidateUeeMunicipio && ueeMunicipio) candidateUeeMunicipio.textContent = ueeMunicipio;
-                    if (candidateUeeCodigo && ueeCodigo) candidateUeeCodigo.textContent = ueeCodigo;
+                    // intentionally empty: keep card values rendered by server
+                }
 
-                    // Disciplina
-                    const disciplinaNameVal = (document.getElementById('disciplina_name') ? document.getElementById(
-                        'disciplina_name').value : '');
-                    const candidateDisciplina = document.getElementById('candidateDisciplina');
-                    if (candidateDisciplina && disciplinaNameVal) candidateDisciplina.textContent = disciplinaNameVal;
-
-                    // Turnos
+                function updateDisciplinaState() {
+                    const rows = Array.from(disciplinasContainer.querySelectorAll('.disciplina-row'));
+                    const names = [];
+                    let totalMat = 0,
+                        totalVes = 0,
+                        totalNot = 0;
+                    rows.forEach(row => {
+                        const sel = row.querySelector('.disciplina-select');
+                        const opt = sel && sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex] : null;
+                        const name = opt ? (opt.dataset.name || opt.textContent.trim()) : '';
+                        if (name) names.push(name);
+                        const m = parseInt(row.querySelector('.quant-matutino')?.value || 0, 10);
+                        const v = parseInt(row.querySelector('.quant-vespertino')?.value || 0, 10);
+                        const n = parseInt(row.querySelector('.quant-noturno')?.value || 0, 10);
+                        totalMat += isNaN(m) ? 0 : m;
+                        totalVes += isNaN(v) ? 0 : v;
+                        totalNot += isNaN(n) ? 0 : n;
+                    });
+                    disciplinaName.value = names.join(' · ');
                     const mEl = document.getElementById('quant_matutino');
                     const vEl = document.getElementById('quant_vespertino');
                     const nEl = document.getElementById('quant_noturno');
-                    const m = mEl ? parseInt(mEl.value || 0, 10) : 0;
-                    const v = vEl ? parseInt(vEl.value || 0, 10) : 0;
-                    const n = nEl ? parseInt(nEl.value || 0, 10) : 0;
-                    const candidateTurnos = document.getElementById('candidateTurnos');
-                    if (candidateTurnos) candidateTurnos.textContent = `Mat: ${m} · Ves: ${v} · Not: ${n}`;
-
-                    // Tipo
-                    const tipoEl = document.getElementById('tipo_encaminhamento');
-                    const candidateTipo = document.getElementById('candidateTipo');
-                    if (candidateTipo) {
-                        const tipoText = tipoEl ? (tipoEl.options[tipoEl.selectedIndex] ? tipoEl.options[tipoEl
-                            .selectedIndex].text : '') : '';
-                        if (tipoText) candidateTipo.textContent = tipoText;
-                    }
-
-                    // Observação
-                    const obsEl = document.getElementById('observacao');
-                    const candidateObservacao = document.getElementById('candidateObservacao');
-                    if (candidateObservacao) {
-                        const obsText = obsEl ? (obsEl.value || '') : '';
-                        if (obsText) candidateObservacao.textContent = obsText;
-                    }
-
-                    // Ensure status text is emphasized and sync header badge
-                    try {
-                        const candidateStatusEl = document.getElementById('candidateStatus');
-                        let statusText = '';
-                        if (candidateStatusEl) {
-                            statusText = (candidateStatusEl.textContent || '').trim();
-                        }
-                        const mainCardStatus = document.getElementById('mainCardStatus');
-                        // Pending (no status)
-                        if (!statusText || statusText === '-' || statusText.toLowerCase() === 'null') {
-                            if (candidateStatusEl) candidateStatusEl.innerHTML =
-                                '<span class="text-danger fw-bold">Pendente Validação</span>';
-                            if (mainCardStatus) mainCardStatus.innerHTML =
-                                '<span class="badge bg-danger text-white fw-bold">Pendente Validação</span>';
-                        } else if (/validad/i.test(statusText)) {
-                            if (candidateStatusEl) candidateStatusEl.innerHTML = '<span class="text-white fw-bold">' +
-                                statusText + '</span>';
-                            if (mainCardStatus) mainCardStatus.innerHTML =
-                                '<span class="badge bg-success text-white fw-bold">' + statusText + '</span>';
-                        } else {
-                            if (candidateStatusEl) candidateStatusEl.innerHTML = '<span class="text-white fw-bold">' +
-                                statusText + '</span>';
-                            if (mainCardStatus) mainCardStatus.innerHTML =
-                                '<span class="badge bg-secondary text-white fw-bold">' + statusText + '</span>';
-                        }
-                    } catch (e) {}
+                    if (mEl) mEl.value = totalMat;
+                    if (vEl) vEl.value = totalVes;
+                    if (nEl) nEl.value = totalNot;
                 }
 
-                // wire update triggers for the card
-                if (document.getElementById('uee_id')) document.getElementById('uee_id').addEventListener('change',
-                    updateCandidateCard);
-                if (document.getElementById('disciplina_code')) document.getElementById('disciplina_code')
-                    .addEventListener('change', function() {
-                        handleDisciplinaChange(this);
-                        updateCandidateCard();
+                function addDisciplinaRow() {
+                    const tpl = document.getElementById('disciplinaRowTemplate');
+                    if (!tpl) return;
+                    const node = tpl.content.firstElementChild.cloneNode(true);
+                    disciplinasContainer.appendChild(node);
+                    const lastSel = disciplinasContainer.querySelector('.disciplina-row:last-of-type .disciplina-select');
+                    if (lastSel) initSelect2For(lastSel);
+                    const removeBtn = disciplinasContainer.querySelector('.disciplina-row:last-of-type .btn-remove-disciplina');
+                    if (removeBtn) removeBtn.addEventListener('click', function() {
+                        this.closest('.disciplina-row').remove();
+                        updateDisciplinaState();
                     });
+                    updateDisciplinaState();
+                }
+
+                // wire add buttons
+                Array.from(document.querySelectorAll('.btn-add-disciplina')).forEach(b => {
+                    b.addEventListener('click', function() {
+                        addDisciplinaRow();
+                    });
+                });
+
+                // initialize existing selects
+                Array.from(document.querySelectorAll('.disciplina-select')).forEach(s => {
+                    initSelect2For(s);
+                });
+
+                // ensure select2 events propagate for dynamically added selects
+                if (window.jQuery) {
+                    jQuery(document).on('select2:select select2:unselect change', '.disciplina-select', function() {
+                        updateDisciplinaState();
+                    });
+                }
+
+                // initial sync
+                updateDisciplinaState();
+
+                // wire update triggers for the card
+                if (document.getElementById('uee_id')) document.getElementById('uee_id').addEventListener('change', updateCandidateCard);
                 ['quant_matutino', 'quant_vespertino', 'quant_noturno'].forEach(id => {
                     const el = document.getElementById(id);
                     if (el) el.addEventListener('input', updateCandidateCard);
@@ -752,6 +796,8 @@
                             updateCandidateCard();
                         });
                     }
+                    // ensure initial UEE info is populated from the server-rendered select option
+                    try { if (ueeSelect) handleUeeChange(ueeSelect); } catch (e) {}
                 }
 
                 document.getElementById('btn-submit-encaminhar').addEventListener('click', async function() {
@@ -769,24 +815,36 @@
                     const ueeNte = ueeOpt ? (ueeOpt.dataset.nte || '') : '';
                     const ueeMunicipio = ueeOpt ? (ueeOpt.dataset.municipio || '') : '';
                     const ueeCodigo = ueeOpt ? (ueeOpt.dataset.codigo || '') : '';
-                    const disciplinaCode = document.getElementById('disciplina_code').value;
-                    const disciplinaNameVal = document.getElementById('disciplina_name').value;
                     const observacao = document.getElementById('observacao').value;
-                    const tipoEncaminhamento = (document.getElementById('tipo_encaminhamento') ? document
-                        .getElementById('tipo_encaminhamento').value : '');
+                    const tipoEncaminhamento = (document.getElementById('tipo_encaminhamento') ? document.getElementById('tipo_encaminhamento').value : '');
 
                     if (!ueeId) {
                         alert('Selecione a unidade escolar');
                         return;
                     }
-                    if (!disciplinaCode) {
-                        alert('Selecione a disciplina');
+
+                    const disciplinaRows = Array.from(document.querySelectorAll('#disciplinasContainer .disciplina-row'));
+                    const disciplinas = disciplinaRows.map(row => {
+                        const sel = row.querySelector('.disciplina-select');
+                        const id = sel ? (sel.value || '') : '';
+                        const opt = sel && sel.options && sel.selectedIndex > -1 ? sel.options[sel.selectedIndex] : null;
+                        const name = opt ? (opt.dataset.name || opt.textContent.trim()) : '';
+                        const m = parseInt(row.querySelector('.quant-matutino')?.value || 0, 10);
+                        const v = parseInt(row.querySelector('.quant-vespertino')?.value || 0, 10);
+                        const n = parseInt(row.querySelector('.quant-noturno')?.value || 0, 10);
+                        return {
+                            disciplina_id: id,
+                            disciplina_name: name,
+                            quant_matutino: isNaN(m) ? 0 : m,
+                            quant_vespertino: isNaN(v) ? 0 : v,
+                            quant_noturno: isNaN(n) ? 0 : n
+                        };
+                    }).filter(d => d.disciplina_id && d.disciplina_id !== '');
+
+                    if (!disciplinas.length) {
+                        alert('Selecione ao menos uma disciplina');
                         return;
                     }
-
-                    const quantMat = parseInt(document.getElementById('quant_matutino').value || 0, 10);
-                    const quantVes = parseInt(document.getElementById('quant_vespertino').value || 0, 10);
-                    const quantNot = parseInt(document.getElementById('quant_noturno').value || 0, 10);
 
                     const payload = {
                         uee_id: ueeId,
@@ -795,13 +853,7 @@
                         uee_municipio: ueeMunicipio,
                         uee_codigo: ueeCodigo,
                         observacao: observacao,
-                        disciplinas: [{
-                            disciplina_id: disciplinaCode,
-                            disciplina_name: disciplinaNameVal,
-                            quant_matutino: quantMat,
-                            quant_vespertino: quantVes,
-                            quant_noturno: quantNot
-                        }],
+                        disciplinas: disciplinas,
                         tipo_encaminhamento: tipoEncaminhamento
                     };
 
@@ -939,3 +991,5 @@
     @endpush
 
 @endsection
+
+

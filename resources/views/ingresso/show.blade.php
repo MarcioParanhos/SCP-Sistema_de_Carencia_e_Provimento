@@ -669,12 +669,20 @@
                                             if (
                                                 preg_match('/(^|_)data/i', $key) ||
                                                 preg_match('/_at$/i', $key) ||
-                                                preg_match('/date/i', $key)
+                                                preg_match('/date/i', $key) ||
+                                                preg_match('/emiss/i', $key) ||
+                                                preg_match('/validade/i', $key) ||
+                                                preg_match('/(^|_)data_pis$/i', $key) ||
+                                                preg_match('/data_pasep/i', $key)
                                             ) {
                                                 // try using Carbon if available
                                                 if (class_exists('\Carbon\Carbon')) {
                                                     try {
                                                         $d = \Carbon\Carbon::parse($val);
+                                                        // For PIS/PASEP fields, always display date-only regardless of time portion.
+                                                        if (preg_match('/(^|_)data_pis$/i', $key) || preg_match('/data_pasep/i', $key)) {
+                                                            return $d->format('d/m/Y');
+                                                        }
                                                         // Detect if the original value contains a time portion.
                                                         $containsTime = (strpos((string) $val, ':') !== false);
                                                         // If it contains time, convert to display timezone and show time.
@@ -705,7 +713,7 @@
 
                                 {{-- Render primary fields --}}
                                 @foreach ($primaryKeys as $k)
-                                    @if (array_key_exists($k, $candidate))
+                                    @if (array_key_exists($k, $candidate) && $k !== 'situacao_candidato')
                                         <tr data-key="{{ $k }}">
                                             <th class="label-cell">
                                                 {{ $map[$k] ?? ucwords(str_replace(['_', 'id'], [' ', ''], $k)) }}</th>
@@ -744,7 +752,7 @@
                                                         $columnNames = $columnNames ?? [];
                                                     @endphp
                                                     @foreach ($colsToShow as $col)
-                                                        @if (!in_array($col, $rendered))
+                                                        @if (!in_array($col, $rendered) && $col !== 'situacao_candidato')
                                                             <tr data-key="{{ $col }}">
                                                                 <th class="label-cell">
                                                                     {{ $columnNames[$col] ?? ($map[$col] ?? ucwords(str_replace(['_', 'id'], [' ', ''], $col))) }}

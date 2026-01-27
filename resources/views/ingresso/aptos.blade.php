@@ -55,6 +55,7 @@
                             <th scope="col">NTE</th>
                             <th scope="col">NOTA</th>
                             <th scope="col">STATUS</th>
+                            <th scope="col">DEVOLUÇÃO ASSUNÇÃO</th>
                             <th scope="col">ENCAMINHAMENTO</th>
                             <th scope="col">TERMO ENC.</th>
                             <th scope="col">ASSUNÇÃO</th>
@@ -99,6 +100,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 return '<span class="badge '+cls+'">'+statusText+'</span>';
             }
         },
+                {
+                    data: null, name: 'devolucao_assunsao', orderable:false, searchable:false,
+                    render: function(data, type, row){
+                        // Bootstrap 4 switch markup (custom-control) to match vendor CSS
+                        var id = 'switchCheckDefault_' + (row.id || row.num_inscricao || '');
+                        var encId = (row.encaminhamento_id || '');
+                        var candidateId = (row.id || row.num_inscricao || '');
+                        var hasEnc = !!row.encaminhamento_id;
+                        var hasDevo = (row.devolucao_assunsao == 1);
+                        var checked = hasDevo ? 'checked' : '';
+                        // consider encaminhamento_status: if null, disable (unless devolucao_assunsao is true)
+                        var encStatus = (typeof row.encaminhamento_status !== 'undefined') ? row.encaminhamento_status : null;
+                        var encStatusIsNull = (encStatus === null || String(encStatus).trim() === '');
+                        // keep enabled when there's an encaminhamento OR when devolucao_assunsao is true
+                        var disabled = ((!hasEnc && !hasDevo) || (encStatusIsNull && !hasDevo)) ? 'disabled' : '';
+                        var title = ((!hasEnc && !hasDevo) || (encStatusIsNull && !hasDevo)) ? 'Sem encaminhamento/status disponível' : '';
+                        var labelClass = ((!hasEnc && !hasDevo) || (encStatusIsNull && !hasDevo)) ? 'text-muted' : '';
+                        return '<div class="custom-control custom-switch" title="'+title+'">'
+                            + '<input type="checkbox" '+disabled+' class="custom-control-input devo-switch" id="'+id+'" data-encaminhamento="'+encId+'" data-candidate="'+candidateId+'" '+checked+'>'
+                            + '<label class="custom-control-label '+labelClass+'" for="'+id+'">&nbsp;</label>'
+                            + '</div>';
+                    }
+                },
         {
             data: 'encaminhamento_status', name: 'encaminhamento_status', orderable:false, searchable:false,
             render: function(data, type, row){
@@ -150,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 var id = row.id || row.num_inscricao || '';
                 if (!id) return '-';
                 return '<div class="btn-group" role="group">'
-                    + '<a disabled href="' + ingressoBaseUrl + '/' + id + '/encaminhar' + '" class="btn btn-primary btn-sm btn-detalhar" title="Encaminhar" aria-label="Encaminhar">'
+                    + '<a href="' + ingressoBaseUrl + '/' + id + '/encaminhar' + '" class="btn btn-primary btn-sm btn-detalhar" title="Encaminhar" aria-label="Encaminhar">'
                         + '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-share">'
                             + '<path stroke="none" d="M0 0h24v24H0z" fill="none"/>'
                             + '<path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />'
@@ -205,6 +229,64 @@ document.addEventListener('DOMContentLoaded', function() {
         drawCallback: function(){ if (window.jQuery && $.fn.tooltip) $('[data-toggle="tooltip"]').tooltip({container:'body'}); },
         initComplete: function(){ var table=this.api(); $('#dt-processing-overlay').remove(); }
     }).on('processing.dt', function(e, settings, processing){ if (processing) $overlay.fadeIn(120); else $overlay.fadeOut(120); });
+
+    // AJAX handler to persist devolucao_assunsao when user toggles a switch
+    $(document).on('change', '.devo-switch', function(){
+        var $chk = $(this);
+        // prevent handling disabled switches
+        if ($chk.prop('disabled')) return;
+        var encId = $chk.data('encaminhamento');
+        if (!encId) {
+            // no identifier — revert and notify
+            $chk.prop('checked', !$chk.prop('checked'));
+            return;
+        }
+
+        var value = $chk.is(':checked') ? 1 : 0;
+        $chk.prop('disabled', true);
+        // prefer sending candidate id so server updates all disciplines for that candidate
+        var candidateId = $chk.data('candidate') || '';
+        var sendId = candidateId || encId;
+
+        $.ajax({
+            url: ingressoBaseUrl + '/encaminhamento/' + encodeURIComponent(sendId) + '/devolucao_assunsao',
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+            data: { devolucao: value },
+            success: function(resp){
+                if (!(resp && resp.success)) {
+                    $chk.prop('checked', !value);
+                    var msg = (resp && resp.message) ? resp.message : 'Falha ao salvar devolução';
+                    if (window.Swal) Swal.fire('Erro', msg, 'error'); else alert(msg);
+                } else {
+                    // show a friendly SweetAlert indicating current state
+                    var devol = (typeof resp.devolucao !== 'undefined') ? (parseInt(resp.devolucao) === 1) : (value === 1);
+                    var title = devol ? 'Devolução registrada' : 'Devolução removida';
+                    var text = devol ? 'Assunção devolvida para o candidato.' : 'Assunção não devolvida.';
+                    if (window.Swal) {
+                        Swal.fire({
+                            icon: devol ? 'success' : 'info',
+                            title: title,
+                            text: text,
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    } else {
+                        alert(text);
+                    }
+                }
+            },
+            error: function(xhr){
+                $chk.prop('checked', !value);
+                var msg = 'Erro ao salvar devolução';
+                try { msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : msg; } catch(e){}
+                if (window.Swal) Swal.fire('Erro', msg, 'error'); else alert(msg);
+            },
+            complete: function(){
+                $chk.prop('disabled', false);
+            }
+        });
+    });
 });
 </script>
 @endpush

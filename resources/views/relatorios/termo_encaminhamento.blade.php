@@ -283,8 +283,41 @@
         <p class="main-content">
             Encaminhamos o(a) Professor(a) {{ $serverName }},
             @if($cargo) {{ $cargo }}, @endif
-            CPF {{ $serverCpf }} com carga horária de 20hs, para atuar nos turnos abaixo indicados, na(s) disciplina(s) {{ $provimentos_encaminhado->disciplina ?? '-' }}.
+            CPF {{ $serverCpf }} com carga horária de 20hs, para atuar nos turnos abaixo indicados, na(s) disciplina(s)
+            @php
+                // prefer explicit $encaminhamentos (rows from ingresso_encaminhamentos) when available
+                $discList = [];
+                if (isset($encaminhamentos) && !empty($encaminhamentos) && count($encaminhamentos)) {
+                    foreach ($encaminhamentos as $r) {
+                        $name = $r->disciplina_name ?? $r->disciplina_nome ?? $r->disciplina ?? null;
+                        if ($name) $discList[] = trim((string) $name);
+                    }
+                }
+                if (empty($discList)) {
+                    // fallback to single field on provimentos_encaminhado
+                    $fallback = $provimentos_encaminhado->disciplina ?? null;
+                    if ($fallback) $discList = array_map('trim', explode(',', (string) $fallback));
+                }
+            @endphp
+            <strong>{{ count($discList) ? implode('; ', $discList) : '-' }}</strong>.
         </p>
+        @php
+            $m_total = 0;
+            $v_total = 0;
+            $n_total = 0;
+            if (isset($encaminhamentos) && !empty($encaminhamentos) && count($encaminhamentos)) {
+                foreach ($encaminhamentos as $r) {
+                    $m_total += intval($r->quant_matutino ?? $r->matutino ?? 0);
+                    $v_total += intval($r->quant_vespertino ?? $r->vespertino ?? 0);
+                    $n_total += intval($r->quant_noturno ?? $r->noturno ?? 0);
+                }
+            } else {
+                $m_total = intval(optional($provimentos_encaminhado)->total_matutino ?? 0);
+                $v_total = intval(optional($provimentos_encaminhado)->total_vespertino ?? 0);
+                $n_total = intval(optional($provimentos_encaminhado)->total_noturno ?? 0);
+            }
+        @endphp
+
         <div class="table">
             <table class="table-bordered">
                 <thead>
@@ -296,9 +329,9 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td class="text-center">{{ optional($provimentos_encaminhado)->total_matutino ?? 0 }}</td>
-                        <td class="text-center">{{ optional($provimentos_encaminhado)->total_vespertino ?? 0 }}</td>
-                        <td class="text-center">{{ optional($provimentos_encaminhado)->total_noturno ?? 0 }}</td>
+                        <td class="text-center">{{ $m_total }}</td>
+                        <td class="text-center">{{ $v_total }}</td>
+                        <td class="text-center">{{ $n_total }}</td>
                     </tr>
                 </tbody>
             </table>

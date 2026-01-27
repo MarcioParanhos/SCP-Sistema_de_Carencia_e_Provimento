@@ -1,0 +1,45 @@
+<?php
+
+return [
+    // Default set of columns (and order) used when exporting CSV from the Ingresso module.
+    // Edit this array to choose which columns should be included by default in the CSV export.
+    // If the client provides a `cols` query parameter it will override this list.
+    'csv_export_columns' => [
+        'num_inscricao',
+        'name',
+        'data_nascimento',
+        'cpf',
+        'rg',
+        'orgao_emissor',
+        'data_emissao',
+        'uf_rg',
+        'sexo',
+        'num_titulo',
+        'zona',
+        'secao',
+        'uf_titulo',
+        'data_emissao_titulo',
+        'pis_pasep',
+        'data_pis',
+        'uf_nascimento',
+        'naturalidade',
+        'cnh',
+        'categoria_cnh',
+        'data_emissao_cnh',
+        'validade_cnh',
+        'estado_civil',
+        'grau_instrucao',
+        'formacao',
+        'logradouro',
+        'bairro',
+        'cep',
+        'municipio',
+        'uf',
+        'pais',
+        'tel_contato',
+        'tel_celular',
+        'email',
+        'nome_pai',
+        'nome_mae',
+    ],
+];
