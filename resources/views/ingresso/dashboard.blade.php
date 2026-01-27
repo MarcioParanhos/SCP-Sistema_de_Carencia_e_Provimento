@@ -275,7 +275,7 @@
                             <div class="position-relative metric-card" style="background: linear-gradient(90deg,#ffc107,#ff9800);">
                                 <div>
                                     <div class="metric-title">Pendência de Docs</div>
-                                    <div class="metric-value">{{ ($stats_conv1['pendencia_documentos'] ?? 0) + 1 }}</div>
+                                    <div class="metric-value">{{ ($stats_conv1['pendencia_documentos'] ?? 0)}}</div>
                                 </div>
                                 <div class="metric-icon">&#9888;</div>
                             </div>

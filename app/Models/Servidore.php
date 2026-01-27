@@ -24,4 +24,9 @@ class Servidore extends Model
     {
         return $this->hasMany(Provimento::class, 'servidor_id');
     }
+
+    public function encaminhamentos()
+    {
+        return $this->hasMany(IngressoEncaminhamento::class, 'servidor_id');
+    }
 }

@@ -52,6 +52,28 @@
             border-radius: 5px !important;
             padding: 8px !important;
         }
+
+        /* Substituição servidor card */
+        .subs-card {
+            background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+            border-radius: 0.6rem;
+            padding: 0.75rem 0.85rem;
+            box-shadow: 0 6px 18px rgba(11,61,145,0.06);
+            border: 1px solid rgba(11,61,145,0.06);
+        }
+        .subs-card .subs-name {
+            font-weight: 700;
+            color: #0b3d91;
+            font-size: 1rem;
+            letter-spacing: 0.2px;
+        }
+        .subs-card .subs-meta {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        .subs-card .subs-badges { gap: .4rem; display:flex; align-items:center; margin-top:.4rem }
+        .subs-card .badge { font-size: 0.75rem; padding: .35rem .5rem; }
+        #btn-substituicao-clear { border-radius: .35rem; }
     </style>
     <div class="container-fluid ingresso-vh py-4">
         <div class="row justify-content-center">
@@ -487,6 +509,42 @@
                                             </select>
                                         </div>
 
+                                        @php
+                                            $subs = null;
+                                            if (isset($last_encaminhamento) && !empty($last_encaminhamento->servidor)) {
+                                                $subs = $last_encaminhamento->servidor;
+                                            } elseif (isset($encaminhamentos) && $encaminhamentos instanceof \Illuminate\Support\Collection && $encaminhamentos->isNotEmpty()) {
+                                                $firstEnc = $encaminhamentos->first();
+                                                $subs = $firstEnc->servidor ?? null;
+                                            }
+                                        @endphp
+                                        <div id="substituicaoBox" class="col-12 mt-3" >
+                                            <label class="form-label">Buscar servidor por matrícula</label>
+                                            <div class="input-group">
+                                                <input type="text" id="substituicao_matricula" class="form-control" placeholder="Matrícula / cadastro">
+                                                <button type="button" id="btn-substituicao-search" class="btn btn-outline-secondary">Buscar</button>
+                                            </div>
+                                            <input type="hidden" id="substituicao_servidor_id" name="substituicao_servidor_id" value="{{ optional($subs)->id ?? '' }}">
+                                            <div id="substituicao_servidor_info" class="mt-2" >
+                                                <div id="substituicao_servidor_card" class="subs-card" >
+                                                    <div class="d-flex justify-content-between align-items-start">
+                                                        <div>
+                                                            <div id="subs_nome" class="subs-name">{{ optional($subs)->nome ?? optional($subs)->Nome ?? optional($subs)->name ?? '' }}</div>
+                                                            <div class="subs-badges">
+                                                                <span id="subs_cadcpf" class="badge bg-primary text-white">{{ optional($subs)->cadastro ? 'Matrícula: ' . optional($subs)->cadastro : '' }}{{ optional($subs)->cpf ? ' · CPF: ' . optional($subs)->cpf : '' }}</span>
+                                                                <span id="subs_regime" class="badge bg-secondary text-white">{{ optional($subs)->regime ? ('Regime: ' . optional($subs)->regime . 'h') : '' }}</span>
+                                                            </div>
+                                                            <div id="subs_vinculo" class="subs-meta mt-2">{{ optional($subs)->vinculo ? ('Vínculo: ' . optional($subs)->vinculo) : '' }}</div>
+                                                        </div>
+                                                        <div class="text-end">
+                                                            <button type="button" id="btn-substituicao-clear" class="btn btn-sm btn-outline-secondary">Limpar</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div id="substituicao_servidor_msg" class="small text-muted" style="display:{{ $subs ? 'none' : 'block' }}"></div>
+                                            </div>
+                                        </div>
+
                                         <div class="col-12 mt-3">
                                             <label for="observacao" class="form-label">Observação (opcional)</label>
                                             <textarea id="observacao" name="observacao" class="form-control" rows="3" placeholder="Observações..."
@@ -726,6 +784,118 @@
                     });
                 }
 
+                // show/hide substituição de reda search box
+                (function(){
+                    const tipoEl = document.getElementById('tipo_encaminhamento');
+                    const box = document.getElementById('substituicaoBox');
+                    const matriculaEl = document.getElementById('substituicao_matricula');
+                    const btnSearch = document.getElementById('btn-substituicao-search');
+                    
+                    const hid = document.getElementById('substituicao_servidor_id');
+
+                    function clearSubstituicao() {
+                        if (matriculaEl) matriculaEl.value = '';
+                        if (hid) hid.value = '';
+                        if (info) { info.style.display = 'none'; info.textContent = ''; }
+                    }
+
+                    function updateVisibility() {
+                        if (!tipoEl) return;
+                        if (tipoEl.value === 'substituicao_reda') {
+                            if (box) box.style.display = '';
+                        } else {
+                            if (box) box.style.display = 'none';
+                            clearSubstituicao();
+                        }
+                    }
+
+                    if (tipoEl) {
+                        tipoEl.addEventListener('change', updateVisibility);
+                        try { updateVisibility(); } catch(e){}
+                    }
+
+                    if (btnSearch) {
+                        btnSearch.addEventListener('click', function(){
+                            const q = (matriculaEl && matriculaEl.value || '').trim();
+                            if (!q) return alert('Informe a matrícula do servidor');
+                            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+                            fetch('/consultarServidor/' + encodeURIComponent(q), {
+                                method: 'POST',
+                                headers: {
+                                    'X-CSRF-TOKEN': token,
+                                    'Accept': 'application/json',
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({})
+                            }).then(r => r.json()).then(data => {
+                                // ServidoreController::searchServidor returns array of matches
+                                    if (Array.isArray(data) && data.length) {
+                                            const s = data[0];
+                                            // prefer the canonical servidor `id` when present; fall back to cadastro/cpf
+                                            if (hid) hid.value = s.id || s.cadastro || s.cpf || '';
+                                            // show alert with servidor id (prefer s.id)
+                                            try {
+                                                const subs_nome = document.getElementById('subs_nome');
+                                                const subs_cadcpf = document.getElementById('subs_cadcpf');
+                                                const subs_regime = document.getElementById('subs_regime');
+                                                const subs_vinculo = document.getElementById('subs_vinculo');
+                                                if (subs_nome) subs_nome.textContent = s.nome || s.Nome || 'Nome não informado';
+                                                if (subs_cadcpf) subs_cadcpf.textContent = (s.cadastro ? ('Matrícula: ' + s.cadastro) : '') + (s.cpf ? (' · CPF: ' + s.cpf) : '');
+                                                if (subs_regime) subs_regime.textContent = s.regime ? ('Regime: ' + s.regime + 'h') : '';
+                                                if (subs_vinculo) subs_vinculo.textContent = s.vinculo ? ('Vínculo: ' + s.vinculo) : '';
+                                            } catch (e) {}
+                                        if (info) {
+                                            info.style.display = '';
+                                            const card = document.getElementById('substituicao_servidor_card');
+                                            const msg = document.getElementById('substituicao_servidor_msg');
+                                            if (msg) { msg.style.display = 'none'; msg.textContent = ''; }
+                                            if (card) {
+                                                document.getElementById('subs_nome').textContent = s.nome || s.Nome || 'Nome não informado';
+                                                document.getElementById('subs_cadcpf').textContent = (s.cadastro ? ('Matrícula: ' + s.cadastro) : '') + (s.cpf ? (' · CPF: ' + s.cpf) : '');
+                                                document.getElementById('subs_vinculo').textContent = s.vinculo ? ('Vínculo: ' + s.vinculo) : '';
+                                                document.getElementById('subs_regime').textContent = s.regime ? ('Regime: ' + s.regime + 'h') : '';
+                                                card.style.display = '';
+                                                // wire clear button
+                                                const clearBtn = document.getElementById('btn-substituicao-clear');
+                                                if (clearBtn) clearBtn.addEventListener('click', function() {
+                                                    if (matriculaEl) matriculaEl.value = '';
+                                                    if (hid) hid.value = '';
+                                                    card.style.display = 'none';
+                                                });
+                                            }
+                                        }
+                                    } else {
+                                        if (info) { info.style.display = ''; info.querySelector('#substituicao_servidor_msg').style.display = ''; info.querySelector('#substituicao_servidor_msg').textContent = 'Servidor não encontrado'; }
+                                        if (hid) hid.value = '';
+                                    }
+                            }).catch(() => {
+                                if (info) { info.style.display = ''; info.textContent = 'Erro ao buscar servidor'; }
+                            });
+                        });
+                    }
+                })();
+
+                // Ensure Select2 events also toggle the substituição box
+                if (window.jQuery) {
+                    jQuery(document).on('select2:select select2:unselect change', '#tipo_encaminhamento', function() {
+                        try {
+                            const val = jQuery(this).val();
+                            const box = document.getElementById('substituicaoBox');
+                            const matriculaEl = document.getElementById('substituicao_matricula');
+                            const hid = document.getElementById('substituicao_servidor_id');
+                            const info = document.getElementById('substituicao_servidor_info');
+                            if (val === 'substituicao_reda') {
+                                if (box) box.style.display = '';
+                            } else {
+                                if (box) box.style.display = 'none';
+                                if (matriculaEl) matriculaEl.value = '';
+                                if (hid) hid.value = '';
+                                if (info) { info.style.display = 'none'; info.textContent = ''; }
+                            }
+                        } catch (e) {}
+                    });
+                }
+
                 // initialize card with any pre-selected values
                 updateCandidateCard();
 
@@ -854,7 +1024,10 @@
                         uee_codigo: ueeCodigo,
                         observacao: observacao,
                         disciplinas: disciplinas,
-                        tipo_encaminhamento: tipoEncaminhamento
+                        tipo_encaminhamento: tipoEncaminhamento,
+                        substituicao_servidor_id: (document.getElementById('substituicao_servidor_id') ? document.getElementById('substituicao_servidor_id').value : ''),
+                        servidor_id: (document.getElementById('substituicao_servidor_id') ? document.getElementById('substituicao_servidor_id').value : ''),
+                        substituicao_servidor_nome: (document.getElementById('substituicao_matricula') ? document.getElementById('substituicao_matricula').value : '')
                     };
 
                     try {

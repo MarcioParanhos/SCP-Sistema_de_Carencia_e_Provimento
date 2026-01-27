@@ -10,6 +10,9 @@ use Illuminate\Support\Facades\Log;
 use App\Models\Uee;
 use App\Models\IngressoDocumento;
 use App\Models\ProvimentosEncaminhado;
+use App\Models\Servidore;
+use App\Models\IngressoEncaminhamento;
+use App\Models\IngressoCandidato;
 
 class IngressoController extends Controller
 {
@@ -719,6 +722,22 @@ class IngressoController extends Controller
                     ->where('ingresso_candidato_id', $candidate->id)
                     ->orderBy('created_at', 'desc')
                     ->get();
+
+                // If encaminhamentos include a servidor_id, attach the servidor model for use in views
+                if ($allEnc->isNotEmpty()) {
+                    $allEnc = $allEnc->map(function($r){
+                        if (isset($r->servidor_id) && $r->servidor_id) {
+                            try {
+                                $r->servidor = Servidore::find($r->servidor_id);
+                            } catch (\Throwable $e) {
+                                $r->servidor = null;
+                            }
+                        } else {
+                            $r->servidor = null;
+                        }
+                        return $r;
+                    });
+                }
 
                 // expose the raw collection to the view so each disciplina can be rendered separately
                 $encaminhamentos = $allEnc;
@@ -3085,6 +3104,11 @@ class IngressoController extends Controller
                             $row['tipo'] = $request->input('tipo_encaminhamento') ?? null;
                         }
 
+                        // persist servidor id on encaminhamentos when table supports it
+                        if (Schema::hasColumn('ingresso_encaminhamentos', 'servidor_id')) {
+                            $row['servidor_id'] = $request->input('servidor_id') ?? $request->input('substituicao_servidor_id') ?? $request->input('substituicao_servidor') ?? null;
+                        }
+
                     return $row;
                 };
 
@@ -3107,6 +3131,19 @@ class IngressoController extends Controller
                         }
                         DB::table('ingresso_encaminhamentos')->insert($rowsToInsert);
                         Log::info('Ingresso encaminhado (replaced with multiple)', ['user' => optional(Auth::user())->id, 'candidate' => $candidateId, 'rows' => count($rowsToInsert)]);
+                        // persist servidor_id if provided
+                        $servidorId = $request->input('servidor_id') ?? $request->input('substituicao_servidor_id') ?? $request->input('substituicao_servidor') ?? null;
+                        if ($servidorId && Schema::hasColumn('ingresso_candidatos', 'servidor_id')) {
+                            try {
+                                $numIns = DB::table('ingresso_candidatos')->where('id', $candidateId)->value('num_inscricao');
+                                Log::info('Attempting persist servidor_id', ['candidate' => $candidateId, 'num_inscricao' => $numIns, 'servidor_id' => $servidorId, 'hasColumn' => Schema::hasColumn('ingresso_candidatos', 'servidor_id')]);
+                                        // Use candidate id for update to avoid mismatches with num_inscricao values
+                                        $affected = DB::table('ingresso_candidatos')->where('id', $candidateId)->update(['servidor_id' => $servidorId, 'updated_at' => now()]);
+                                Log::info('Persisted servidor_id for candidate', ['candidate' => $candidateId, 'servidor_id' => $servidorId, 'rows_affected' => $affected ?? 0]);
+                            } catch (\Throwable $e) {
+                                Log::warning('Failed to persist servidor_id', ['exception' => $e->getMessage(), 'candidate' => $candidateId, 'servidor_id' => $servidorId]);
+                            }
+                        }
                         return response()->json(['success' => true, 'message' => 'Encaminhamento registrado.']);
                     }
 
@@ -3120,6 +3157,19 @@ class IngressoController extends Controller
                     $updateRow['updated_at'] = now();
                     DB::table('ingresso_encaminhamentos')->where('id', $existing->id)->update($updateRow);
                     Log::info('Ingresso encaminhado (updated existing)', ['user' => optional(Auth::user())->id, 'candidate' => $candidateId, 'encaminhamento' => $existing->id]);
+                    // persist servidor_id if provided
+                    $servidorId = $request->input('servidor_id') ?? $request->input('substituicao_servidor_id') ?? $request->input('substituicao_servidor') ?? null;
+                    if ($servidorId && Schema::hasColumn('ingresso_candidatos', 'servidor_id')) {
+                        try {
+                            $numIns = DB::table('ingresso_candidatos')->where('id', $candidateId)->value('num_inscricao');
+                            Log::info('Attempting persist servidor_id', ['candidate' => $candidateId, 'num_inscricao' => $numIns, 'servidor_id' => $servidorId, 'hasColumn' => Schema::hasColumn('ingresso_candidatos', 'servidor_id')]);
+                            // Prefer updating by candidate id to guarantee the correct row is modified
+                            $affected = DB::table('ingresso_candidatos')->where('id', $candidateId)->update(['servidor_id' => $servidorId, 'updated_at' => now()]);
+                            Log::info('Persisted servidor_id for candidate', ['candidate' => $candidateId, 'servidor_id' => $servidorId, 'rows_affected' => $affected ?? 0]);
+                        } catch (\Throwable $e) {
+                            Log::warning('Failed to persist servidor_id', ['exception' => $e->getMessage(), 'candidate' => $candidateId, 'servidor_id' => $servidorId]);
+                        }
+                    }
                     return response()->json(['success' => true, 'message' => 'Encaminhamento atualizado.']);
                 }
 
@@ -3135,6 +3185,19 @@ class IngressoController extends Controller
 
                 DB::table('ingresso_encaminhamentos')->insert($rowsToInsert);
                 Log::info('Ingresso encaminhado', ['user' => optional(Auth::user())->id, 'candidate' => $candidateId, 'rows' => count($rowsToInsert)]);
+                // persist servidor_id if provided
+                $servidorId = $request->input('servidor_id') ?? $request->input('substituicao_servidor_id') ?? $request->input('substituicao_servidor') ?? null;
+                if ($servidorId && Schema::hasColumn('ingresso_candidatos', 'servidor_id')) {
+                    try {
+                        $numIns = DB::table('ingresso_candidatos')->where('id', $candidateId)->value('num_inscricao');
+                        Log::info('Attempting persist servidor_id', ['candidate' => $candidateId, 'num_inscricao' => $numIns, 'servidor_id' => $servidorId, 'hasColumn' => Schema::hasColumn('ingresso_candidatos', 'servidor_id')]);
+                        // Always update by id to avoid num_inscricao lookup inconsistencies
+                        $affected = DB::table('ingresso_candidatos')->where('id', $candidateId)->update(['servidor_id' => $servidorId, 'updated_at' => now()]);
+                        Log::info('Persisted servidor_id for candidate', ['candidate' => $candidateId, 'servidor_id' => $servidorId, 'rows_affected' => $affected ?? 0]);
+                    } catch (\Throwable $e) {
+                        Log::warning('Failed to persist servidor_id', ['exception' => $e->getMessage(), 'candidate' => $candidateId, 'servidor_id' => $servidorId]);
+                    }
+                }
                 return response()->json(['success' => true, 'message' => 'Encaminhamento registrado.']);
             }
         } catch (\Throwable $e) {
