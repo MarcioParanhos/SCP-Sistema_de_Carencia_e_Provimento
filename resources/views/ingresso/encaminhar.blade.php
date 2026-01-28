@@ -58,22 +58,33 @@
             background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
             border-radius: 0.6rem;
             padding: 0.75rem 0.85rem;
-            box-shadow: 0 6px 18px rgba(11,61,145,0.06);
-            border: 1px solid rgba(11,61,145,0.06);
+            box-shadow: 0 6px 18px rgba(11, 61, 145, 0.06);
+            border: 1px solid rgba(11, 61, 145, 0.06);
         }
+
         .subs-card .subs-name {
             font-weight: 700;
             color: #0b3d91;
             font-size: 1rem;
             letter-spacing: 0.2px;
         }
+
         .subs-card .subs-meta {
             color: #6c757d;
             font-size: 0.9rem;
         }
-        .subs-card .subs-badges { gap: .4rem; display:flex; align-items:center; margin-top:.4rem }
-        .subs-card .badge { font-size: 0.75rem; padding: .35rem .5rem; }
-        #btn-substituicao-clear { border-radius: .35rem; }
+
+        .subs-card .subs-badges {
+            gap: .4rem;
+            display: flex;
+            align-items: center;
+            margin-top: .4rem
+        }
+
+        .subs-card .badge {
+            font-size: 0.75rem;
+            padding: .35rem .5rem;
+        }
     </style>
     <div class="container-fluid ingresso-vh py-4">
         <div class="row justify-content-center">
@@ -83,7 +94,11 @@
                     $headerStatus = null;
                     if (isset($last_encaminhamento) && $last_encaminhamento) {
                         $headerStatus = $last_encaminhamento->status ?? null;
-                    } elseif (isset($encaminhamentos) && $encaminhamentos instanceof \Illuminate\Support\Collection && $encaminhamentos->isNotEmpty()) {
+                    } elseif (
+                        isset($encaminhamentos) &&
+                        $encaminhamentos instanceof \Illuminate\Support\Collection &&
+                        $encaminhamentos->isNotEmpty()
+                    ) {
                         $headerStatus = $encaminhamentos->first()->status ?? null;
                     }
                     // Ensure $cardStatus remains defined for later use in the card body
@@ -99,12 +114,15 @@
                             <div class="text-end">
                                 <span id="mainCardStatus">
                                     @if (isset($headerStatus) && str_contains(mb_strtolower($headerStatus), mb_strtolower('Encaminhamento validado')))
-                                            <span class="badge bg-success text-white fw-bold"><strong>{{ $headerStatus }}</strong></span>
-                                        @elseif(is_null($headerStatus))
-                                            <span class="badge bg-danger text-white fw-bold"><strong>Pendente Validação</strong></span>
-                                        @else
-                                            <span class="badge bg-danger text-white fw-bold"><strong>{{ $headerStatus }}</strong></span>
-                                        @endif
+                                        <span
+                                            class="badge bg-success text-white fw-bold"><strong>{{ $headerStatus }}</strong></span>
+                                    @elseif(is_null($headerStatus))
+                                        <span class="badge bg-danger text-white fw-bold"><strong>Pendente
+                                                Validação</strong></span>
+                                    @else
+                                        <span
+                                            class="badge bg-danger text-white fw-bold"><strong>{{ $headerStatus }}</strong></span>
+                                    @endif
                                 </span>
                             </div>
                         </div>
@@ -250,6 +268,39 @@
                                             <div id="candidateObservacao" class="muted small" style="white-space:pre-wrap;">
                                                 {{ $cardObservacao ?? '-' }}</div>
                                         </div>
+
+                                        <script>
+                                            function clearSubstituicaoFields() {
+                                                try {
+                                                    var ids = ['cadastro','servidor','servidor_subistituido','substituicao_servidor_id','vinculo'];
+                                                    ids.forEach(function(id){
+                                                        var el = document.getElementById(id);
+                                                        if (!el) return;
+                                                        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                                                            el.value = '';
+                                                        } else {
+                                                            el.innerText = '';
+                                                        }
+                                                        el.dispatchEvent(new Event('input'));
+                                                        el.dispatchEvent(new Event('change'));
+                                                    });
+
+                                                    if (window.jQuery) {
+                                                        try {
+                                                            window.jQuery('#cadastro').trigger('change');
+                                                            window.jQuery('#servidor').trigger('change');
+                                                            window.jQuery('#servidor_subistituido').trigger('change');
+                                                            window.jQuery('#substituicao_servidor_id').trigger('change');
+                                                            window.jQuery('#vinculo').trigger('change');
+                                                        } catch (e) {
+                                                            // ignore
+                                                        }
+                                                    }
+                                                } catch (e) {
+                                                    console.error('clearSubstituicaoFields error', e);
+                                                }
+                                            }
+                                        </script>
                                     </div>
                                 </div>
                             </div>
@@ -350,55 +401,103 @@
                                         <div class="col-md-12 mt-3">
                                             <label class="form-label">Disciplina</label>
                                             <div id="disciplinasContainer">
-                                                @if(isset($encaminhamentos) && $encaminhamentos->isNotEmpty())
-                                                    @foreach($encaminhamentos as $enc)
+                                                @if (isset($encaminhamentos) && $encaminhamentos->isNotEmpty())
+                                                    @foreach ($encaminhamentos as $enc)
                                                         <div class="disciplina-row mb-2">
                                                             <div class="row g-2 align-items-end">
                                                                 <div class="col-md-7">
-                                                                    <select name="disciplina_code[]" class="form-control form-control-sm disciplina-select select2"
-                                                                        data-placeholder="Selecione a disciplina" aria-label="Disciplina" @if (!empty($isValidated)) disabled @endif>
+                                                                    <select name="disciplina_code[]"
+                                                                        class="form-control form-control-sm disciplina-select select2"
+                                                                        data-placeholder="Selecione a disciplina"
+                                                                        aria-label="Disciplina"
+                                                                        @if (!empty($isValidated)) disabled @endif>
                                                                         <option value="">(Selecione)</option>
                                                                         @foreach ($disciplinas as $d)
                                                                             @php
                                                                                 $selectedDisc = false;
-                                                                                $lkName = trim((string) ($enc->disciplina_name ?? ($enc->disciplina_nome ?? ($enc->disciplina ?? ''))));
-                                                                                $lkCode = trim((string) ($enc->disciplina_code ?? ($enc->disciplina_id ?? '')));
-                                                                                if ($lkCode !== '' && (string) $d->id === $lkCode) {
+                                                                                $lkName = trim(
+                                                                                    (string) ($enc->disciplina_name ??
+                                                                                        ($enc->disciplina_nome ??
+                                                                                            ($enc->disciplina ?? ''))),
+                                                                                );
+                                                                                $lkCode = trim(
+                                                                                    (string) ($enc->disciplina_code ??
+                                                                                        ($enc->disciplina_id ?? '')),
+                                                                                );
+                                                                                if (
+                                                                                    $lkCode !== '' &&
+                                                                                    (string) $d->id === $lkCode
+                                                                                ) {
                                                                                     $selectedDisc = true;
                                                                                 }
                                                                                 if (!$selectedDisc && $lkName !== '') {
                                                                                     try {
-                                                                                        $dnNorm = mb_strtolower(trim(\Illuminate\Support\Str::ascii($d->nome ?? '')));
-                                                                                        $lkNorm = mb_strtolower(trim(\Illuminate\Support\Str::ascii($lkName)));
+                                                                                        $dnNorm = mb_strtolower(
+                                                                                            trim(
+                                                                                                \Illuminate\Support\Str::ascii(
+                                                                                                    $d->nome ?? '',
+                                                                                                ),
+                                                                                            ),
+                                                                                        );
+                                                                                        $lkNorm = mb_strtolower(
+                                                                                            trim(
+                                                                                                \Illuminate\Support\Str::ascii(
+                                                                                                    $lkName,
+                                                                                                ),
+                                                                                            ),
+                                                                                        );
                                                                                         if ($dnNorm === $lkNorm) {
                                                                                             $selectedDisc = true;
                                                                                         }
                                                                                     } catch (\Throwable $e) {
                                                                                         // fallback to strict case-insensitive equality without diacritics removal
-                                                                                        if (mb_strtolower(trim($d->nome ?? '')) === mb_strtolower(trim($lkName))) {
+                                                                                        if (
+                                                                                            mb_strtolower(
+                                                                                                trim($d->nome ?? ''),
+                                                                                            ) ===
+                                                                                            mb_strtolower(trim($lkName))
+                                                                                        ) {
                                                                                             $selectedDisc = true;
                                                                                         }
                                                                                     }
                                                                                 }
                                                                             @endphp
-                                                                            <option value="{{ $d->id }}" data-name="{{ $d->nome }}" @if ($selectedDisc) selected @endif>{{ $d->nome }}</option>
+                                                                            <option value="{{ $d->id }}"
+                                                                                data-name="{{ $d->nome }}"
+                                                                                @if ($selectedDisc) selected @endif>
+                                                                                {{ $d->nome }}</option>
                                                                         @endforeach
                                                                     </select>
                                                                 </div>
                                                                 <div class="col-1">
                                                                     <label class="form-label small">Mat</label>
-                                                                    <input type="number" min="0" name="quant_matutino[]" class="form-control form-control-sm quant-matutino" value="{{ $enc->quant_matutino ?? 0 }}" @if (!empty($isValidated)) disabled @endif>
+                                                                    <input type="number" min="0"
+                                                                        name="quant_matutino[]"
+                                                                        class="form-control form-control-sm quant-matutino"
+                                                                        value="{{ $enc->quant_matutino ?? 0 }}"
+                                                                        @if (!empty($isValidated)) disabled @endif>
                                                                 </div>
                                                                 <div class="col-1">
                                                                     <label class="form-label small">Ves</label>
-                                                                    <input type="number" min="0" name="quant_vespertino[]" class="form-control form-control-sm quant-vespertino" value="{{ $enc->quant_vespertino ?? 0 }}" @if (!empty($isValidated)) disabled @endif>
+                                                                    <input type="number" min="0"
+                                                                        name="quant_vespertino[]"
+                                                                        class="form-control form-control-sm quant-vespertino"
+                                                                        value="{{ $enc->quant_vespertino ?? 0 }}"
+                                                                        @if (!empty($isValidated)) disabled @endif>
                                                                 </div>
                                                                 <div class="col-1">
                                                                     <label class="form-label small">Not</label>
-                                                                    <input type="number" min="0" name="quant_noturno[]" class="form-control form-control-sm quant-noturno" value="{{ $enc->quant_noturno ?? 0 }}" @if (!empty($isValidated)) disabled @endif>
+                                                                    <input type="number" min="0"
+                                                                        name="quant_noturno[]"
+                                                                        class="form-control form-control-sm quant-noturno"
+                                                                        value="{{ $enc->quant_noturno ?? 0 }}"
+                                                                        @if (!empty($isValidated)) disabled @endif>
                                                                 </div>
                                                                 <div class="col-md-2 text-end">
-                                                                    <button type="button" class="btn btn-sm btn-outline-primary btn-add-disciplina" @if (!empty($isValidated)) disabled @endif>Adicionar disciplina</button>
+                                                                    <button type="button"
+                                                                        class="btn btn-sm btn-outline-primary btn-add-disciplina"
+                                                                        @if (!empty($isValidated)) disabled @endif>Adicionar
+                                                                        disciplina</button>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -407,95 +506,161 @@
                                                     <div class="disciplina-row mb-2">
                                                         <div class="row g-2 align-items-end">
                                                             <div class="col-md-7">
-                                                                <select name="disciplina_code[]" class="form-control form-control-sm disciplina-select select2"
-                                                                    data-placeholder="Selecione a disciplina" aria-label="Disciplina"
-                                                                    required @if (!empty($isValidated)) disabled @endif>
+                                                                <select name="disciplina_code[]"
+                                                                    class="form-control form-control-sm disciplina-select select2"
+                                                                    data-placeholder="Selecione a disciplina"
+                                                                    aria-label="Disciplina" required
+                                                                    @if (!empty($isValidated)) disabled @endif>
                                                                     <option value="">(Selecione)</option>
                                                                     @foreach ($disciplinas as $d)
                                                                         @php
                                                                             $selectedDisc = false;
-                                                                            if (isset($last_encaminhamento) && $last_encaminhamento) {
-                                                                                $lkName = trim((string) ($last_encaminhamento->disciplina_name ?? ($last_encaminhamento->disciplina_nome ?? '')));
-                                                                                $lkCode = trim((string) ($last_encaminhamento->disciplina_code ?? ($last_encaminhamento->disciplina_id ?? '')));
-                                                                                if ($lkCode !== '' && (string) $d->id === $lkCode) {
+                                                                            if (
+                                                                                isset($last_encaminhamento) &&
+                                                                                $last_encaminhamento
+                                                                            ) {
+                                                                                $lkName = trim(
+                                                                                    (string) ($last_encaminhamento->disciplina_name ??
+                                                                                        ($last_encaminhamento->disciplina_nome ??
+                                                                                            '')),
+                                                                                );
+                                                                                $lkCode = trim(
+                                                                                    (string) ($last_encaminhamento->disciplina_code ??
+                                                                                        ($last_encaminhamento->disciplina_id ??
+                                                                                            '')),
+                                                                                );
+                                                                                if (
+                                                                                    $lkCode !== '' &&
+                                                                                    (string) $d->id === $lkCode
+                                                                                ) {
                                                                                     $selectedDisc = true;
                                                                                 }
                                                                                 if (!$selectedDisc && $lkName !== '') {
                                                                                     try {
-                                                                                        $dnNorm = mb_strtolower(trim(\Illuminate\Support\Str::ascii($d->nome ?? '')));
-                                                                                        $lkNorm = mb_strtolower(trim(\Illuminate\Support\Str::ascii($lkName)));
+                                                                                        $dnNorm = mb_strtolower(
+                                                                                            trim(
+                                                                                                \Illuminate\Support\Str::ascii(
+                                                                                                    $d->nome ?? '',
+                                                                                                ),
+                                                                                            ),
+                                                                                        );
+                                                                                        $lkNorm = mb_strtolower(
+                                                                                            trim(
+                                                                                                \Illuminate\Support\Str::ascii(
+                                                                                                    $lkName,
+                                                                                                ),
+                                                                                            ),
+                                                                                        );
                                                                                         if ($dnNorm === $lkNorm) {
                                                                                             $selectedDisc = true;
                                                                                         }
                                                                                     } catch (\Throwable $e) {
-                                                                                        if (mb_strtolower(trim($d->nome ?? '')) === mb_strtolower(trim($lkName))) {
+                                                                                        if (
+                                                                                            mb_strtolower(
+                                                                                                trim($d->nome ?? ''),
+                                                                                            ) ===
+                                                                                            mb_strtolower(trim($lkName))
+                                                                                        ) {
                                                                                             $selectedDisc = true;
                                                                                         }
                                                                                     }
                                                                                 }
                                                                             }
                                                                         @endphp
-                                                                        <option value="{{ $d->id }}" data-name="{{ $d->nome }}" @if ($selectedDisc) selected @endif>{{ $d->nome }}</option>
+                                                                        <option value="{{ $d->id }}"
+                                                                            data-name="{{ $d->nome }}"
+                                                                            @if ($selectedDisc) selected @endif>
+                                                                            {{ $d->nome }}</option>
                                                                     @endforeach
                                                                 </select>
                                                             </div>
                                                             <div class="col-1">
                                                                 <label class="form-label small">Mat</label>
-                                                                <input type="number" min="0" name="quant_matutino[]" class="form-control form-control-sm quant-matutino" value="{{ $cardMat ?? 0 }}" @if (!empty($isValidated)) disabled @endif>
+                                                                <input type="number" min="0"
+                                                                    name="quant_matutino[]"
+                                                                    class="form-control form-control-sm quant-matutino"
+                                                                    value="{{ $cardMat ?? 0 }}"
+                                                                    @if (!empty($isValidated)) disabled @endif>
                                                             </div>
                                                             <div class="col-1">
                                                                 <label class="form-label small">Ves</label>
-                                                                <input type="number" min="0" name="quant_vespertino[]" class="form-control form-control-sm quant-vespertino" value="{{ $cardVes ?? 0 }}" @if (!empty($isValidated)) disabled @endif>
+                                                                <input type="number" min="0"
+                                                                    name="quant_vespertino[]"
+                                                                    class="form-control form-control-sm quant-vespertino"
+                                                                    value="{{ $cardVes ?? 0 }}"
+                                                                    @if (!empty($isValidated)) disabled @endif>
                                                             </div>
                                                             <div class="col-1">
                                                                 <label class="form-label small">Not</label>
-                                                                <input type="number" min="0" name="quant_noturno[]" class="form-control form-control-sm quant-noturno" value="{{ $cardNot ?? 0 }}" @if (!empty($isValidated)) disabled @endif>
+                                                                <input type="number" min="0"
+                                                                    name="quant_noturno[]"
+                                                                    class="form-control form-control-sm quant-noturno"
+                                                                    value="{{ $cardNot ?? 0 }}"
+                                                                    @if (!empty($isValidated)) disabled @endif>
                                                             </div>
                                                             <div class="col-md-2 text-end">
-                                                                <button type="button" class="btn btn-sm btn-outline-primary btn-add-disciplina" @if (!empty($isValidated)) disabled @endif>Adicionar disciplina</button>
+                                                                <button type="button"
+                                                                    class="btn btn-sm btn-outline-primary btn-add-disciplina"
+                                                                    @if (!empty($isValidated)) disabled @endif>Adicionar
+                                                                    disciplina</button>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 @endif
                                             </div>
-                                            <input type="hidden" name="disciplina_name" id="disciplina_name" value="{{ $cardDisciplinaName ?? '' }}">
+                                            <input type="hidden" name="disciplina_name" id="disciplina_name"
+                                                value="{{ $cardDisciplinaName ?? '' }}">
 
                                             {{-- template for additional disciplina rows --}}
                                             <template id="disciplinaRowTemplate">
                                                 <div class="disciplina-row mb-2">
                                                     <div class="row g-2 align-items-end">
                                                         <div class="col-md-7">
-                                                            <select name="disciplina_code[]" class="form-control form-control-sm disciplina-select select2" data-placeholder="Selecione a disciplina">
+                                                            <select name="disciplina_code[]"
+                                                                class="form-control form-control-sm disciplina-select select2"
+                                                                data-placeholder="Selecione a disciplina">
                                                                 <option value="">(Selecione)</option>
                                                                 @foreach ($disciplinas as $d)
-                                                                    <option value="{{ $d->id }}" data-name="{{ $d->nome }}">{{ $d->nome }}</option>
+                                                                    <option value="{{ $d->id }}"
+                                                                        data-name="{{ $d->nome }}">
+                                                                        {{ $d->nome }}</option>
                                                                 @endforeach
                                                             </select>
                                                         </div>
                                                         <div class="col-1">
                                                             <label class="form-label small">Mat</label>
-                                                            <input type="number" min="0" name="quant_matutino[]" class="form-control form-control-sm quant-matutino" value="0">
+                                                            <input type="number" min="0" name="quant_matutino[]"
+                                                                class="form-control form-control-sm quant-matutino"
+                                                                value="0">
                                                         </div>
                                                         <div class="col-1">
                                                             <label class="form-label small">Ves</label>
-                                                            <input type="number" min="0" name="quant_vespertino[]" class="form-control form-control-sm quant-vespertino" value="0">
+                                                            <input type="number" min="0"
+                                                                name="quant_vespertino[]"
+                                                                class="form-control form-control-sm quant-vespertino"
+                                                                value="0">
                                                         </div>
                                                         <div class="col-1">
                                                             <label class="form-label small">Not</label>
-                                                            <input type="number" min="0" name="quant_noturno[]" class="form-control form-control-sm quant-noturno" value="0">
+                                                            <input type="number" min="0" name="quant_noturno[]"
+                                                                class="form-control form-control-sm quant-noturno"
+                                                                value="0">
                                                         </div>
                                                         <div class="col-md-2 text-end">
-                                                            <button type="button" class="btn btn-sm btn-outline-danger btn-remove-disciplina">Remover</button>
+                                                            <button type="button"
+                                                                class="btn btn-sm btn-outline-danger btn-remove-disciplina">Remover</button>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </template>
                                         </div>
+
                                         <div class="col-md-12 mt-2">
                                             <label class="form-label">Tipo de Encaminhamento</label>
                                             <select id="tipo_encaminhamento" name="tipo_encaminhamento"
                                                 class="form-control form-control-sm select2 w-100"
                                                 data-placeholder="Selecione o tipo" aria-label="Tipo de Encaminhamento"
+                                                onchange="document.getElementById('substituicaoBox').style.display = this.value === 'substituicao_reda' ? 'block' : 'none';"
                                                 @if (!empty($isValidated)) disabled @endif>
                                                 <option value="">(Selecione)</option>
                                                 <option value="substituicao_reda"
@@ -509,41 +674,194 @@
                                             </select>
                                         </div>
 
+                                        <script>
+                                            document.addEventListener('DOMContentLoaded', function () {
+                                                var sel = document.getElementById('tipo_encaminhamento');
+                                                var box = document.getElementById('substituicaoBox');
+                                                if (!sel || !box) return;
+                                                function showBox() {
+                                                    box.removeAttribute('hidden');
+                                                    box.setAttribute('visible', '');
+                                                    box.style.display = '';
+                                                }
+                                                function hideBox() {
+                                                    box.setAttribute('hidden', 'hidden');
+                                                    box.removeAttribute('visible');
+                                                    box.style.display = 'none';
+                                                }
+                                                function updateBox() {
+                                                    if ((sel.value || '').toString() === 'substituicao_reda') {
+                                                        showBox();
+                                                    } else {
+                                                        hideBox();
+                                                    }
+                                                }
+
+                                                // native change
+                                                sel.addEventListener('change', updateBox);
+
+                                                // jQuery/Select2: listen to Select2 events if present
+                                                if (window.jQuery) {
+                                                    try {
+                                                        var $sel = window.jQuery(sel);
+                                                        $sel.on('select2:select select2:unselect change', updateBox);
+                                                        // also handle programmatic changes via val()
+                                                        window.jQuery(document).on('change', '#tipo_encaminhamento', updateBox);
+                                                    } catch (e) {
+                                                        // ignore
+                                                    }
+                                                }
+
+                                                // initial state
+                                                updateBox();
+                                            });
+                                        </script>
+
                                         @php
+                                            // determine candidate $subs (legacy field) and prefer explicit servidor_id fields
                                             $subs = null;
                                             if (isset($last_encaminhamento) && !empty($last_encaminhamento->servidor)) {
                                                 $subs = $last_encaminhamento->servidor;
-                                            } elseif (isset($encaminhamentos) && $encaminhamentos instanceof \Illuminate\Support\Collection && $encaminhamentos->isNotEmpty()) {
+                                            } elseif (
+                                                isset($encaminhamentos) &&
+                                                $encaminhamentos instanceof \Illuminate\Support\Collection &&
+                                                $encaminhamentos->isNotEmpty()
+                                            ) {
                                                 $firstEnc = $encaminhamentos->first();
                                                 $subs = $firstEnc->servidor ?? null;
                                             }
+
+                                            // Resolve an explicit servidor id from multiple possible sources
+                                            $subs_id = null;
+                                            if (isset($last_encaminhamento) && !empty($last_encaminhamento->servidor_id)) {
+                                                $subs_id = $last_encaminhamento->servidor_id;
+                                            } elseif (isset($last_encaminhamento) && !empty($last_encaminhamento->servidor_subistituido)) {
+                                                $subs_id = $last_encaminhamento->servidor_subistituido;
+                                            } elseif (isset($firstEnc) && !empty($firstEnc->servidor_id)) {
+                                                $subs_id = $firstEnc->servidor_id;
+                                            } elseif (isset($firstEnc) && !empty($firstEnc->servidor_subistituido)) {
+                                                $subs_id = $firstEnc->servidor_subistituido;
+                                            } elseif (!empty($subs) && is_numeric($subs)) {
+                                                $subs_id = intval($subs);
+                                            }
+
+                                            // preload servidor fields when we have an id
+                                            $subs_cadastro = '';
+                                            $subs_nome = '';
+                                            $subs_vinculo = '';
+                                            $subs_regime = '';
+                                            if (!empty($subs_id)) {
+                                                try {
+                                                    $srv = \App\Models\Servidore::find(intval($subs_id));
+                                                    if ($srv) {
+                                                        $subs_cadastro = $srv->cadastro ?? $srv->cpf ?? '';
+                                                        $subs_nome = $srv->nome ?? '';
+                                                        $subs_vinculo = $srv->vinculo ?? '';
+                                                        $subs_regime = $srv->regime ?? '';
+                                                    }
+                                                } catch (\Throwable $e) {
+                                                    // ignore lookup errors
+                                                }
+                                            }
                                         @endphp
-                                        <div id="substituicaoBox" class="col-12 mt-3" >
-                                            <label class="form-label">Buscar servidor por matrícula</label>
-                                            <div class="input-group">
-                                                <input type="text" id="substituicao_matricula" class="form-control" placeholder="Matrícula / cadastro">
-                                                <button type="button" id="btn-substituicao-search" class="btn btn-outline-secondary">Buscar</button>
-                                            </div>
-                                            <input type="hidden" id="substituicao_servidor_id" name="substituicao_servidor_id" value="{{ optional($subs)->id ?? '' }}">
-                                            <div id="substituicao_servidor_info" class="mt-2" >
-                                                <div id="substituicao_servidor_card" class="subs-card" >
-                                                    <div class="d-flex justify-content-between align-items-start">
-                                                        <div>
-                                                            <div id="subs_nome" class="subs-name">{{ optional($subs)->nome ?? optional($subs)->Nome ?? optional($subs)->name ?? '' }}</div>
-                                                            <div class="subs-badges">
-                                                                <span id="subs_cadcpf" class="badge bg-primary text-white">{{ optional($subs)->cadastro ? 'Matrícula: ' . optional($subs)->cadastro : '' }}{{ optional($subs)->cpf ? ' · CPF: ' . optional($subs)->cpf : '' }}</span>
-                                                                <span id="subs_regime" class="badge bg-secondary text-white">{{ optional($subs)->regime ? ('Regime: ' . optional($subs)->regime . 'h') : '' }}</span>
-                                                            </div>
-                                                            <div id="subs_vinculo" class="subs-meta mt-2">{{ optional($subs)->vinculo ? ('Vínculo: ' . optional($subs)->vinculo) : '' }}</div>
-                                                        </div>
-                                                        <div class="text-end">
-                                                            <button type="button" id="btn-substituicao-clear" class="btn btn-sm btn-outline-secondary">Limpar</button>
-                                                        </div>
+
+                                        <div @if(isset($cardTipoText) && $cardTipoText === 'substituicao_reda') visible  @else hidden @endif class="form-row col-12" id="substituicaoBox" >
+                                            <div class="mt-3 col-md-3">
+                                                <div class="display_btn position-relative form-group">
+                                                    <div>
+                                                        <label for="cadastro" class="">Matrícula
+                                                        </label>
+                                                        <input value="{{ old('cadastro', $subs_cadastro ?? '') }}" minlength="8" maxlength="11"
+                                                            name="cadastro" id="cadastro" type="text"
+                                                            class="form-control form-control-sm" required>
+                                                    </div>
+                                                    <div class="btn_carencia_seacrh">
+                                                        <button id="cadastro_btn"
+                                                            class="position-relative btn_search_carencia btn btn-sm btn-primary"
+                                                            type="button" onclick="searchServidor()">
+                                                            <i class="ti-search"></i>
+                                                        </button>
                                                     </div>
                                                 </div>
-                                                <div id="substituicao_servidor_msg" class="small text-muted" style="display:{{ $subs ? 'none' : 'block' }}"></div>
+                                            </div>
+                                            <div class="mt-3 col-md-5">
+                                                <div class="form-group">
+                                                    <label for="servidor" class="">Nome do servidor
+                                                        subistituido</label>
+                                                    <input value="{{ old('servidor', $subs_nome ?? '') }}" id="servidor" name="servidor" type="text"
+                                                        class="form-control form-control-sm" readonly>
+                                                    <input value="{{ $subs_id ?? $subs ?? '' }}" id="servidor_subistituido"
+                                                        name="servidor_subistituido" type="number"
+                                                        class="form-control form-control-sm" hidden>
+                                                    <input value="{{ $subs_id ?? $subs ?? '' }}" id="substituicao_servidor_id" name="servidor_id" type="number" class="form-control form-control-sm" hidden>
+                                                </div>
+                                            </div>
+                                            <div class="mt-3 col-md-3">
+                                                <div class="form-group">
+                                                    <label for="vinculo" class="">Vinculo</label>
+                                                    <div class="d-flex align-items-center">
+                                                        <input value="{{ old('vinculo', $subs_vinculo ?? '') }}" id="vinculo" name="vinculo" type="text"
+                                                            class="form-control form-control-sm me-2" readonly>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                             <div class="mt-3 col-md-1 d-flex justify-content-center align-items-center">
+                                                <div class="form-group mb-0">
+                                                    <button type="button" id="btnClearSubstituicao" class="btn btn-danger btn-sm" onclick="clearSubstituicaoFields()">Limpar</button>
+                                                </div>
                                             </div>
                                         </div>
+
+
+
+                                        @php
+                                            // determine candidate $subs (legacy field) and prefer explicit servidor_id fields
+                                            $subs = null;
+                                            if (isset($last_encaminhamento) && !empty($last_encaminhamento->servidor)) {
+                                                $subs = $last_encaminhamento->servidor;
+                                            } elseif (
+                                                isset($encaminhamentos) &&
+                                                $encaminhamentos instanceof \Illuminate\Support\Collection &&
+                                                $encaminhamentos->isNotEmpty()
+                                            ) {
+                                                $firstEnc = $encaminhamentos->first();
+                                                $subs = $firstEnc->servidor ?? null;
+                                            }
+
+                                            // Resolve an explicit servidor id from multiple possible sources
+                                            $subs_id = null;
+                                            if (isset($last_encaminhamento) && !empty($last_encaminhamento->servidor_id)) {
+                                                $subs_id = $last_encaminhamento->servidor_id;
+                                            } elseif (isset($last_encaminhamento) && !empty($last_encaminhamento->servidor_subistituido)) {
+                                                $subs_id = $last_encaminhamento->servidor_subistituido;
+                                            } elseif (isset($firstEnc) && !empty($firstEnc->servidor_id)) {
+                                                $subs_id = $firstEnc->servidor_id;
+                                            } elseif (isset($firstEnc) && !empty($firstEnc->servidor_subistituido)) {
+                                                $subs_id = $firstEnc->servidor_subistituido;
+                                            } elseif (!empty($subs) && is_numeric($subs)) {
+                                                $subs_id = intval($subs);
+                                            }
+
+                                            // preload servidor fields when we have an id
+                                            $subs_cadastro = '';
+                                            $subs_nome = '';
+                                            $subs_vinculo = '';
+                                            $subs_regime = '';
+                                            if (!empty($subs_id)) {
+                                                try {
+                                                    $srv = \App\Models\Servidore::find(intval($subs_id));
+                                                    if ($srv) {
+                                                        $subs_cadastro = $srv->cadastro ?? $srv->cpf ?? '';
+                                                        $subs_nome = $srv->nome ?? '';
+                                                        $subs_vinculo = $srv->vinculo ?? '';
+                                                        $subs_regime = $srv->regime ?? '';
+                                                    }
+                                                } catch (\Throwable $e) {
+                                                    // ignore lookup errors
+                                                }
+                                            }
+                                        @endphp
+
 
                                         <div class="col-12 mt-3">
                                             <label for="observacao" class="form-label">Observação (opcional)</label>
@@ -678,7 +996,9 @@
                 function initSelect2For(el) {
                     try {
                         if (window.jQuery && jQuery(el).select2) {
-                            jQuery(el).select2({ width: '100%' });
+                            jQuery(el).select2({
+                                width: '100%'
+                            });
                             try {
                                 // If server rendered an <option selected>, ensure Select2 reflects it
                                 const pre = el.querySelector('option[selected]');
@@ -693,8 +1013,8 @@
                     } catch (e) {}
                     if (!el) return;
                     el.addEventListener('change', function() {
-                            updateDisciplinaState();
-                        });
+                        updateDisciplinaState();
+                    });
                 }
 
                 // no-op placeholder to preserve existing call sites without overwriting server-rendered card
@@ -710,7 +1030,8 @@
                         totalNot = 0;
                     rows.forEach(row => {
                         const sel = row.querySelector('.disciplina-select');
-                        const opt = sel && sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex] : null;
+                        const opt = sel && sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex] :
+                            null;
                         const name = opt ? (opt.dataset.name || opt.textContent.trim()) : '';
                         if (name) names.push(name);
                         const m = parseInt(row.querySelector('.quant-matutino')?.value || 0, 10);
@@ -734,9 +1055,11 @@
                     if (!tpl) return;
                     const node = tpl.content.firstElementChild.cloneNode(true);
                     disciplinasContainer.appendChild(node);
-                    const lastSel = disciplinasContainer.querySelector('.disciplina-row:last-of-type .disciplina-select');
+                    const lastSel = disciplinasContainer.querySelector(
+                        '.disciplina-row:last-of-type .disciplina-select');
                     if (lastSel) initSelect2For(lastSel);
-                    const removeBtn = disciplinasContainer.querySelector('.disciplina-row:last-of-type .btn-remove-disciplina');
+                    const removeBtn = disciplinasContainer.querySelector(
+                        '.disciplina-row:last-of-type .btn-remove-disciplina');
                     if (removeBtn) removeBtn.addEventListener('click', function() {
                         this.closest('.disciplina-row').remove();
                         updateDisciplinaState();
@@ -767,7 +1090,8 @@
                 updateDisciplinaState();
 
                 // wire update triggers for the card
-                if (document.getElementById('uee_id')) document.getElementById('uee_id').addEventListener('change', updateCandidateCard);
+                if (document.getElementById('uee_id')) document.getElementById('uee_id').addEventListener('change',
+                    updateCandidateCard);
                 ['quant_matutino', 'quant_vespertino', 'quant_noturno'].forEach(id => {
                     const el = document.getElementById(id);
                     if (el) el.addEventListener('input', updateCandidateCard);
@@ -784,95 +1108,10 @@
                     });
                 }
 
-                // show/hide substituição de reda search box
-                (function(){
-                    const tipoEl = document.getElementById('tipo_encaminhamento');
+                // busca por matrícula removida — manter box visível
+                (function() {
                     const box = document.getElementById('substituicaoBox');
-                    const matriculaEl = document.getElementById('substituicao_matricula');
-                    const btnSearch = document.getElementById('btn-substituicao-search');
-                    
-                    const hid = document.getElementById('substituicao_servidor_id');
-
-                    function clearSubstituicao() {
-                        if (matriculaEl) matriculaEl.value = '';
-                        if (hid) hid.value = '';
-                        if (info) { info.style.display = 'none'; info.textContent = ''; }
-                    }
-
-                    function updateVisibility() {
-                        if (!tipoEl) return;
-                        if (tipoEl.value === 'substituicao_reda') {
-                            if (box) box.style.display = '';
-                        } else {
-                            if (box) box.style.display = 'none';
-                            clearSubstituicao();
-                        }
-                    }
-
-                    if (tipoEl) {
-                        tipoEl.addEventListener('change', updateVisibility);
-                        try { updateVisibility(); } catch(e){}
-                    }
-
-                    if (btnSearch) {
-                        btnSearch.addEventListener('click', function(){
-                            const q = (matriculaEl && matriculaEl.value || '').trim();
-                            if (!q) return alert('Informe a matrícula do servidor');
-                            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
-                            fetch('/consultarServidor/' + encodeURIComponent(q), {
-                                method: 'POST',
-                                headers: {
-                                    'X-CSRF-TOKEN': token,
-                                    'Accept': 'application/json',
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({})
-                            }).then(r => r.json()).then(data => {
-                                // ServidoreController::searchServidor returns array of matches
-                                    if (Array.isArray(data) && data.length) {
-                                            const s = data[0];
-                                            // prefer the canonical servidor `id` when present; fall back to cadastro/cpf
-                                            if (hid) hid.value = s.id || s.cadastro || s.cpf || '';
-                                            // show alert with servidor id (prefer s.id)
-                                            try {
-                                                const subs_nome = document.getElementById('subs_nome');
-                                                const subs_cadcpf = document.getElementById('subs_cadcpf');
-                                                const subs_regime = document.getElementById('subs_regime');
-                                                const subs_vinculo = document.getElementById('subs_vinculo');
-                                                if (subs_nome) subs_nome.textContent = s.nome || s.Nome || 'Nome não informado';
-                                                if (subs_cadcpf) subs_cadcpf.textContent = (s.cadastro ? ('Matrícula: ' + s.cadastro) : '') + (s.cpf ? (' · CPF: ' + s.cpf) : '');
-                                                if (subs_regime) subs_regime.textContent = s.regime ? ('Regime: ' + s.regime + 'h') : '';
-                                                if (subs_vinculo) subs_vinculo.textContent = s.vinculo ? ('Vínculo: ' + s.vinculo) : '';
-                                            } catch (e) {}
-                                        if (info) {
-                                            info.style.display = '';
-                                            const card = document.getElementById('substituicao_servidor_card');
-                                            const msg = document.getElementById('substituicao_servidor_msg');
-                                            if (msg) { msg.style.display = 'none'; msg.textContent = ''; }
-                                            if (card) {
-                                                document.getElementById('subs_nome').textContent = s.nome || s.Nome || 'Nome não informado';
-                                                document.getElementById('subs_cadcpf').textContent = (s.cadastro ? ('Matrícula: ' + s.cadastro) : '') + (s.cpf ? (' · CPF: ' + s.cpf) : '');
-                                                document.getElementById('subs_vinculo').textContent = s.vinculo ? ('Vínculo: ' + s.vinculo) : '';
-                                                document.getElementById('subs_regime').textContent = s.regime ? ('Regime: ' + s.regime + 'h') : '';
-                                                card.style.display = '';
-                                                // wire clear button
-                                                const clearBtn = document.getElementById('btn-substituicao-clear');
-                                                if (clearBtn) clearBtn.addEventListener('click', function() {
-                                                    if (matriculaEl) matriculaEl.value = '';
-                                                    if (hid) hid.value = '';
-                                                    card.style.display = 'none';
-                                                });
-                                            }
-                                        }
-                                    } else {
-                                        if (info) { info.style.display = ''; info.querySelector('#substituicao_servidor_msg').style.display = ''; info.querySelector('#substituicao_servidor_msg').textContent = 'Servidor não encontrado'; }
-                                        if (hid) hid.value = '';
-                                    }
-                            }).catch(() => {
-                                if (info) { info.style.display = ''; info.textContent = 'Erro ao buscar servidor'; }
-                            });
-                        });
-                    }
+                    if (box) box.style.display = '';
                 })();
 
                 // Ensure Select2 events also toggle the substituição box
@@ -881,16 +1120,38 @@
                         try {
                             const val = jQuery(this).val();
                             const box = document.getElementById('substituicaoBox');
-                            const matriculaEl = document.getElementById('substituicao_matricula');
                             const hid = document.getElementById('substituicao_servidor_id');
                             const info = document.getElementById('substituicao_servidor_info');
-                            if (val === 'substituicao_reda') {
-                                if (box) box.style.display = '';
-                            } else {
-                                if (box) box.style.display = 'none';
-                                if (matriculaEl) matriculaEl.value = '';
+                            const subsNome = document.getElementById('subs_nome');
+                            const subsCad = document.getElementById('subs_cadcpf');
+                            const subsVinc = document.getElementById('subs_vinculo');
+                            const subsReg = document.getElementById('subs_regime');
+                            // Always keep the substituição box visible per user's request
+                            if (box) box.style.display = '';
+                            // On non-substitution types, clear matricula/hidden id and adjust card fields
+                            if (val !== 'substituicao_reda') {
                                 if (hid) hid.value = '';
-                                if (info) { info.style.display = 'none'; info.textContent = ''; }
+                                if (info) {
+                                    info.style.display = '';
+                                    info.textContent = '';
+                                }
+                                // For vaga_real / vaga_temporaria, show the provided placeholders if fields are empty
+                                if (val === 'vaga_real' || val === 'vaga_temporaria') {
+                                    if (subsNome && (!subsNome.textContent || !subsNome.textContent.trim()))
+                                        subsNome.textContent = 'HUGLA MILCA MONTEIRO DE MENEZES';
+                                    if (subsCad && (!subsCad.textContent || !subsCad.textContent.trim()))
+                                        subsCad.textContent = 'Matrícula: 92147421';
+                                    if (subsReg && (!subsReg.textContent || !subsReg.textContent.trim()))
+                                        subsReg.textContent = 'Regime: 20h';
+                                    if (subsVinc && (!subsVinc.textContent || !subsVinc.textContent.trim()))
+                                        subsVinc.textContent = 'Vínculo: REDA PROFESSOR';
+                                } else {
+                                    // other types: keep card visible but clear fields
+                                    if (subsNome) subsNome.textContent = '';
+                                    if (subsCad) subsCad.textContent = '';
+                                    if (subsReg) subsReg.textContent = '';
+                                    if (subsVinc) subsVinc.textContent = '';
+                                }
                             }
                         } catch (e) {}
                     });
@@ -967,7 +1228,9 @@
                         });
                     }
                     // ensure initial UEE info is populated from the server-rendered select option
-                    try { if (ueeSelect) handleUeeChange(ueeSelect); } catch (e) {}
+                    try {
+                        if (ueeSelect) handleUeeChange(ueeSelect);
+                    } catch (e) {}
                 }
 
                 document.getElementById('btn-submit-encaminhar').addEventListener('click', async function() {
@@ -986,18 +1249,21 @@
                     const ueeMunicipio = ueeOpt ? (ueeOpt.dataset.municipio || '') : '';
                     const ueeCodigo = ueeOpt ? (ueeOpt.dataset.codigo || '') : '';
                     const observacao = document.getElementById('observacao').value;
-                    const tipoEncaminhamento = (document.getElementById('tipo_encaminhamento') ? document.getElementById('tipo_encaminhamento').value : '');
+                    const tipoEncaminhamento = (document.getElementById('tipo_encaminhamento') ? document
+                        .getElementById('tipo_encaminhamento').value : '');
 
                     if (!ueeId) {
                         alert('Selecione a unidade escolar');
                         return;
                     }
 
-                    const disciplinaRows = Array.from(document.querySelectorAll('#disciplinasContainer .disciplina-row'));
+                    const disciplinaRows = Array.from(document.querySelectorAll(
+                        '#disciplinasContainer .disciplina-row'));
                     const disciplinas = disciplinaRows.map(row => {
                         const sel = row.querySelector('.disciplina-select');
                         const id = sel ? (sel.value || '') : '';
-                        const opt = sel && sel.options && sel.selectedIndex > -1 ? sel.options[sel.selectedIndex] : null;
+                        const opt = sel && sel.options && sel.selectedIndex > -1 ? sel.options[sel
+                            .selectedIndex] : null;
                         const name = opt ? (opt.dataset.name || opt.textContent.trim()) : '';
                         const m = parseInt(row.querySelector('.quant-matutino')?.value || 0, 10);
                         const v = parseInt(row.querySelector('.quant-vespertino')?.value || 0, 10);
@@ -1025,24 +1291,27 @@
                         observacao: observacao,
                         disciplinas: disciplinas,
                         tipo_encaminhamento: tipoEncaminhamento,
-                        substituicao_servidor_id: (document.getElementById('substituicao_servidor_id') ? document.getElementById('substituicao_servidor_id').value : ''),
-                        servidor_id: (document.getElementById('substituicao_servidor_id') ? document.getElementById('substituicao_servidor_id').value : ''),
-                        substituicao_servidor_nome: (document.getElementById('substituicao_matricula') ? document.getElementById('substituicao_matricula').value : '')
+                        substituicao_servidor_id: (document.getElementById('substituicao_servidor_id') ?
+                            document.getElementById('substituicao_servidor_id').value : ''),
+                        servidor_id: (document.getElementById('substituicao_servidor_id') ? document
+                            .getElementById('substituicao_servidor_id').value : ''),
+                        substituicao_servidor_nome: (document.getElementById('subs_nome') ? document
+                            .getElementById('subs_nome').textContent.trim() : '')
                     };
 
                     try {
                         const res = await fetch('{{ url('/ingresso') }}/' + encodeURIComponent(
                             candidateId) + '/encaminhar', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
-                                        .getAttribute('content'),
-                                    'X-Requested-With': 'XMLHttpRequest',
-                                    'Accept': 'application/json'
-                                },
-                                body: JSON.stringify(payload)
-                            });
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
+                                    .getAttribute('content'),
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify(payload)
+                        });
                         const j = await res.json();
                         if (j && j.success) {
                             try {
@@ -1090,18 +1359,18 @@
                         try {
                             const res = await fetch('{{ url('/ingresso') }}/' + encodeURIComponent(
                                 candidateId) + '/encaminhar/status', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
-                                            .getAttribute('content'),
-                                        'X-Requested-With': 'XMLHttpRequest',
-                                        'Accept': 'application/json'
-                                    },
-                                    body: JSON.stringify({
-                                        status: newStatus
-                                    })
-                                });
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
+                                        .getAttribute('content'),
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'Accept': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    status: newStatus
+                                })
+                            });
                             const j = await res.json();
                             if (j && j.success) {
                                 try {
@@ -1164,5 +1433,3 @@
     @endpush
 
 @endsection
-
-

@@ -49,9 +49,9 @@ class IngressoController extends Controller
 
         // Attempt to get columns from the ingresso_candidatos table to build the datatable
         $columns = [];
-        if (Schema::hasTable('ingresso_candidatos')) {
-            $columns = Schema::getColumnListing('ingresso_candidatos');
-        }
+            if (Schema::hasTable('ingresso_candidatos') && Schema::hasColumn('ingresso_candidatos', 'assunsao')) {
+                $columns = Schema::getColumnListing('ingresso_candidatos');
+            }
 
         // Build list of available NTEs for the filter select
         $ntes = [];
@@ -116,7 +116,7 @@ class IngressoController extends Controller
         }
         // Build real stats from DB, defensively checking available columns
         $table = 'ingresso_candidatos';
-        $available = Schema::hasTable($table) ? Schema::getColumnListing($table) : [];
+            $available = Schema::hasTable($table) && Schema::hasColumn($table, 'assunsao') ? Schema::getColumnListing($table) : [];
 
         // Prepare a base query which may be scoped to the authenticated NTE user below
         $total = 0;
@@ -600,7 +600,7 @@ class IngressoController extends Controller
         }
 
         $table = 'ingresso_candidatos';
-        $available = Schema::hasTable($table) ? Schema::getColumnListing($table) : [];
+            $available = Schema::hasTable($table) && Schema::hasColumn($table, 'assunsao') ? Schema::getColumnListing($table) : [];
 
         if (! Schema::hasTable($table)) {
             return redirect()->route('ingresso.dashboard')->with('status', 'Tabela de candidatos indisponível.');
@@ -928,7 +928,7 @@ class IngressoController extends Controller
             // filtered
             // ensure we explicitly select critical columns but only those that exist in the table
             // include both legacy and current column names for racial quota to be safe
-            $desired = ['id','num_inscricao','name','cpf','nte','disciplina','municipio_convocacao','classificacao_ampla','classificacao_quota_pne','classificacao_quota_racial','classificacao_racial','classificacao','nota','sei_number','status','documentos_validados'];
+            $desired = ['id','num_inscricao','name','cpf','nte','disciplina','municipio_convocacao','classificacao_ampla','classificacao_quota_pne','classificacao_quota_racial','classificacao_racial','classificacao','nota','sei_number','status','documentos_validados','assunsao'];
             $available = Schema::hasTable('ingresso_candidatos') ? Schema::getColumnListing('ingresso_candidatos') : [];
             $selectCols = array_values(array_intersect($desired, $available));
 
@@ -1263,9 +1263,36 @@ class IngressoController extends Controller
             $candidateCount = DB::table('ingresso_encaminhamentos')->where('ingresso_candidato_id', $identifier)->count();
             $upd = ['devolucao_assunsao' => $parsed ? 1 : 0, 'updated_at' => now()];
 
+            // Determine assunsao date to save on ingresso_candidatos (not ingresso_encaminhamentos)
+            $candidateAssunsao = null;
+            if ($parsed) {
+                // ensure the DB has the expected column on ingresso_candidatos before attempting to write
+                if (! Schema::hasColumn('ingresso_candidatos', 'assunsao')) {
+                    return response()->json(['success' => false, 'message' => 'Coluna assunsao inexistente no banco de dados (ingresso_candidatos)'], 400);
+                }
+
+                $dateInput = $request->input('assunsao') ?? $request->input('assunsao');
+                if (! $dateInput) {
+                    return response()->json(['success' => false, 'message' => 'Data de assunção é obrigatória ao marcar devolução'], 422);
+                }
+                try {
+                    $candidateAssunsao = \Carbon\Carbon::parse($dateInput)->format('Y-m-d');
+                } catch (\Throwable $e) {
+                    return response()->json(['success' => false, 'message' => 'Formato de data inválido (use YYYY-MM-DD)'], 422);
+                }
+            } else {
+                // clearing devolucao -> clear date on candidate
+                $candidateAssunsao = null;
+            }
+
             if ($candidateCount > 0) {
+                // update encaminhamentos rows
                 DB::table('ingresso_encaminhamentos')->where('ingresso_candidato_id', $identifier)->update($upd);
-                Log::info('Encaminhamentos (candidate) devolucao_assunsao atualizado', ['user' => optional(Auth::user())->id, 'candidate' => $identifier, 'rows' => $candidateCount, 'devolucao' => $upd['devolucao_assunsao']]);
+                // update the candidate row with assunsao; only set updated_at if column exists
+                $candidateUpd = ['assunsao' => $candidateAssunsao];
+                if (Schema::hasColumn('ingresso_candidatos', 'updated_at')) $candidateUpd['updated_at'] = now();
+                DB::table('ingresso_candidatos')->where('id', $identifier)->update($candidateUpd);
+                Log::info('Encaminhamentos (candidate) devolucao_assunsao atualizado', ['user' => optional(Auth::user())->id, 'candidate' => $identifier, 'rows' => $candidateCount, 'devolucao' => $upd['devolucao_assunsao'], 'assunsao' => $candidateAssunsao]);
                 return response()->json(['success' => true, 'message' => 'Valor salvo para todas as disciplinas do candidato', 'devolucao' => $upd['devolucao_assunsao'], 'rows_updated' => $candidateCount]);
             }
 
@@ -1276,7 +1303,13 @@ class IngressoController extends Controller
             }
 
             DB::table('ingresso_encaminhamentos')->where('id', $enc->id)->update($upd);
-            Log::info('Encaminhamento devolucao_assunsao atualizado', ['user' => optional(Auth::user())->id, 'encaminhamento' => $enc->id, 'devolucao' => $upd['devolucao_assunsao']]);
+            // update candidate assunsao if column exists
+            if (Schema::hasColumn('ingresso_candidatos', 'assunsao')) {
+                $candidateUpd = ['assunsao' => $candidateAssunsao];
+                if (Schema::hasColumn('ingresso_candidatos', 'updated_at')) $candidateUpd['updated_at'] = now();
+                DB::table('ingresso_candidatos')->where('id', $enc->ingresso_candidato_id)->update($candidateUpd);
+            }
+            Log::info('Encaminhamento devolucao_assunsao atualizado', ['user' => optional(Auth::user())->id, 'encaminhamento' => $enc->id, 'devolucao' => $upd['devolucao_assunsao'], 'assunsao' => $candidateAssunsao]);
 
             return response()->json(['success' => true, 'message' => 'Valor salvo', 'devolucao' => $upd['devolucao_assunsao']]);
         } catch (\Throwable $e) {

@@ -59,6 +59,7 @@
                             <th scope="col">ENCAMINHAMENTO</th>
                             <th scope="col">TERMO ENC.</th>
                             <th scope="col">ASSUNÇÃO</th>
+                            <th scope="col">DATA DE ASSUNSSÃO</th>
                             <th scope="col">AÇÃO</th>
                         </tr>
                     </thead>
@@ -169,6 +170,28 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         },
         {
+            data: 'assunsao', name: 'assunsao', orderable:false, searchable:false,
+            render: function(d){
+                if (!d || d === null) return '-';
+                try {
+                    // Handle date-only strings (YYYY-MM-DD) as local dates to avoid timezone shift
+                    if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) {
+                        var parts = d.split('-');
+                        var y = parseInt(parts[0], 10);
+                        var m = parseInt(parts[1], 10) - 1;
+                        var day = parseInt(parts[2], 10);
+                        var dtLocal = new Date(y, m, day);
+                        return dtLocal.toLocaleDateString('pt-BR');
+                    }
+                    var dt = new Date(d);
+                    if (isNaN(dt.getTime())) return d;
+                    return dt.toLocaleDateString('pt-BR');
+                } catch (e) {
+                    return d;
+                }
+            }
+        },
+        {
             data: null, name: 'actions', orderable:false, searchable:false,
             render: function(data, type, row){
                 var id = row.id || row.num_inscricao || '';
@@ -193,6 +216,14 @@ document.addEventListener('DOMContentLoaded', function() {
     $('#aptosTable').parent().css('position','relative').prepend($overlay);
 
         $('#aptosTable').DataTable({
+        // persist table state (page, length, search, order) across visits
+        stateSave: true,
+        stateSaveCallback: function(settings, data) {
+            try { localStorage.setItem('aptos_dt_state', JSON.stringify(data)); } catch(e){}
+        },
+        stateLoadCallback: function(settings) {
+            try { var d = localStorage.getItem('aptos_dt_state'); return d ? JSON.parse(d) : null; } catch(e) { return null; }
+        },
         processing: true,
         serverSide: true,
         ajax: {
@@ -233,59 +264,97 @@ document.addEventListener('DOMContentLoaded', function() {
     // AJAX handler to persist devolucao_assunsao when user toggles a switch
     $(document).on('change', '.devo-switch', function(){
         var $chk = $(this);
-        // prevent handling disabled switches
         if ($chk.prop('disabled')) return;
         var encId = $chk.data('encaminhamento');
         if (!encId) {
-            // no identifier — revert and notify
             $chk.prop('checked', !$chk.prop('checked'));
             return;
         }
 
         var value = $chk.is(':checked') ? 1 : 0;
-        $chk.prop('disabled', true);
         // prefer sending candidate id so server updates all disciplines for that candidate
         var candidateId = $chk.data('candidate') || '';
         var sendId = candidateId || encId;
 
-        $.ajax({
-            url: ingressoBaseUrl + '/encaminhamento/' + encodeURIComponent(sendId) + '/devolucao_assunsao',
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-            data: { devolucao: value },
-            success: function(resp){
-                if (!(resp && resp.success)) {
-                    $chk.prop('checked', !value);
-                    var msg = (resp && resp.message) ? resp.message : 'Falha ao salvar devolução';
-                    if (window.Swal) Swal.fire('Erro', msg, 'error'); else alert(msg);
-                } else {
-                    // show a friendly SweetAlert indicating current state
-                    var devol = (typeof resp.devolucao !== 'undefined') ? (parseInt(resp.devolucao) === 1) : (value === 1);
-                    var title = devol ? 'Devolução registrada' : 'Devolução removida';
-                    var text = devol ? 'Assunção devolvida para o candidato.' : 'Assunção não devolvida.';
-                    if (window.Swal) {
-                        Swal.fire({
-                            icon: devol ? 'success' : 'info',
-                            title: title,
-                            text: text,
-                            timer: 2000,
-                            showConfirmButton: false
-                        });
+        function doAjaxSend(assunsaoDate) {
+            $chk.prop('disabled', true);
+            var payload = { devolucao: value };
+            if (typeof assunsaoDate !== 'undefined') payload.assunsao = assunsaoDate;
+
+            $.ajax({
+                url: ingressoBaseUrl + '/encaminhamento/' + encodeURIComponent(sendId) + '/devolucao_assunsao',
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                data: payload,
+                success: function(resp){
+                    if (!(resp && resp.success)) {
+                        $chk.prop('checked', !value);
+                        var msg = (resp && resp.message) ? resp.message : 'Falha ao salvar devolução';
+                        if (window.Swal) Swal.fire('Erro', msg, 'error'); else alert(msg);
                     } else {
-                        alert(text);
+                        var devol = (typeof resp.devolucao !== 'undefined') ? (parseInt(resp.devolucao) === 1) : (value === 1);
+                        var title = devol ? 'Devolução registrada' : 'Devolução removida';
+                        var text = devol ? 'Assunção devolvida para o candidato.' : 'Assunção não devolvida.';
+                        if (window.Swal) {
+                            Swal.fire({ icon: devol ? 'success' : 'info', title: title, text: text, timer: 2000, showConfirmButton: false }).then(function(){ location.reload(); });
+                        } else {
+                            alert(text);
+                            location.reload();
+                        }
                     }
+                },
+                error: function(xhr){
+                    $chk.prop('checked', !value);
+                    var msg = 'Erro ao salvar devolução';
+                    try { msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : msg; } catch(e){}
+                    if (window.Swal) Swal.fire('Erro', msg, 'error'); else alert(msg);
+                },
+                complete: function(){
+                    $chk.prop('disabled', false);
                 }
-            },
-            error: function(xhr){
-                $chk.prop('checked', !value);
-                var msg = 'Erro ao salvar devolução';
-                try { msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : msg; } catch(e){}
-                if (window.Swal) Swal.fire('Erro', msg, 'error'); else alert(msg);
-            },
-            complete: function(){
-                $chk.prop('disabled', false);
+            });
+        }
+
+        // If enabling devolucao, ask for assunsao date first
+        if (value === 1) {
+            if (window.Swal) {
+                Swal.fire({
+                    title: 'Informe a data de assunção',
+                    html: '<input type="date" id="swal-assunsao" class="swal2-input" />',
+                    showCancelButton: true,
+                    confirmButtonText: 'Salvar',
+                    preConfirm: function(){
+                        var v = document.getElementById('swal-assunsao').value;
+                        if (!v) {
+                            Swal.showValidationMessage('A data é obrigatória');
+                            return false;
+                        }
+                        return v;
+                    }
+                }).then(function(result){
+                    if (result && result.isConfirmed && result.value) {
+                        doAjaxSend(result.value);
+                    } else {
+                        $chk.prop('checked', false);
+                    }
+                });
+            } else {
+                // fallback to native prompt (expect YYYY-MM-DD)
+                var d = prompt('Informe a data de assunção (YYYY-MM-DD)');
+                if (!d) { $chk.prop('checked', false); return; }
+                // basic validation
+                var dt = new Date(d);
+                if (isNaN(dt.getTime())) { alert('Data inválida'); $chk.prop('checked', false); return; }
+                // format to yyyy-mm-dd
+                var yyyy = dt.getFullYear();
+                var mm = ('0'+(dt.getMonth()+1)).slice(-2);
+                var dd = ('0'+dt.getDate()).slice(-2);
+                doAjaxSend(yyyy+'-'+mm+'-'+dd);
             }
-        });
+        } else {
+            // disabling devolucao — no date needed
+            doAjaxSend();
+        }
     });
 });
 </script>

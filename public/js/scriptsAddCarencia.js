@@ -343,11 +343,21 @@ function searchServidor() {
             const servidor_subistituido = document.getElementById(
                 "servidor_subistituido"
             );
-            servidor.value = data.nome;
-            vinculo.value = data.vinculo;
-            regime.value = data.regime;
-            cadastro.value = data.cadastro;
-            servidor_subistituido.value = data.id;
+            const servidorEl = document.getElementById('servidor');
+            const vinculoEl = document.getElementById('vinculo');
+            const regimeEl = document.getElementById('regime');
+
+            if (servidorEl) servidorEl.value = data.nome || '';
+            if (vinculoEl) vinculoEl.value = data.vinculo || '';
+            if (regimeEl) regimeEl.value = data.regime || '';
+            if (cadastro) cadastro.value = data.cadastro || '';
+            if (servidor_subistituido) servidor_subistituido.value = data.id || '';
+
+            // also populate the hidden substituicao_servidor_id field if present
+            try {
+                const hid = document.getElementById('substituicao_servidor_id');
+                if (hid) hid.value = data.id || '';
+            } catch (e) {}
         } else {
             Swal.fire({
                 icon: "warning",
