@@ -282,7 +282,6 @@
         @endphp
         <p class="main-content">
             Encaminhamos o(a) Professor(a) {{ $serverName }},
-            @if($cargo) {{ $cargo }}, @endif
             CPF {{ $serverCpf }} com carga horária de 20hs, para atuar nos turnos abaixo indicados, na(s) disciplina(s)
             @php
                 // prefer explicit $encaminhamentos (rows from ingresso_encaminhamentos) when available
@@ -345,10 +344,16 @@
     <section class="yoursSincerely">
         <p>Atenciosamente, </p>
     </section>
+    @if(intval(optional($provimentos_encaminhado->uee)->nte ?? 0) === 26)
     <section class="responsavel">
         <p><strong>Manoel Vidal Colaço Neto</strong></p>
         <p>COORDENADOR TÉCNICO</p>
     </section>
+    @else
+    <section class="responsavel">
+        <p><strong>NÚCLEO TERRITORIAL DE EDUCAÇÃO</strong></p>
+    </section>
+    @endif
 
     <script>
         // Script para imprimir automaticamente quando a página for carregada

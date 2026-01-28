@@ -112,6 +112,7 @@
                                 <div class="small text-muted">Preencha os dados para encaminhar o candidato</div>
                             </div>
                             <div class="text-end">
+                                
                                 <span id="mainCardStatus">
                                     @if (isset($headerStatus) && str_contains(mb_strtolower($headerStatus), mb_strtolower('Encaminhamento validado')))
                                         <span
@@ -124,6 +125,19 @@
                                             class="badge bg-danger text-white fw-bold"><strong>{{ $headerStatus }}</strong></span>
                                     @endif
                                 </span>
+                                                                            <a href="{{ url('ingresso/aptos') . (session('filter_convocacao') ? '?filter_convocacao=' . urlencode(session('filter_convocacao')) : '') }}"
+                                                class="btn btn-primary btn-sm btn-options" title="Voltar"
+                                                aria-label="Voltar"
+                                                style="display:inline-flex;align-items:center;border-radius:6px;padding:6px 10px;margin-right:6px;font-size:0.85rem;">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-back-up">
+                                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                    <path d="M9 14l-4 -4l4 -4" />
+                                                    <path d="M5 10h11a4 4 0 1 1 0 8h-1" />
+                                                </svg> <span style="vertical-align:middle;"></span>
+                                            </a>
                             </div>
                         </div>
                     </div>
@@ -272,8 +286,8 @@
                                         <script>
                                             function clearSubstituicaoFields() {
                                                 try {
-                                                    var ids = ['cadastro','servidor','servidor_subistituido','substituicao_servidor_id','vinculo'];
-                                                    ids.forEach(function(id){
+                                                    var ids = ['cadastro', 'servidor', 'servidor_subistituido', 'substituicao_servidor_id', 'vinculo'];
+                                                    ids.forEach(function(id) {
                                                         var el = document.getElementById(id);
                                                         if (!el) return;
                                                         if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
@@ -675,20 +689,23 @@
                                         </div>
 
                                         <script>
-                                            document.addEventListener('DOMContentLoaded', function () {
+                                            document.addEventListener('DOMContentLoaded', function() {
                                                 var sel = document.getElementById('tipo_encaminhamento');
                                                 var box = document.getElementById('substituicaoBox');
                                                 if (!sel || !box) return;
+
                                                 function showBox() {
                                                     box.removeAttribute('hidden');
                                                     box.setAttribute('visible', '');
                                                     box.style.display = '';
                                                 }
+
                                                 function hideBox() {
                                                     box.setAttribute('hidden', 'hidden');
                                                     box.removeAttribute('visible');
                                                     box.style.display = 'none';
                                                 }
+
                                                 function updateBox() {
                                                     if ((sel.value || '').toString() === 'substituicao_reda') {
                                                         showBox();
@@ -733,9 +750,15 @@
 
                                             // Resolve an explicit servidor id from multiple possible sources
                                             $subs_id = null;
-                                            if (isset($last_encaminhamento) && !empty($last_encaminhamento->servidor_id)) {
+                                            if (
+                                                isset($last_encaminhamento) &&
+                                                !empty($last_encaminhamento->servidor_id)
+                                            ) {
                                                 $subs_id = $last_encaminhamento->servidor_id;
-                                            } elseif (isset($last_encaminhamento) && !empty($last_encaminhamento->servidor_subistituido)) {
+                                            } elseif (
+                                                isset($last_encaminhamento) &&
+                                                !empty($last_encaminhamento->servidor_subistituido)
+                                            ) {
                                                 $subs_id = $last_encaminhamento->servidor_subistituido;
                                             } elseif (isset($firstEnc) && !empty($firstEnc->servidor_id)) {
                                                 $subs_id = $firstEnc->servidor_id;
@@ -754,7 +777,7 @@
                                                 try {
                                                     $srv = \App\Models\Servidore::find(intval($subs_id));
                                                     if ($srv) {
-                                                        $subs_cadastro = $srv->cadastro ?? $srv->cpf ?? '';
+                                                        $subs_cadastro = $srv->cadastro ?? ($srv->cpf ?? '');
                                                         $subs_nome = $srv->nome ?? '';
                                                         $subs_vinculo = $srv->vinculo ?? '';
                                                         $subs_regime = $srv->regime ?? '';
@@ -765,15 +788,16 @@
                                             }
                                         @endphp
 
-                                        <div @if(isset($cardTipoText) && $cardTipoText === 'substituicao_reda') visible  @else hidden @endif class="form-row col-12" id="substituicaoBox" >
+                                        <div @if (isset($cardTipoText) && $cardTipoText === 'substituicao_reda') visible  @else hidden @endif
+                                            class="form-row col-12" id="substituicaoBox">
                                             <div class="mt-3 col-md-3">
                                                 <div class="display_btn position-relative form-group">
                                                     <div>
                                                         <label for="cadastro" class="">Matrícula
                                                         </label>
-                                                        <input value="{{ old('cadastro', $subs_cadastro ?? '') }}" minlength="8" maxlength="11"
-                                                            name="cadastro" id="cadastro" type="text"
-                                                            class="form-control form-control-sm" required>
+                                                        <input value="{{ old('cadastro', $subs_cadastro ?? '') }}"
+                                                            minlength="8" maxlength="11" name="cadastro" id="cadastro"
+                                                            type="text" class="form-control form-control-sm" required>
                                                     </div>
                                                     <div class="btn_carencia_seacrh">
                                                         <button id="cadastro_btn"
@@ -788,26 +812,32 @@
                                                 <div class="form-group">
                                                     <label for="servidor" class="">Nome do servidor
                                                         subistituido</label>
-                                                    <input value="{{ old('servidor', $subs_nome ?? '') }}" id="servidor" name="servidor" type="text"
+                                                    <input value="{{ old('servidor', $subs_nome ?? '') }}" id="servidor"
+                                                        name="servidor" type="text"
                                                         class="form-control form-control-sm" readonly>
-                                                    <input value="{{ $subs_id ?? $subs ?? '' }}" id="servidor_subistituido"
-                                                        name="servidor_subistituido" type="number"
+                                                    <input value="{{ $subs_id ?? ($subs ?? '') }}"
+                                                        id="servidor_subistituido" name="servidor_subistituido"
+                                                        type="number" class="form-control form-control-sm" hidden>
+                                                    <input value="{{ $subs_id ?? ($subs ?? '') }}"
+                                                        id="substituicao_servidor_id" name="servidor_id" type="number"
                                                         class="form-control form-control-sm" hidden>
-                                                    <input value="{{ $subs_id ?? $subs ?? '' }}" id="substituicao_servidor_id" name="servidor_id" type="number" class="form-control form-control-sm" hidden>
                                                 </div>
                                             </div>
                                             <div class="mt-3 col-md-3">
                                                 <div class="form-group">
                                                     <label for="vinculo" class="">Vinculo</label>
                                                     <div class="d-flex align-items-center">
-                                                        <input value="{{ old('vinculo', $subs_vinculo ?? '') }}" id="vinculo" name="vinculo" type="text"
+                                                        <input value="{{ old('vinculo', $subs_vinculo ?? '') }}"
+                                                            id="vinculo" name="vinculo" type="text"
                                                             class="form-control form-control-sm me-2" readonly>
                                                     </div>
                                                 </div>
                                             </div>
-                                             <div class="mt-3 col-md-1 d-flex justify-content-center align-items-center">
+                                            <div class="mt-3 col-md-1 d-flex justify-content-center align-items-center">
                                                 <div class="form-group mb-0">
-                                                    <button type="button" id="btnClearSubstituicao" class="btn btn-danger btn-sm" onclick="clearSubstituicaoFields()">Limpar</button>
+                                                    <button type="button" id="btnClearSubstituicao"
+                                                        class="btn btn-danger btn-sm"
+                                                        onclick="clearSubstituicaoFields()">Limpar</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -830,9 +860,15 @@
 
                                             // Resolve an explicit servidor id from multiple possible sources
                                             $subs_id = null;
-                                            if (isset($last_encaminhamento) && !empty($last_encaminhamento->servidor_id)) {
+                                            if (
+                                                isset($last_encaminhamento) &&
+                                                !empty($last_encaminhamento->servidor_id)
+                                            ) {
                                                 $subs_id = $last_encaminhamento->servidor_id;
-                                            } elseif (isset($last_encaminhamento) && !empty($last_encaminhamento->servidor_subistituido)) {
+                                            } elseif (
+                                                isset($last_encaminhamento) &&
+                                                !empty($last_encaminhamento->servidor_subistituido)
+                                            ) {
                                                 $subs_id = $last_encaminhamento->servidor_subistituido;
                                             } elseif (isset($firstEnc) && !empty($firstEnc->servidor_id)) {
                                                 $subs_id = $firstEnc->servidor_id;
@@ -851,7 +887,7 @@
                                                 try {
                                                     $srv = \App\Models\Servidore::find(intval($subs_id));
                                                     if ($srv) {
-                                                        $subs_cadastro = $srv->cadastro ?? $srv->cpf ?? '';
+                                                        $subs_cadastro = $srv->cadastro ?? ($srv->cpf ?? '');
                                                         $subs_nome = $srv->nome ?? '';
                                                         $subs_vinculo = $srv->vinculo ?? '';
                                                         $subs_regime = $srv->regime ?? '';
@@ -870,6 +906,12 @@
                                         </div>
 
                                         <div class="col-12 mt-3 d-flex justify-content-end gap-3">
+                                            @php
+                                                $conv = session('convocacao') ?? '';
+                                                $backUrl =
+                                                    'ingresso/aptos' .
+                                                    ($conv !== '' ? '?filter_convocacao=' . urlencode($conv) : '');
+                                            @endphp
                                             <button type="button" id="btn-submit-encaminhar"
                                                 class="btn btn-primary btn-sm d-flex align-items-center mr-2 @if (!empty($isValidated)) hidden @endif"
                                                 title="Salvar encaminhamento">
