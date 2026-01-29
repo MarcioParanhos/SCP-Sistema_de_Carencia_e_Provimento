@@ -249,7 +249,7 @@
                                                     ' · Not: ' .
                                                     ($cardNot ?? 0);
                                                 $tipoMap = [
-                                                    'substituicao_reda' => 'Substituição de reda',
+                                                    'substituicao_reda' => 'Substituição de REDA',
                                                     'vaga_real' => 'Vaga real',
                                                     'vaga_temporaria' => 'Vaga temporária',
                                                 ];
@@ -509,9 +509,17 @@
                                                                 </div>
                                                                 <div class="col-md-2 text-end">
                                                                     <button type="button"
-                                                                        class="btn btn-sm btn-outline-primary btn-add-disciplina"
-                                                                        @if (!empty($isValidated)) disabled @endif>Adicionar
-                                                                        disciplina</button>
+                                                                        class="btn btn-sm btn-outline-primary btn-add-disciplina p-1"
+                                                                        title="Adicionar disciplina" aria-label="Adicionar disciplina"
+                                                                        @if (!empty($isValidated)) disabled @endif>
+                                                                        <i class="ti-plus"></i>
+                                                                    </button>
+                                                                    <button type="button"
+                                                                        class="btn btn-sm btn-outline-danger btn-remove-disciplina ms-2 p-1"
+                                                                        title="Remover disciplina" aria-label="Remover disciplina"
+                                                                        @if (!empty($isValidated)) disabled @endif>
+                                                                        <i class="ti-trash"></i>
+                                                                    </button>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -612,12 +620,20 @@
                                                                     value="{{ $cardNot ?? 0 }}"
                                                                     @if (!empty($isValidated)) disabled @endif>
                                                             </div>
-                                                            <div class="col-md-2 text-end">
-                                                                <button type="button"
-                                                                    class="btn btn-sm btn-outline-primary btn-add-disciplina"
-                                                                    @if (!empty($isValidated)) disabled @endif>Adicionar
-                                                                    disciplina</button>
-                                                            </div>
+                                                        <div class="col-md-2 text-end">
+                                                            <button type="button"
+                                                                class="btn btn-sm btn-outline-primary btn-add-disciplina p-1"
+                                                                title="Adicionar disciplina" aria-label="Adicionar disciplina"
+                                                                @if (!empty($isValidated)) disabled @endif>
+                                                                <i class="ti-plus"></i>
+                                                            </button>
+                                                            <button type="button"
+                                                                class="btn btn-sm btn-outline-danger btn-remove-disciplina ms-2 p-1"
+                                                                title="Remover disciplina" aria-label="Remover disciplina"
+                                                                @if (!empty($isValidated)) disabled @endif>
+                                                                <i class="ti-trash"></i>
+                                                            </button>
+                                                        </div>
                                                         </div>
                                                     </div>
                                                 @endif
@@ -662,7 +678,10 @@
                                                         </div>
                                                         <div class="col-md-2 text-end">
                                                             <button type="button"
-                                                                class="btn btn-sm btn-outline-danger btn-remove-disciplina">Remover</button>
+                                                                class="btn btn-sm btn-outline-danger btn-remove-disciplina p-1"
+                                                                title="Remover disciplina" aria-label="Remover disciplina">
+                                                                <i class="ti-trash"></i>
+                                                            </button>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -811,7 +830,7 @@
                                             <div class="mt-3 col-md-5">
                                                 <div class="form-group">
                                                     <label for="servidor" class="">Nome do servidor
-                                                        subistituido</label>
+                                                        substituido</label>
                                                     <input value="{{ old('servidor', $subs_nome ?? '') }}" id="servidor"
                                                         name="servidor" type="text"
                                                         class="form-control form-control-sm" readonly>
@@ -1116,6 +1135,13 @@
                     });
                 });
 
+                // wire remove buttons for existing rows
+                Array.from(document.querySelectorAll('.btn-remove-disciplina')).forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        this.closest('.disciplina-row').remove();
+                        updateDisciplinaState();
+                    });
+                });
                 // initialize existing selects
                 Array.from(document.querySelectorAll('.disciplina-select')).forEach(s => {
                     initSelect2For(s);

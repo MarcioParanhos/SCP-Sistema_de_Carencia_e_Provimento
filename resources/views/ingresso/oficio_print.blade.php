@@ -344,7 +344,7 @@
     <main>
         <p>Senhor(a) Diretor(a): </p>
         <p class="main-content">
-            Pelo presente termo, informamos que o servidor(a) {{ $candidate['name'] ?? $candidate['nome'] ?? '-' }}, CPF nº {{ $candidate['cpf'] ?? '-' }}, professor(a), assumiu suas atividades em   ____ de ____________ de 2026. </p>.
+            Pelo presente termo, informamos que o(a) candidato(a) {{ $candidate['name'] ?? $candidate['nome'] ?? '-' }}, CPF nº {{ $candidate['cpf'] ?? '-' }}, assumiu suas atividades em   ____ de ____________ de 2026. </p>.
         </p>
         <div class="table">
             <div class="table-responsive">

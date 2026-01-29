@@ -204,6 +204,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/ingresso/{identifier}/encaminhar', [IngressoController::class, 'encaminharForm'])->name('ingresso.encaminhar.form');
     Route::post('/ingresso/search-cpf', [IngressoController::class, 'searchByCpf']);
     Route::post('/ingresso/{id}/validar', [IngressoController::class, 'validateIngresso'])->name('ingresso.validar');
+    Route::post('/ingresso/{id}/assuncao/validate', [IngressoController::class, 'validateAssuncao'])->name('ingresso.assuncao.validate');
     Route::post('/ingresso/{id}/retirar-validacao', [IngressoController::class, 'unvalidateIngresso'])->name('ingresso.retirar_validacao');
     Route::get('/ingresso/{id}/oficio', [IngressoController::class, 'oficio'])->name('ingresso.oficio');
     Route::get('/ingresso/export/csv', [IngressoController::class, 'exportCsv'])->name('ingresso.export.csv');

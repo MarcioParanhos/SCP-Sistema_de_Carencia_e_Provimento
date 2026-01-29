@@ -55,11 +55,11 @@
                             <th scope="col">NTE</th>
                             <th scope="col">NOTA</th>
                             <th scope="col">STATUS</th>
-                            <th scope="col">DEVOLUÇÃO ASSUNÇÃO</th>
+                            <th scope="col">VALIDAÇÃO DA ASSUNÇÃO</th>
                             <th scope="col">ENCAMINHAMENTO</th>
                             <th scope="col">TERMO ENC.</th>
                             <th scope="col">ASSUNÇÃO</th>
-                            <th scope="col">DATA DE ASSUNSSÃO</th>
+                            <th scope="col">DATA DE ASSUNÇÃO</th>
                             <th scope="col">AÇÃO</th>
                         </tr>
                     </thead>
@@ -320,7 +320,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (window.Swal) {
                 Swal.fire({
                     title: 'Informe a data de assunção',
-                    html: '<input type="date" id="swal-assunsao" class="swal2-input" />',
+                    html: '<input type="date" id="swal-assunsao" class="swal2-input" min="2026-02-02" />',
                     showCancelButton: true,
                     confirmButtonText: 'Salvar',
                     preConfirm: function(){
@@ -329,7 +329,32 @@ document.addEventListener('DOMContentLoaded', function() {
                             Swal.showValidationMessage('A data é obrigatória');
                             return false;
                         }
-                        return v;
+                        // enforce minimum date 2026-01-02 using Date objects (robust against manual typing)
+                        try {
+                            var parts = String(v).split('-');
+                            if (parts.length !== 3) {
+                                Swal.showValidationMessage('Formato de data inválido');
+                                return false;
+                            }
+                            var y = parseInt(parts[0],10), m = parseInt(parts[1],10)-1, ddd = parseInt(parts[2],10);
+                            var dtv = new Date(y, m, ddd);
+                            if (isNaN(dtv.getTime())) {
+                                Swal.showValidationMessage('Formato de data inválido');
+                                return false;
+                            }
+                            var minDate = new Date(2026,1,2);
+                            // normalize time portion
+                            dtv.setHours(0,0,0,0);
+                            minDate.setHours(0,0,0,0);
+                            if (dtv < minDate) {
+                                Swal.showValidationMessage('A data deve ser igual ou posterior a 02/02/2026');
+                                return false;
+                            }
+                            return parts.join('-');
+                        } catch (err) {
+                            Swal.showValidationMessage('Erro ao validar a data');
+                            return false;
+                        }
                     }
                 }).then(function(result){
                     if (result && result.isConfirmed && result.value) {
@@ -338,13 +363,26 @@ document.addEventListener('DOMContentLoaded', function() {
                         $chk.prop('checked', false);
                     }
                 });
-            } else {
-                // fallback to native prompt (expect YYYY-MM-DD)
-                var d = prompt('Informe a data de assunção (YYYY-MM-DD)');
+                } else {
+                // fallback to native prompt. Accept YYYY-MM-DD or DD/MM/YYYY
+                var d = prompt('Informe a data de assunção (YYYY-MM-DD ou DD/MM/YYYY)');
                 if (!d) { $chk.prop('checked', false); return; }
-                // basic validation
-                var dt = new Date(d);
-                if (isNaN(dt.getTime())) { alert('Data inválida'); $chk.prop('checked', false); return; }
+                // try to parse DD/MM/YYYY
+                var dt = null;
+                var m1 = d.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+                if (m1) {
+                    var day = parseInt(m1[1],10), mon = parseInt(m1[2],10)-1, yr = parseInt(m1[3],10);
+                    dt = new Date(yr, mon, day);
+                } else {
+                    // try ISO YYYY-MM-DD
+                    var m2 = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+                    if (m2) dt = new Date(parseInt(m2[1],10), parseInt(m2[2],10)-1, parseInt(m2[3],10));
+                    else dt = new Date(d);
+                }
+                if (!dt || isNaN(dt.getTime())) { alert('Data inválida'); $chk.prop('checked', false); return; }
+                // enforce minimum date 02/02/2026 (2 Feb 2026)
+                var minDate = new Date(2026, 1, 2); // months are 0-based
+                if (dt < minDate) { alert('A data deve ser igual ou posterior a 02/02/2026'); $chk.prop('checked', false); return; }
                 // format to yyyy-mm-dd
                 var yyyy = dt.getFullYear();
                 var mm = ('0'+(dt.getMonth()+1)).slice(-2);

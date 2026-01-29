@@ -587,6 +587,108 @@
             </div>
         </div>
 
+        @php
+            // try multiple possible keys for assunção date on the candidate payload
+            $assuncaoRaw = $candidate['data_assuncao'] ?? $candidate['assuncao'] ?? $candidate['assunsao'] ?? $candidate['data_assunsao'] ?? $candidate['data_assumcao'] ?? null;
+            $assuncaoToShow = null;
+            if (!empty($assuncaoRaw)) {
+                try {
+                    if (class_exists('\Carbon\Carbon')) {
+                        $assuncaoToShow = \Carbon\Carbon::parse($assuncaoRaw)->format('d/m/Y');
+                    } else {
+                        $ts = strtotime((string) $assuncaoRaw);
+                        if ($ts !== false) $assuncaoToShow = date('d/m/Y', $ts);
+                    }
+                } catch (\Throwable $e) {
+                    $assuncaoToShow = (string) $assuncaoRaw;
+                }
+            }
+        @endphp
+
+        @if (!empty($assuncaoToShow))
+            <div class="col-12">
+                <div id="assuncaoAlert" role="alert" style="margin:0 0 1rem 0;display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:10px;background:linear-gradient(90deg,#eef2ff, #f0f9ff);box-shadow:0 6px 18px rgba(15,23,42,0.06);border:1px solid rgba(59,130,246,0.12);">
+                    <div style="flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:8px;background:linear-gradient(180deg,#3b82f6,#06b6d4);color:#fff;box-shadow:0 6px 12px rgba(59,130,246,0.12);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:rgba(255,255,255,0.98);"><path d="M12 8v4l3 3"></path><circle cx="12" cy="12" r="9"></circle></svg>
+                    </div>
+                    <div style="flex:1 1 auto;min-width:0;">
+                        <div style="font-weight:700;color:#0f172a;">Data de Assunção</div>
+                        <div style="color:#475569;font-size:0.95rem;">{{ $assuncaoToShow }}</div>
+                    </div>
+                    <div style="flex:0 0 auto;margin-left:8px;">
+                        <button type="button" class="btn btn-primary btn-sm" id="btn-validar-assuncao" style="border-radius:6px;padding:6px 10px;">Validar Assunção</button>
+                    </div>
+                    <script>
+                        (function(){
+                            try {
+                                const btn = document.getElementById('btn-validar-assuncao');
+                                if (!btn) return;
+                                const candidateId = '{{ $candidate['id'] ?? ($candidate['num_inscricao'] ?? '') }}';
+                                const csrf = (document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '{{ csrf_token() }}');
+
+                                async function doValidate() {
+                                    try {
+                                        btn.disabled = true;
+                                        const resp = await fetch('/ingresso/' + encodeURIComponent(candidateId) + '/assuncao/validate', {
+                                            method: 'POST',
+                                            credentials: 'same-origin',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                'X-CSRF-TOKEN': csrf,
+                                                'X-Requested-With': 'XMLHttpRequest',
+                                                'Accept': 'application/json'
+                                            },
+                                            body: JSON.stringify({})
+                                        });
+                                        let j = null;
+                                        try { j = await resp.json(); } catch (e) { j = null; }
+                                        if (resp.ok && j && j.success) {
+                                            try {
+                                                await Swal.fire({icon:'success', title: j.message || 'Assunção validada', timer:900, showConfirmButton:false});
+                                            } catch (e) { console.error(e); }
+                                            try { location.reload(); } catch (e) { /* ignore */ }
+                                        } else {
+                                            const msg = (j && j.message) || 'Erro ao validar assunção';
+                                            await Swal.fire({icon:'error', title:'Erro', text: msg});
+                                        }
+                                    } catch (e) {
+                                        console.error(e);
+                                        await Swal.fire({icon:'error', title:'Erro', text: 'Erro de comunicação'});
+                                    } finally {
+                                        try { btn.disabled = false; } catch (e) {}
+                                    }
+                                }
+
+                                btn.addEventListener('click', function(e){
+                                    e.preventDefault();
+                                    const hasSwal = typeof Swal !== 'undefined';
+                                    if (!hasSwal) {
+                                        if (confirm('Validar Assunção?\n\nAo validar, o candidato será marcado como Apto para Ingresso.')) {
+                                            // fallback: do a simple POST using fetch even without Swal
+                                            doValidate();
+                                        }
+                                        return;
+                                    }
+                                    Swal.fire({
+                                        title: 'Validar Assunção?',
+                                        text: 'Ao validar, o candidato será marcado como Apto para Ingresso.',
+                                        icon: 'question',
+                                        showCancelButton: true,
+                                        confirmButtonText: 'Sim, validar',
+                                        cancelButtonText: 'Cancelar'
+                                    }).then(function(res){
+                                        if (res && res.isConfirmed) {
+                                            doValidate();
+                                        }
+                                    });
+                                });
+                            } catch (e) { console.error(e); }
+                        })();
+                    </script>
+                </div>
+            </div>
+        @endif
+
         <div class="candidate-body">
             <div class="candidate-left">
                 <div class="card-panel mb-3 border">
@@ -873,7 +975,10 @@
                                             mb_stripos($lbl, 'saude ocup', 0, 'UTF-8') !== false ||
                                             mb_stripos((string) $k, 'aso', 0, 'UTF-8') !== false ||
                                             mb_stripos((string) $k, 'atestado', 0, 'UTF-8') !== false ||
-                                            mb_stripos((string) $k, 'atestado_saude', 0, 'UTF-8') !== false
+                                            mb_stripos((string) $k, 'atestado_saude', 0, 'UTF-8') !== false ||
+                                            // Explicitly require Declaração I A IX by key or label
+                                            (mb_stripos($lbl, 'declara', 0, 'UTF-8') !== false && mb_stripos($lbl, 'i', 0, 'UTF-8') !== false && mb_stripos($lbl, 'ix', 0, 'UTF-8') !== false) ||
+                                            mb_stripos((string) $k, 'declaracao_i_a_ix', 0, 'UTF-8') !== false
                                         ) {
                                             $isRequired = true;
                                             // but exclude documents clearly about dependents (e.g., 'dependente', 'filho')
@@ -936,6 +1041,20 @@
                                                     0,
                                                     'UTF-8',
                                                 ) !== false
+                                            ) {
+                                                $isRequired = true;
+                                            }
+                                        }
+                                        // Additional required document check: Antecedentes Polícia Estadual (estados últimos 8 anos)
+                                        if (!$isRequired) {
+                                            if (
+                                                (mb_stripos($lbl, 'antecedentes', 0, 'UTF-8') !== false &&
+                                                    (mb_stripos($lbl, 'polic', 0, 'UTF-8') !== false &&
+                                                        (mb_stripos($lbl, 'estad', 0, 'UTF-8') !== false || mb_stripos($lbl, 'estado', 0, 'UTF-8') !== false))) ||
+                                                mb_stripos((string) $k, 'antecedentes_pe', 0, 'UTF-8') !== false ||
+                                                mb_stripos((string) $k, 'policia_estadual', 0, 'UTF-8') !== false ||
+                                                mb_stripos((string) $k, 'antecedentes_policia_estadual', 0, 'UTF-8') !== false ||
+                                                mb_stripos((string) $k, 'antecedentes_pe_estados_8_anos', 0, 'UTF-8') !== false
                                             ) {
                                                 $isRequired = true;
                                             }

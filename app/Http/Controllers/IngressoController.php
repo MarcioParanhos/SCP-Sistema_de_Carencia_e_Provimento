@@ -1277,6 +1277,16 @@ class IngressoController extends Controller
                 }
                 try {
                     $candidateAssunsao = \Carbon\Carbon::parse($dateInput)->format('Y-m-d');
+                    // enforce minimum allowed assunção date: 2026-01-02
+                    try {
+                        $dtParsed = \Carbon\Carbon::parse($candidateAssunsao)->startOfDay();
+                        $minAllowed = \Carbon\Carbon::createFromFormat('Y-m-d', '2026-02-02')->startOfDay();
+                        if ($dtParsed->lt($minAllowed)) {
+                            return response()->json(['success' => false, 'message' => 'Data de assunção deve ser igual ou posterior a 02/02/2026'], 422);
+                        }
+                    } catch (\Throwable $__e) {
+                        return response()->json(['success' => false, 'message' => 'Formato de data inválido (use YYYY-MM-DD)'], 422);
+                    }
                 } catch (\Throwable $e) {
                     return response()->json(['success' => false, 'message' => 'Formato de data inválido (use YYYY-MM-DD)'], 422);
                 }
@@ -1919,6 +1929,7 @@ class IngressoController extends Controller
             ['key' => 'quitacao_eleitoral', 'label' => 'Quitação Eleitoral (fornecida pelo cartório eleitoral)'],
             ['key' => 'declaracao_acumulacao', 'label' => 'Declaração de Acumulação'],
             ['key' => 'declaracao_dependentes', 'label' => 'Declaração de Dependentes'],
+            ['key' => 'declaracao_i_a_ix', 'label' => 'Declaração I A IX'],
             ['key' => 'aso', 'label' => 'Atestado de Saúde Ocupacional - ASO'],
             ['key' => 'certidao_negativa_condenacoes', 'label' => 'Certidão Negativa do Cadastro Nacional de Condenações Civeis'],
             ['key' => 'certidao_negativa_justica_eleitoral', 'label' => 'Certidão Negativa da Justiça Eleitoral'],
@@ -1927,6 +1938,7 @@ class IngressoController extends Controller
             ['key' => 'certidao_negativa_foros_estadual_8_anos', 'label' => 'Certidão Negativa - Foros Criminais (Justiça Estadual) - estados residiu nos últimos 8 anos'],
             ['key' => 'cref13_ba', 'label' => 'Conselho Regional de Educação Fisica da 13º Região - CREF13/BA'],
             ['key' => 'antecedentes_pf_estados_8_anos', 'label' => 'Antecedentes da Polícia Federal (Estados onde residiu nos últimos 8 anos)'],
+            ['key' => 'antecedentes_pe_estados_8_anos', 'label' => 'Antecedentes da Polícia Estadual (Estados onde residiu nos últimos 8 anos)'],
             ['key' => 'declaracao_beneficio_inss', 'label' => 'Declaração de Benefício do INSS'],
             ['key' => 'comprovante_situacao_cadastral_rf', 'label' => 'Comprovante de Situação Cadastral por CPF - RECEITA FEDERAL'],
             
@@ -2272,6 +2284,74 @@ class IngressoController extends Controller
     }
 
     /**
+     * CPM: validate candidate assunção and mark candidate as 'Apto para encaminhamento'.
+     */
+    public function validateAssuncao(Request $request, $identifier)
+    {
+        if (! $this->authorizeUser()) {
+            return response()->json(['success' => false, 'message' => 'Ação não autorizada'], 403);
+        }
+
+        // only CPM may perform this action
+        $user = optional(Auth::user());
+        if (!($user && isset($user->sector_id) && isset($user->profile_id) && $user->sector_id == 2 && $user->profile_id == 1)) {
+            return response()->json(['success' => false, 'message' => 'Ação permitida apenas para CPM'], 403);
+        }
+
+        try {
+            $candidateId = DB::table('ingresso_candidatos')->where('id', $identifier)->orWhere('num_inscricao', $identifier)->value('id');
+            if (! $candidateId) {
+                return response()->json(['success' => false, 'message' => 'Candidato não encontrado'], 404);
+            }
+
+            // check whether candidate has an assunção date in DB (try common keys)
+            $candidate = (array) DB::table('ingresso_candidatos')->where('id', $candidateId)->first();
+            $assuncaoRaw = $candidate['data_assuncao'] ?? $candidate['assuncao'] ?? $candidate['data_assunsao'] ?? $candidate['assunsao'] ?? null;
+            if (empty($assuncaoRaw)) {
+                return response()->json(['success' => false, 'message' => 'Data de assunção não encontrada para este candidato'], 400);
+            }
+
+            $updates = [];
+            if (Schema::hasColumn('ingresso_candidatos', 'documentos_validados')) {
+                $updates['documentos_validados'] = 1;
+            }
+            if (Schema::hasColumn('ingresso_candidatos', 'status')) {
+                $updates['status'] = 'Apto para encaminhamento';
+            }
+            if (Schema::hasColumn('ingresso_candidatos', 'status_validated_by')) {
+                $updates['status_validated_by'] = optional(Auth::user())->id;
+            }
+            if (Schema::hasColumn('ingresso_candidatos', 'status_validated_at')) {
+                $updates['status_validated_at'] = now();
+            }
+
+            // Optional assunção-specific metadata columns (non-breaking if absent)
+            if (Schema::hasColumn('ingresso_candidatos', 'assuncao_validada')) {
+                $updates['assuncao_validada'] = 1;
+            }
+            if (Schema::hasColumn('ingresso_candidatos', 'assuncao_validada_by')) {
+                $updates['assuncao_validada_by'] = optional(Auth::user())->id;
+            }
+            if (Schema::hasColumn('ingresso_candidatos', 'assuncao_validada_at')) {
+                $updates['assuncao_validada_at'] = now();
+            }
+
+            if (! empty($updates)) {
+                DB::table('ingresso_candidatos')->where('id', $candidateId)->update($updates);
+            }
+
+            Log::info('CPM validated assuncao and set apto', ['user' => optional(Auth::user())->id, 'candidate' => $candidateId, 'updates' => $updates]);
+
+            $updated = DB::table('ingresso_candidatos')->where('id', $candidateId)->first();
+            Log::info('validateAssuncao result', ['candidate_after_update' => $updated]);
+            return response()->json(['success' => true, 'message' => 'Assunção validada. Candidato apto para encaminhamento.', 'candidate' => $updated]);
+        } catch (\Throwable $e) {
+            Log::error('Failed to validate assuncao', ['exception' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Erro ao validar assunção'], 500);
+        }
+    }
+
+    /**
      * CPM confirms documents -> mark candidate as Documentos Validados
      */
     public function confirmDocumentosCpm(Request $request, $identifier)
@@ -2482,6 +2562,7 @@ class IngressoController extends Controller
             ['key' => 'declaracao_bens', 'label' => 'Declaração de Bens'],
             ['key' => 'declaracao_acumulacao', 'label' => 'Declaração de Acumulação'],
             ['key' => 'declaracao_dependentes', 'label' => 'Declaração de Dependentes'],
+            ['key' => 'declaracao_i_a_ix', 'label' => 'Declaração I A IX'],
             ['key' => 'aso', 'label' => 'Atestado de Saúde Ocupacional - ASO'],
             ['key' => 'certidao_negativa_condenacoes', 'label' => 'Certidão Negativa do Cadastro Nacional de Condenações Civeis'],
             ['key' => 'certidao_negativa_justica_eleitoral', 'label' => 'Certidão Negativa da Justiça Eleitoral'],
@@ -2489,6 +2570,7 @@ class IngressoController extends Controller
             ['key' => 'certidao_negativa_foros_federal_8_anos', 'label' => 'Certidão Negativa - Foros Criminais (Justiça Federal) - estados residiu nos últimos 8 anos'],
             ['key' => 'certidao_negativa_foros_estadual_8_anos', 'label' => 'Certidão Negativa - Foros Criminais (Justiça Estadual) - estados residiu nos últimos 8 anos'],
             ['key' => 'antecedentes_pf_estados_8_anos', 'label' => 'Antecedentes da Polícia Federal (Estados onde residiu nos últimos 8 anos)'],
+            ['key' => 'antecedentes_pe_estados_8_anos', 'label' => 'Antecedentes da Polícia Estadual (Estados onde residiu nos últimos 8 anos)'],
         ];
 
         $existing = [];
@@ -3148,90 +3230,46 @@ class IngressoController extends Controller
                 // If caller provided a 'disciplinas' array, create one row per discipline
                 $disciplinas = $request->input('disciplinas');
 
-                // Check for an existing encaminhamento for this candidate
-                $existing = DB::table('ingresso_encaminhamentos')
-                    ->where('ingresso_candidato_id', $candidateId)
-                    ->orderBy('created_at', 'desc')
-                    ->first();
+                // If caller provided a 'disciplinas' array, treat it as the complete set of
+                // encaminhamentos for this candidate: delete existing rows and insert the
+                // submitted ones. This ensures removals in the UI are persisted.
+                $disciplinas = $request->input('disciplinas');
 
-                if ($existing) {
-                    // If multiple disciplines submitted, replace existing row with multiple new rows
-                    if (is_array($disciplinas) && count($disciplinas) > 1) {
-                        // delete existing single row
-                        DB::table('ingresso_encaminhamentos')->where('id', $existing->id)->delete();
-                        foreach ($disciplinas as $d) {
-                            $rowsToInsert[] = $assembleRow($d);
-                        }
-                        DB::table('ingresso_encaminhamentos')->insert($rowsToInsert);
-                        Log::info('Ingresso encaminhado (replaced with multiple)', ['user' => optional(Auth::user())->id, 'candidate' => $candidateId, 'rows' => count($rowsToInsert)]);
-                        // persist servidor_id if provided
-                        $servidorId = $request->input('servidor_id') ?? $request->input('substituicao_servidor_id') ?? $request->input('substituicao_servidor') ?? null;
-                        if ($servidorId && Schema::hasColumn('ingresso_candidatos', 'servidor_id')) {
-                            try {
-                                $numIns = DB::table('ingresso_candidatos')->where('id', $candidateId)->value('num_inscricao');
-                                Log::info('Attempting persist servidor_id', ['candidate' => $candidateId, 'num_inscricao' => $numIns, 'servidor_id' => $servidorId, 'hasColumn' => Schema::hasColumn('ingresso_candidatos', 'servidor_id')]);
-                                        // Use candidate id for update to avoid mismatches with num_inscricao values
-                                        $affected = DB::table('ingresso_candidatos')->where('id', $candidateId)->update(['servidor_id' => $servidorId, 'updated_at' => now()]);
-                                Log::info('Persisted servidor_id for candidate', ['candidate' => $candidateId, 'servidor_id' => $servidorId, 'rows_affected' => $affected ?? 0]);
-                            } catch (\Throwable $e) {
-                                Log::warning('Failed to persist servidor_id', ['exception' => $e->getMessage(), 'candidate' => $candidateId, 'servidor_id' => $servidorId]);
+                if (is_array($disciplinas)) {
+                    DB::beginTransaction();
+                    try {
+                        // remove all current encaminhamentos for candidate
+                        DB::table('ingresso_encaminhamentos')->where('ingresso_candidato_id', $candidateId)->delete();
+
+                        // prepare and insert submitted rows (if any)
+                        if (count($disciplinas)) {
+                            foreach ($disciplinas as $d) {
+                                $rowsToInsert[] = $assembleRow($d);
                             }
+                            DB::table('ingresso_encaminhamentos')->insert($rowsToInsert);
                         }
-                        return response()->json(['success' => true, 'message' => 'Encaminhamento registrado.']);
+
+                        DB::commit();
+                        Log::info('Ingresso encaminhado (replace all)', ['user' => optional(Auth::user())->id, 'candidate' => $candidateId, 'rows' => count($rowsToInsert)]);
+                    } catch (\Throwable $e) {
+                        DB::rollBack();
+                        Log::error('Failed to sync encaminhamentos', ['exception' => $e->getMessage(), 'candidate' => $candidateId]);
+                        return response()->json(['success' => false, 'message' => 'Erro ao registrar encaminhamentos'], 500);
                     }
 
-                    // Single-discipline update: update the existing row with new values
-                    $first = (is_array($disciplinas) && count($disciplinas)) ? $disciplinas[0] : null;
-                    $updateRow = $assembleRow($first);
-                    // remove creation-only fields
-                    if (isset($updateRow['created_by'])) unset($updateRow['created_by']);
-                    if (isset($updateRow['created_at'])) unset($updateRow['created_at']);
-                    // ensure updated_at is current
-                    $updateRow['updated_at'] = now();
-                    DB::table('ingresso_encaminhamentos')->where('id', $existing->id)->update($updateRow);
-                    Log::info('Ingresso encaminhado (updated existing)', ['user' => optional(Auth::user())->id, 'candidate' => $candidateId, 'encaminhamento' => $existing->id]);
                     // persist servidor_id if provided
                     $servidorId = $request->input('servidor_id') ?? $request->input('substituicao_servidor_id') ?? $request->input('substituicao_servidor') ?? null;
                     if ($servidorId && Schema::hasColumn('ingresso_candidatos', 'servidor_id')) {
                         try {
-                            $numIns = DB::table('ingresso_candidatos')->where('id', $candidateId)->value('num_inscricao');
-                            Log::info('Attempting persist servidor_id', ['candidate' => $candidateId, 'num_inscricao' => $numIns, 'servidor_id' => $servidorId, 'hasColumn' => Schema::hasColumn('ingresso_candidatos', 'servidor_id')]);
-                            // Prefer updating by candidate id to guarantee the correct row is modified
                             $affected = DB::table('ingresso_candidatos')->where('id', $candidateId)->update(['servidor_id' => $servidorId, 'updated_at' => now()]);
                             Log::info('Persisted servidor_id for candidate', ['candidate' => $candidateId, 'servidor_id' => $servidorId, 'rows_affected' => $affected ?? 0]);
                         } catch (\Throwable $e) {
                             Log::warning('Failed to persist servidor_id', ['exception' => $e->getMessage(), 'candidate' => $candidateId, 'servidor_id' => $servidorId]);
                         }
                     }
-                    return response()->json(['success' => true, 'message' => 'Encaminhamento atualizado.']);
-                }
 
-                // No existing row: perform insert (multiple rows allowed)
-                if (is_array($disciplinas) && count($disciplinas)) {
-                    foreach ($disciplinas as $d) {
-                        $rowsToInsert[] = $assembleRow($d);
-                    }
-                } else {
-                    // fallback: single-row insertion using top-level fields
-                    $rowsToInsert[] = $assembleRow(null);
+                    return response()->json(['success' => true, 'message' => 'Encaminhamento registrado.']);
                 }
-
-                DB::table('ingresso_encaminhamentos')->insert($rowsToInsert);
-                Log::info('Ingresso encaminhado', ['user' => optional(Auth::user())->id, 'candidate' => $candidateId, 'rows' => count($rowsToInsert)]);
-                // persist servidor_id if provided
-                $servidorId = $request->input('servidor_id') ?? $request->input('substituicao_servidor_id') ?? $request->input('substituicao_servidor') ?? null;
-                if ($servidorId && Schema::hasColumn('ingresso_candidatos', 'servidor_id')) {
-                    try {
-                        $numIns = DB::table('ingresso_candidatos')->where('id', $candidateId)->value('num_inscricao');
-                        Log::info('Attempting persist servidor_id', ['candidate' => $candidateId, 'num_inscricao' => $numIns, 'servidor_id' => $servidorId, 'hasColumn' => Schema::hasColumn('ingresso_candidatos', 'servidor_id')]);
-                        // Always update by id to avoid num_inscricao lookup inconsistencies
-                        $affected = DB::table('ingresso_candidatos')->where('id', $candidateId)->update(['servidor_id' => $servidorId, 'updated_at' => now()]);
-                        Log::info('Persisted servidor_id for candidate', ['candidate' => $candidateId, 'servidor_id' => $servidorId, 'rows_affected' => $affected ?? 0]);
-                    } catch (\Throwable $e) {
-                        Log::warning('Failed to persist servidor_id', ['exception' => $e->getMessage(), 'candidate' => $candidateId, 'servidor_id' => $servidorId]);
-                    }
-                }
-                return response()->json(['success' => true, 'message' => 'Encaminhamento registrado.']);
             }
         } catch (\Throwable $e) {
             Log::error('Failed to create ingresso_encaminhamentos', ['exception' => $e->getMessage()]);
