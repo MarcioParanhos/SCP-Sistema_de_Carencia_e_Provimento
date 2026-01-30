@@ -7,6 +7,10 @@
 @php
     $currentConv = session('filter_convocacao', request()->query('filter_convocacao', ''));
     $currentConv = is_numeric($currentConv) ? intval($currentConv) : null;
+    // define user role flags early so the template can use them before rendering controls
+    $user = Auth::user();
+    $isNte = ($user && isset($user->profile_id) && isset($user->sector_id) && $user->profile_id == 1 && $user->sector_id == 7);
+    $isCpm = ($user && isset($user->profile_id) && isset($user->sector_id) && $user->profile_id == 1 && $user->sector_id == 2);
 @endphp
 
 <div class="container-fluid ingresso-vh full-panel">
@@ -30,19 +34,48 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" class="icon icon-tabler icons-tabler-filled icon-tabler-layout-dashboard"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 3a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-4a2 2 0 0 1 -2 -2v-6a2 2 0 0 1 2 -2zm0 12a2 2 0 0 1 2 2v2a2 2 0 0 1 -2 2h-4a2 2 0 0 1 -2 -2v-2a2 2 0 0 1 2 -2zm10 -4a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-4a2 2 0 0 1 -2 -2v-6a2 2 0 0 1 2 -2zm0 -8a2 2 0 0 1 2 2v2a2 2 0 0 1 -2 2h-4a2 2 0 0 1 -2 -2v-2a2 2 0 0 1 2 -2z" /></svg>
                 </a>
 
+                @if($isCpm)
                 <button id="btn-toggle-filters" class="btn btn-dark btn-icon btn-sm" title="Filtros" aria-label="Filtros" style="width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;border-radius:5px;background:#2f3b4a;border:0;padding:2px;color:#fff;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" class="icon icon-tabler icons-tabler-filled icon-tabler-filter"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M20 3h-16a1 1 0 0 0 -1 1v2.227l.008 .223a3 3 0 0 0 .772 1.795l4.22 4.641v8.114a1 1 0 0 0 1.316 .949l6 -2l.108 -.043a1 1 0 0 0 .576 -.906v-6.586l4.121 -4.12a3 3 0 0 0 .879 -2.123v-2.171a1 1 0 0 0 -1 -1z" /></svg>
                 </button>
+                @endif
 
-                @php
-                    $user = Auth::user();
-                    $isNte = ($user && isset($user->profile_id) && isset($user->sector_id) && $user->profile_id == 1 && $user->sector_id == 7);
-                @endphp
+                
                 @unless($isNte)
                     <a href="{{ route('ingresso.export.csv') }}" class="btn btn-dark btn-icon btn-sm" title="Exportar CSV" aria-label="Exportar CSV" style="width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;border-radius:5px;background:#2f3b4a;border:0;padding:2px;color:#fff;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-file-type-csv"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M5 12v-7a2 2 0 0 1 2 -2h7l5 5v4" /><path d="M7 16.5a1.5 1.5 0 0 0 -3 0v3a1.5 1.5 0 0 0 3 0" /><path d="M10 20.25c0 .414 .336 .75 .75 .75h1.25a1 1 0 0 0 1 -1v-1a1 1 0 0 0 -1 -1h-1a1 1 0 0 1 -1 -1v-1a1 1 0 0 1 1 -1h1.25a.75 .75 0 0 1 .75 .75" /><path d="M16 15l2 6l2 -6" /></svg>
                     </a>
                 @endunless
+            </div>
+    
+
+            <!-- Painel de filtros (colapsável) similar ao index -->
+            @php $isNteUser = optional(Auth::user())->profile_id == 1 && optional(Auth::user())->sector_id == 7; @endphp
+            <div id="filterPanel" class="border rounded bg-light p-3 mb-3" style="display:none;">
+                <form id="filterForm" class="form-row align-items-end">
+                    @if($isNteUser)
+                        <input type="hidden" id="filter_nte" value="{{ Auth::user()->nte ?? '' }}">
+                    @else
+                    <div class="col-md-2">
+                        <label for="filter_nte">NTE</label>
+                        <select id="filter_nte" class="form-control form-control-sm">
+                            <option value="">(Todos)</option>
+                            @if(!empty($ntes))
+                                @foreach($ntes as $nteVal)
+                                    <option value="{{ $nteVal }}">{{ str_pad($nteVal, 2, '0', STR_PAD_LEFT) }}</option>
+                                @endforeach
+                            @elseif(optional(Auth::user())->nte)
+                                <option value="{{ Auth::user()->nte }}">{{ Auth::user()->nte }}</option>
+                            @endif
+                        </select>
+                    </div>
+                    @endif
+                    <div class="col-md-2">
+                        <button type="button" id="applyFilters" class="btn btn-primary">Aplicar</button>
+                        <button type="button" id="clearFilters" class="btn btn-secondary ml-2">Limpar</button>
+                    </div>
+                    <input type="hidden" id="filter_convocacao" value="{{ session('filter_convocacao', request()->query('filter_convocacao', '')) }}">
+                </form>
             </div>
 
             <div class="table-responsive">
@@ -230,15 +263,26 @@ document.addEventListener('DOMContentLoaded', function() {
             url: '{{ route('ingresso.data') }}',
             type: 'GET',
                 data: function(d){
-                    d.filter_status = 'Apto para encaminhamento';
-                    // prefer server-side session value injected via Blade, fallback to URL param
-                    @if(!empty($currentConv))
-                        d.filter_convocacao = '{{ $currentConv }}';
-                    @else
-                        var qp = (new URLSearchParams(window.location.search)).get('filter_convocacao');
-                        if (qp) d.filter_convocacao = qp;
-                    @endif
-                }
+                        // prefer panel value for status, fallback to default
+                        try {
+                            var fs = document.getElementById('filter_status');
+                            if (fs && fs.value) d.filter_status = fs.value; else d.filter_status = 'Apto para encaminhamento';
+                        } catch(e) { d.filter_status = 'Apto para encaminhamento'; }
+                        // prefer server-side session value injected via Blade, fallback to URL param
+                        @if(!empty($currentConv))
+                            d.filter_convocacao = '{{ $currentConv }}';
+                        @else
+                            var qp = (new URLSearchParams(window.location.search)).get('filter_convocacao');
+                            if (qp) d.filter_convocacao = qp;
+                        @endif
+                        // include NTE filter from panel or CPM select
+                        try {
+                            var ntePanel = document.getElementById('filter_nte');
+                            var nteSel = document.getElementById('filter_nte_cpm');
+                            if (ntePanel && ntePanel.value) d.filter_nte = ntePanel.value || '';
+                            else if (nteSel && nteSel.value) d.filter_nte = nteSel.value || '';
+                        } catch (e) {}
+                    }
         },
         columns: dtCols,
         ordering: false,
@@ -260,6 +304,74 @@ document.addEventListener('DOMContentLoaded', function() {
         drawCallback: function(){ if (window.jQuery && $.fn.tooltip) $('[data-toggle="tooltip"]').tooltip({container:'body'}); },
         initComplete: function(){ var table=this.api(); $('#dt-processing-overlay').remove(); }
     }).on('processing.dt', function(e, settings, processing){ if (processing) $overlay.fadeIn(120); else $overlay.fadeOut(120); });
+
+    // Filter panel toggle and controls (apply / clear) — persist small state to localStorage
+    (function(){
+        function setFilterButtonOpen(isOpen){
+            var btn = document.getElementById('btn-toggle-filters');
+            if (!btn) return;
+            if (isOpen) {
+                btn.className = 'btn btn-danger btn-icon btn-sm';
+                btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-x"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg>';
+                btn.setAttribute('aria-pressed','true');
+            } else {
+                btn.className = 'btn btn-dark btn-icon btn-sm';
+                btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" class="icon icon-tabler icons-tabler-filled icon-tabler-filter"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M20 3h-16a1 1 0 0 0 -1 1v2.227l.008 .223a3 3 0 0 0 .772 1.795l4.22 4.641v8.114a1 1 0 0 0 1.316 .949l6 -2l.108 -.043a1 1 0 0 0 .576 -.906v-6.586l4.121 -4.12a3 3 0 0 0 .879 -2.123v-2.171a1 1 0 0 0 -1 -1z" /></svg>';
+                btn.setAttribute('aria-pressed','false');
+            }
+            btn.setAttribute('style', 'width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;border-radius:5px;background:#2f3b4a;border:0;padding:2px;color:#fff;');
+        }
+
+        // restore saved filter UI state
+        try {
+            var raw = localStorage.getItem('aptos_filters');
+            if (raw) {
+                var state = JSON.parse(raw);
+                if (state) {
+                    try { if (state.filter_nte) document.getElementById('filter_nte').value = state.filter_nte; } catch(e){}
+                    try { if (state.filter_status) document.getElementById('filter_status').value = state.filter_status; } catch(e){}
+                    try { if (state.panelOpen) { document.getElementById('filterPanel').style.display = 'block'; setFilterButtonOpen(true); } else { setFilterButtonOpen(false); } } catch(e){ setFilterButtonOpen(false); }
+                }
+            } else {
+                setFilterButtonOpen(false);
+            }
+        } catch(e){ setFilterButtonOpen(false); }
+
+        // toggle button
+        $(document).on('click', '#btn-toggle-filters', function(e){
+            e.preventDefault();
+            $('#filterPanel').slideToggle(150, function(){
+                var open = $(this).is(':visible');
+                setFilterButtonOpen(open);
+                // persist panel state
+                try {
+                    var prev = localStorage.getItem('aptos_filters');
+                    var st = prev ? JSON.parse(prev) : {};
+                    st.panelOpen = open;
+                    localStorage.setItem('aptos_filters', JSON.stringify(st));
+                } catch(err){}
+            });
+        });
+
+        // apply filters
+        $(document).on('click', '#applyFilters', function(e){
+            e.preventDefault();
+            try {
+                var st = { filter_nte: document.getElementById('filter_nte') ? document.getElementById('filter_nte').value : '', filter_status: document.getElementById('filter_status') ? document.getElementById('filter_status').value : '', panelOpen: ($('#filterPanel').is(':visible')) };
+                localStorage.setItem('aptos_filters', JSON.stringify(st));
+            } catch(err){}
+            try { $('#aptosTable').DataTable().ajax.reload(function(){ try{ var s = localStorage.getItem('aptos_filters'); if (s) localStorage.setItem('aptos_filters', s); }catch(e){} }); } catch(e) { console.warn(e); }
+        });
+
+        // clear filters
+        $(document).on('click', '#clearFilters', function(e){
+            e.preventDefault();
+            try { if (document.getElementById('filter_nte')) document.getElementById('filter_nte').value = ''; } catch(e){}
+            try { if (document.getElementById('filter_status')) document.getElementById('filter_status').value = ''; } catch(e){}
+            try { var st = { filter_nte:'', filter_status:'', panelOpen: false }; localStorage.setItem('aptos_filters', JSON.stringify(st)); } catch(err){}
+            try { $('#aptosTable').DataTable().ajax.reload(); } catch(e){}
+        });
+    })();
 
     // AJAX handler to persist devolucao_assunsao when user toggles a switch
     $(document).on('change', '.devo-switch', function(){

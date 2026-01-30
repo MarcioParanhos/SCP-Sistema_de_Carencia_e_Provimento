@@ -615,20 +615,28 @@
                         <div style="font-weight:700;color:#0f172a;">Data de Assunção</div>
                         <div style="color:#475569;font-size:0.95rem;">{{ $assuncaoToShow }}</div>
                     </div>
-                    <div style="flex:0 0 auto;margin-left:8px;">
-                        <button type="button" class="btn btn-primary btn-sm" id="btn-validar-assuncao" style="border-radius:6px;padding:6px 10px;">Validar Assunção</button>
+                    @php
+                        $isAptoIngresso = isset($candidate['ingresso']) && mb_strtolower(trim($candidate['ingresso']), 'UTF-8') === 'apto para ingresso';
+                    @endphp
+                    <div style="flex:0 0 auto;margin-left:8px;display:flex;gap:8px;">
+                        @if ($isAptoIngresso)
+                            <button type="button" class="btn btn-outline-danger btn-sm" id="btn-retirar-validacao-assuncao" style="border-radius:6px;padding:6px 10px;">Retirar Validação de Assunção</button>
+                        @else
+                            <button type="button" class="btn btn-primary btn-sm" id="btn-validar-assuncao" style="border-radius:6px;padding:6px 10px;">Validar Assunção</button>
+                        @endif
                     </div>
                     <script>
                         (function(){
                             try {
-                                const btn = document.getElementById('btn-validar-assuncao');
-                                if (!btn) return;
+                                const btnValidate = document.getElementById('btn-validar-assuncao');
+                                const btnRet = document.getElementById('btn-retirar-validacao-assuncao');
                                 const candidateId = '{{ $candidate['id'] ?? ($candidate['num_inscricao'] ?? '') }}';
                                 const csrf = (document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '{{ csrf_token() }}');
 
                                 async function doValidate() {
+                                    if (!btnValidate) return;
                                     try {
-                                        btn.disabled = true;
+                                        btnValidate.disabled = true;
                                         const resp = await fetch('/ingresso/' + encodeURIComponent(candidateId) + '/assuncao/validate', {
                                             method: 'POST',
                                             credentials: 'same-origin',
@@ -643,9 +651,7 @@
                                         let j = null;
                                         try { j = await resp.json(); } catch (e) { j = null; }
                                         if (resp.ok && j && j.success) {
-                                            try {
-                                                await Swal.fire({icon:'success', title: j.message || 'Assunção validada', timer:900, showConfirmButton:false});
-                                            } catch (e) { console.error(e); }
+                                            try { await Swal.fire({icon:'success', title: j.message || 'Assunção validada', timer:900, showConfirmButton:false}); } catch (e) { console.error(e); }
                                             try { location.reload(); } catch (e) { /* ignore */ }
                                         } else {
                                             const msg = (j && j.message) || 'Erro ao validar assunção';
@@ -655,33 +661,91 @@
                                         console.error(e);
                                         await Swal.fire({icon:'error', title:'Erro', text: 'Erro de comunicação'});
                                     } finally {
-                                        try { btn.disabled = false; } catch (e) {}
+                                        try { if (btnValidate) btnValidate.disabled = false; } catch (e) {}
                                     }
                                 }
 
-                                btn.addEventListener('click', function(e){
-                                    e.preventDefault();
-                                    const hasSwal = typeof Swal !== 'undefined';
-                                    if (!hasSwal) {
-                                        if (confirm('Validar Assunção?\n\nAo validar, o candidato será marcado como Apto para Ingresso.')) {
-                                            // fallback: do a simple POST using fetch even without Swal
-                                            doValidate();
+                                async function doRetirarValidacao() {
+                                    if (!btnRet) return;
+                                    try {
+                                        btnRet.disabled = true;
+                                        const resp = await fetch('/ingresso/' + encodeURIComponent(candidateId) + '/retirar-validacao', {
+                                            method: 'POST',
+                                            credentials: 'same-origin',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                'X-CSRF-TOKEN': csrf,
+                                                'X-Requested-With': 'XMLHttpRequest',
+                                                'Accept': 'application/json'
+                                            },
+                                            body: JSON.stringify({})
+                                        });
+                                        let j = null;
+                                        try { j = await resp.json(); } catch (e) { j = null; }
+                                        if (resp.ok && j && j.success) {
+                                            try { await Swal.fire({icon:'success', title: j.message || 'Validação removida', timer:900, showConfirmButton:false}); } catch (e) {}
+                                            try { location.reload(); } catch (e) {}
+                                        } else {
+                                            const msg = (j && j.message) || 'Erro ao retirar validação';
+                                            await Swal.fire({icon:'error', title:'Erro', text: msg});
                                         }
-                                        return;
+                                    } catch (e) {
+                                        console.error(e);
+                                        await Swal.fire({icon:'error', title:'Erro', text: 'Erro de comunicação'});
+                                    } finally {
+                                        try { if (btnRet) btnRet.disabled = false; } catch (e) {}
                                     }
-                                    Swal.fire({
-                                        title: 'Validar Assunção?',
-                                        text: 'Ao validar, o candidato será marcado como Apto para Ingresso.',
-                                        icon: 'question',
-                                        showCancelButton: true,
-                                        confirmButtonText: 'Sim, validar',
-                                        cancelButtonText: 'Cancelar'
-                                    }).then(function(res){
-                                        if (res && res.isConfirmed) {
-                                            doValidate();
+                                }
+
+                                if (btnValidate) {
+                                    btnValidate.addEventListener('click', function(e){
+                                        e.preventDefault();
+                                        const hasSwal = typeof Swal !== 'undefined';
+                                        if (!hasSwal) {
+                                            if (confirm('Validar Assunção?')) {
+                                                try { doValidate(); } catch (e) { console.error(e); }
+                                            }
+                                            return;
                                         }
+                                        Swal.fire({
+                                            title: 'Validar Assunção?',
+                                            text: 'Confirme para validar a assunção e registrar como apto para ingresso.',
+                                            icon: 'question',
+                                            showCancelButton: true,
+                                            confirmButtonText: 'Confirmar',
+                                            cancelButtonText: 'Cancelar'
+                                        }).then(function(result){
+                                            if (result && result.isConfirmed) {
+                                                try { doValidate(); } catch (e) { console.error(e); }
+                                            }
+                                        });
                                     });
-                                });
+                                }
+
+                                if (btnRet) {
+                                    btnRet.addEventListener('click', function(e){
+                                        e.preventDefault();
+                                        const hasSwal2 = typeof Swal !== 'undefined';
+                                        if (!hasSwal2) {
+                                            if (confirm('Retirar validação de assunção?')) {
+                                                try { doRetirarValidacao(); } catch (e) { console.error(e); }
+                                            }
+                                            return;
+                                        }
+                                        Swal.fire({
+                                            title: 'Retirar validação de assunção?',
+                                            text: 'Confirme para remover a validação e desfazer o ingresso apto.',
+                                            icon: 'warning',
+                                            showCancelButton: true,
+                                            confirmButtonText: 'Sim, remover',
+                                            cancelButtonText: 'Cancelar'
+                                        }).then(function(res){
+                                            if (res && res.isConfirmed) {
+                                                try { doRetirarValidacao(); } catch (e) { console.error(e); }
+                                            }
+                                        });
+                                    });
+                                }
                             } catch (e) { console.error(e); }
                         })();
                     </script>

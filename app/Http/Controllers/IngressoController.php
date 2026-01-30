@@ -675,7 +675,57 @@ class IngressoController extends Controller
 
         $rows = $query->select($select)->orderBy('name')->get();
 
-        return view('ingresso.aptos', ['aptos_ingresso' => $rows]);
+        // Build list of available NTEs for the filter select (fallbacks similar to index())
+        $ntes = [];
+        try {
+            if (Schema::hasTable('ingresso_candidatos') && in_array('nte', $available)) {
+                try {
+                    $ntes = DB::table('ingresso_candidatos')
+                        ->select('nte')
+                        ->whereNotNull('nte')
+                        ->distinct()
+                        ->orderByRaw("CAST(nte AS SIGNED) ASC")
+                        ->pluck('nte')
+                        ->toArray();
+                } catch (\Throwable $ex) {
+                    $ntes = DB::table('ingresso_candidatos')
+                        ->select('nte')
+                        ->whereNotNull('nte')
+                        ->distinct()
+                        ->orderBy('nte')
+                        ->pluck('nte')
+                        ->toArray();
+                }
+            } elseif (Schema::hasTable('uees')) {
+                try {
+                    $ntes = DB::table('uees')
+                        ->select('nte')
+                        ->whereNotNull('nte')
+                        ->distinct()
+                        ->orderByRaw("CAST(nte AS SIGNED) ASC")
+                        ->pluck('nte')
+                        ->toArray();
+                } catch (\Throwable $ex) {
+                    $ntes = DB::table('uees')
+                        ->select('nte')
+                        ->whereNotNull('nte')
+                        ->distinct()
+                        ->orderBy('nte')
+                        ->pluck('nte')
+                        ->toArray();
+                }
+            } elseif (class_exists(\App\Models\Uee::class)) {
+                try {
+                    $ntes = Uee::select('nte')->whereNotNull('nte')->distinct()->orderByRaw("CAST(nte AS SIGNED) ASC")->pluck('nte')->toArray();
+                } catch (\Throwable $ex) {
+                    $ntes = Uee::select('nte')->whereNotNull('nte')->distinct()->orderBy('nte')->pluck('nte')->toArray();
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to fetch NTE list for ingresso.aptos', ['exception' => $e->getMessage()]);
+        }
+
+        return view('ingresso.aptos', ['aptos_ingresso' => $rows, 'ntes' => $ntes]);
     }
 
     /**
@@ -2268,6 +2318,10 @@ class IngressoController extends Controller
             if (Schema::hasColumn('ingresso_candidatos', 'status_validated_at')) {
                 $updates['status_validated_at'] = null;
             }
+            // clear ingresso column when final validation is removed
+            if (Schema::hasColumn('ingresso_candidatos', 'ingresso')) {
+                $updates['ingresso'] = null;
+            }
 
             if (!empty($updates)) {
                 DB::table('ingresso_candidatos')->where('id', $candidateId)->update($updates);
@@ -2336,6 +2390,11 @@ class IngressoController extends Controller
                 $updates['assuncao_validada_at'] = now();
             }
 
+            // Set ingresso column to 'Apto para ingresso' if present
+            if (Schema::hasColumn('ingresso_candidatos', 'ingresso')) {
+                $updates['ingresso'] = 'Apto para ingresso';
+            }
+
             if (! empty($updates)) {
                 DB::table('ingresso_candidatos')->where('id', $candidateId)->update($updates);
             }
@@ -2344,7 +2403,7 @@ class IngressoController extends Controller
 
             $updated = DB::table('ingresso_candidatos')->where('id', $candidateId)->first();
             Log::info('validateAssuncao result', ['candidate_after_update' => $updated]);
-            return response()->json(['success' => true, 'message' => 'Assunção validada. Candidato apto para encaminhamento.', 'candidate' => $updated]);
+            return response()->json(['success' => true, 'message' => 'Assunção validada. Candidato apto para ingresso.', 'candidate' => $updated]);
         } catch (\Throwable $e) {
             Log::error('Failed to validate assuncao', ['exception' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => 'Erro ao validar assunção'], 500);
@@ -3315,17 +3374,14 @@ class IngressoController extends Controller
                 return response()->json(['success' => false, 'message' => 'Recurso de encaminhamentos indisponível'], 404);
             }
 
-            $enc = DB::table('ingresso_encaminhamentos')
-                ->where('ingresso_candidato_id', $candidateId)
-                ->orderBy('created_at', 'desc')
-                ->first();
-
-            if (! $enc) {
-                return response()->json(['success' => false, 'message' => 'Nenhum encaminhamento encontrado para este candidato'], 404);
-            }
-
+            // Update status for ALL encaminhamentos belonging to this candidate
             if (! Schema::hasColumn('ingresso_encaminhamentos', 'status')) {
                 return response()->json(['success' => false, 'message' => 'Coluna status inexistente na tabela de encaminhamentos'], 400);
+            }
+
+            $rowsCount = DB::table('ingresso_encaminhamentos')->where('ingresso_candidato_id', $candidateId)->count();
+            if (! $rowsCount) {
+                return response()->json(['success' => false, 'message' => 'Nenhum encaminhamento encontrado para este candidato'], 404);
             }
 
             $upd = ['updated_at' => now()];
@@ -3334,10 +3390,11 @@ class IngressoController extends Controller
             } else {
                 $upd['status'] = mb_substr($status, 0, 255);
             }
-            DB::table('ingresso_encaminhamentos')->where('id', $enc->id)->update($upd);
-            Log::info('Encaminhamento status atualizado', ['user' => optional(Auth::user())->id, 'candidate' => $candidateId, 'encaminhamento' => $enc->id, 'status' => $status]);
 
-            return response()->json(['success' => true, 'message' => is_null($status) ? 'Status removido' : 'Status atualizado', 'status' => $status]);
+            $updated = DB::table('ingresso_encaminhamentos')->where('ingresso_candidato_id', $candidateId)->update($upd);
+            Log::info('Encaminhamentos status atualizado (candidate)', ['user' => optional(Auth::user())->id, 'candidate' => $candidateId, 'rows_updated' => $updated, 'status' => $status]);
+
+            return response()->json(['success' => true, 'message' => is_null($status) ? 'Status removido' : 'Status atualizado', 'status' => $status, 'rows_updated' => $updated]);
         } catch (\Throwable $e) {
             Log::error('setEncaminhamentoStatus failed', ['exception' => $e->getMessage(), 'identifier' => $identifier]);
             return response()->json(['success' => false, 'message' => 'Erro ao atualizar status'], 500);

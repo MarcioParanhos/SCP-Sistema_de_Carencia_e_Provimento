@@ -182,6 +182,7 @@
                         <th scope="col">Class. Racial</th>
                         <th scope="col">NOTA</th>
                         <th scope="col">Nº PROCESSO SEI</th>
+                        <th scope="col">ASSUNÇÃO</th>
                         <th scope="col">STATUS</th>
                         <th scope="col">DOCS.</th>
                         <th scope="col">AÇÃO</th>
@@ -281,6 +282,42 @@
                     data: 'sei_number', name: 'sei_number',
                     render: function(data, type, row) {
                         return (data === null || data === undefined || data === '') ? '-' : data;
+                    }
+                }
+                ,{
+                    data: null,
+                    name: 'assuncao',
+                    orderable: false,
+                    searchable: false,
+                    render: function(data, type, row) {
+                        var date = row.data_assuncao || row.assuncao || row.assunsao || row.data_assunsao || row.data_assumcao || null;
+                        if (!date) return '-';
+                        var formatted = String(date);
+                        try {
+                            if (/^\d{4}-\d{2}-\d{2}/.test(formatted)) {
+                                formatted = formatted.split('T')[0].split('-');
+                                if (formatted.length === 3) formatted = formatted[2] + '/' + formatted[1] + '/' + formatted[0];
+                                else formatted = String(date);
+                            } else {
+                                formatted = String(date);
+                            }
+                        } catch (e) { formatted = String(date); }
+
+                        // broaden detection for 'validated' state: check several possible indicators
+                        var validated = false;
+                        try {
+                            if (row && (row.assuncao_validada === 1 || String(row.assuncao_validada) === '1')) validated = true;
+                            if (!validated && row && row.assuncao_validada_at) validated = true;
+                            if (!validated && row && row.status_validated_at) validated = true;
+                            if (!validated && row && row.ingresso && String(row.ingresso).toLowerCase().indexOf('apto para ingresso') !== -1) validated = true;
+                            if (!validated && row && row.status && String(row.status).toLowerCase().indexOf('apto para ingresso') !== -1) validated = true;
+                            // also treat generic 'apto' statuses as validated if ingresso present
+                            if (!validated && row && row.status && String(row.status).toLowerCase().indexOf('apto') !== -1 && row.ingresso) validated = true;
+                        } catch (e) { validated = false; }
+                        if (validated) {
+                            return '<span class="badge bg-success">' + formatted + ' • Validado (CPM)</span>';
+                        }
+                        return '<span class="badge bg-warning text-dark">' + formatted + ' • Pendente (CPM)</span>';
                     }
                 }
                 ,{
