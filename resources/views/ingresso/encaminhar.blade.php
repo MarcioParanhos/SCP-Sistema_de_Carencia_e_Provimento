@@ -707,6 +707,8 @@
                                             </select>
                                         </div>
 
+                               
+
                                         <script>
                                             document.addEventListener('DOMContentLoaded', function() {
                                                 var sel = document.getElementById('tipo_encaminhamento');
@@ -1368,7 +1370,7 @@
                     };
 
                     try {
-                        const res = await fetch('{{ url('/ingresso') }}/' + encodeURIComponent(
+                        const res = await fetch('/ingresso/' + encodeURIComponent(
                             candidateId) + '/encaminhar', {
                             method: 'POST',
                             headers: {

@@ -3280,7 +3280,26 @@ class IngressoController extends Controller
 
                         // persist servidor id on encaminhamentos when table supports it
                         if (Schema::hasColumn('ingresso_encaminhamentos', 'servidor_id')) {
-                            $row['servidor_id'] = $request->input('servidor_id') ?? $request->input('substituicao_servidor_id') ?? $request->input('substituicao_servidor') ?? null;
+                            $servidorVal = null;
+                            // allow per-discipline override when provided
+                            if (is_array($discipline)) {
+                                if (isset($discipline['substituicao_servidor_id'])) {
+                                    $servidorVal = intval($discipline['substituicao_servidor_id']);
+                                } elseif (isset($discipline['servidor_id'])) {
+                                    $servidorVal = intval($discipline['servidor_id']);
+                                }
+                            }
+                            // if not set per-discipline, prefer substituicao_servidor when tipo is REDA
+                            if ($servidorVal === null) {
+                                $tipo = $request->input('tipo_encaminhamento') ?? $request->input('tipo') ?? null;
+                                $tipoStr = is_null($tipo) ? '' : strtolower((string)$tipo);
+                                if ($tipoStr === 'reda') {
+                                    $servidorVal = $request->input('substituicao_servidor_id') ?? $request->input('substituicao_servidor') ?? null;
+                                } else {
+                                    $servidorVal = $request->input('servidor_id') ?? $request->input('substituicao_servidor_id') ?? $request->input('substituicao_servidor') ?? null;
+                                }
+                            }
+                            $row['servidor_id'] = is_null($servidorVal) ? null : intval($servidorVal);
                         }
 
                     return $row;
@@ -3312,8 +3331,16 @@ class IngressoController extends Controller
                         Log::info('Ingresso encaminhado (replace all)', ['user' => optional(Auth::user())->id, 'candidate' => $candidateId, 'rows' => count($rowsToInsert)]);
                     } catch (\Throwable $e) {
                         DB::rollBack();
-                        Log::error('Failed to sync encaminhamentos', ['exception' => $e->getMessage(), 'candidate' => $candidateId]);
-                        return response()->json(['success' => false, 'message' => 'Erro ao registrar encaminhamentos'], 500);
+                        try { Log::error('Failed to sync encaminhamentos', ['exception' => $e->getMessage(), 'trace' => $e->getTraceAsString(), 'candidate' => $candidateId]); } catch (\Throwable $_) {}
+                        $resp = ['success' => false, 'message' => 'Erro ao registrar encaminhamentos'];
+                        // Expose error details only when app debug is enabled or caller requested debug
+                        try {
+                            if (config('app.debug') || $request->input('debug')) {
+                                $resp['error'] = $e->getMessage();
+                                $resp['trace'] = $e->getTraceAsString();
+                            }
+                        } catch (\Throwable $_) {}
+                        return response()->json($resp, 500);
                     }
 
                     // persist servidor_id if provided
