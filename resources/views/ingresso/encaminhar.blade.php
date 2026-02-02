@@ -86,6 +86,12 @@
             padding: .35rem .5rem;
         }
     </style>
+
+    @if(session('success'))
+    <div class="alert alert-success">
+        {{ session('success') }}
+    </div>
+@endif
     <div class="container-fluid ingresso-vh py-4">
         <div class="row justify-content-center">
             <div class="col-lg-12">
@@ -112,7 +118,7 @@
                                 <div class="small text-muted">Preencha os dados para encaminhar o candidato</div>
                             </div>
                             <div class="text-end">
-                                
+
                                 <span id="mainCardStatus">
                                     @if (isset($headerStatus) && str_contains(mb_strtolower($headerStatus), mb_strtolower('Encaminhamento validado')))
                                         <span
@@ -125,19 +131,18 @@
                                             class="badge bg-danger text-white fw-bold"><strong>{{ $headerStatus }}</strong></span>
                                     @endif
                                 </span>
-                                                                            <a href="{{ url('ingresso/aptos') . (session('filter_convocacao') ? '?filter_convocacao=' . urlencode(session('filter_convocacao')) : '') }}"
-                                                class="btn btn-primary btn-sm btn-options" title="Voltar"
-                                                aria-label="Voltar"
-                                                style="display:inline-flex;align-items:center;border-radius:6px;padding:6px 10px;margin-right:6px;font-size:0.85rem;">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                    class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-back-up">
-                                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                                    <path d="M9 14l-4 -4l4 -4" />
-                                                    <path d="M5 10h11a4 4 0 1 1 0 8h-1" />
-                                                </svg> <span style="vertical-align:middle;"></span>
-                                            </a>
+                                <a href="{{ url('ingresso/aptos') . (session('filter_convocacao') ? '?filter_convocacao=' . urlencode(session('filter_convocacao')) : '') }}"
+                                    class="btn btn-primary btn-sm btn-options" title="Voltar" aria-label="Voltar"
+                                    style="display:inline-flex;align-items:center;border-radius:6px;padding:6px 10px;margin-right:6px;font-size:0.85rem;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round"
+                                        class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-back-up">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                        <path d="M9 14l-4 -4l4 -4" />
+                                        <path d="M5 10h11a4 4 0 1 1 0 8h-1" />
+                                    </svg> <span style="vertical-align:middle;"></span>
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -510,13 +515,15 @@
                                                                 <div class="col-md-2 text-end">
                                                                     <button type="button"
                                                                         class="btn btn-sm btn-outline-primary btn-add-disciplina p-1"
-                                                                        title="Adicionar disciplina" aria-label="Adicionar disciplina"
+                                                                        title="Adicionar disciplina"
+                                                                        aria-label="Adicionar disciplina"
                                                                         @if (!empty($isValidated)) disabled @endif>
                                                                         <i class="ti-plus"></i>
                                                                     </button>
                                                                     <button type="button"
                                                                         class="btn btn-sm btn-outline-danger btn-remove-disciplina ms-2 p-1"
-                                                                        title="Remover disciplina" aria-label="Remover disciplina"
+                                                                        title="Remover disciplina"
+                                                                        aria-label="Remover disciplina"
                                                                         @if (!empty($isValidated)) disabled @endif>
                                                                         <i class="ti-trash"></i>
                                                                     </button>
@@ -620,20 +627,22 @@
                                                                     value="{{ $cardNot ?? 0 }}"
                                                                     @if (!empty($isValidated)) disabled @endif>
                                                             </div>
-                                                        <div class="col-md-2 text-end">
-                                                            <button type="button"
-                                                                class="btn btn-sm btn-outline-primary btn-add-disciplina p-1"
-                                                                title="Adicionar disciplina" aria-label="Adicionar disciplina"
-                                                                @if (!empty($isValidated)) disabled @endif>
-                                                                <i class="ti-plus"></i>
-                                                            </button>
-                                                            <button type="button"
-                                                                class="btn btn-sm btn-outline-danger btn-remove-disciplina ms-2 p-1"
-                                                                title="Remover disciplina" aria-label="Remover disciplina"
-                                                                @if (!empty($isValidated)) disabled @endif>
-                                                                <i class="ti-trash"></i>
-                                                            </button>
-                                                        </div>
+                                                            <div class="col-md-2 text-end">
+                                                                <button type="button"
+                                                                    class="btn btn-sm btn-outline-primary btn-add-disciplina p-1"
+                                                                    title="Adicionar disciplina"
+                                                                    aria-label="Adicionar disciplina"
+                                                                    @if (!empty($isValidated)) disabled @endif>
+                                                                    <i class="ti-plus"></i>
+                                                                </button>
+                                                                <button type="button"
+                                                                    class="btn btn-sm btn-outline-danger btn-remove-disciplina ms-2 p-1"
+                                                                    title="Remover disciplina"
+                                                                    aria-label="Remover disciplina"
+                                                                    @if (!empty($isValidated)) disabled @endif>
+                                                                    <i class="ti-trash"></i>
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 @endif
@@ -679,7 +688,8 @@
                                                         <div class="col-md-2 text-end">
                                                             <button type="button"
                                                                 class="btn btn-sm btn-outline-danger btn-remove-disciplina p-1"
-                                                                title="Remover disciplina" aria-label="Remover disciplina">
+                                                                title="Remover disciplina"
+                                                                aria-label="Remover disciplina">
                                                                 <i class="ti-trash"></i>
                                                             </button>
                                                         </div>
@@ -707,7 +717,7 @@
                                             </select>
                                         </div>
 
-                               
+
 
                                         <script>
                                             document.addEventListener('DOMContentLoaded', function() {
@@ -809,57 +819,47 @@
                                             }
                                         @endphp
 
-                                        <div @if (isset($cardTipoText) && $cardTipoText === 'substituicao_reda') visible  @else hidden @endif
-                                            class="form-row col-12" id="substituicaoBox">
-                                            <div class="mt-3 col-md-3">
-                                                <div class="display_btn position-relative form-group">
-                                                    <div>
-                                                        <label for="cadastro" class="">Matrícula
-                                                        </label>
-                                                        <input value="{{ old('cadastro', $subs_cadastro ?? '') }}"
-                                                            minlength="8" maxlength="11" name="cadastro" id="cadastro"
-                                                            type="text" class="form-control form-control-sm" required>
-                                                    </div>
-                                                    <div class="btn_carencia_seacrh">
-                                                        <button id="cadastro_btn"
-                                                            class="position-relative btn_search_carencia btn btn-sm btn-primary"
-                                                            type="button" onclick="searchServidor()">
-                                                            <i class="ti-search"></i>
-                                                        </button>
-                                                    </div>
+                                        <div class="row d-flex gx-3 mt-3 col-12" id="substituicaoBox"
+                                            @if (isset($cardTipoText) && $cardTipoText === 'substituicao_reda') visible @else hidden @endif>
+                                            <div class="col-md-3">
+                                                <label for="cadastro" class="form-label">Matrícula</label>
+                                                <div class="input-group input-group-sm">
+                                                    <input value="{{ old('cadastro', $subs_cadastro ?? '') }}" minlength="8"
+                                                        maxlength="11" form="substituicaoForm" name="cadastro" id="cadastro" type="text"
+                                                        class="form-control form-control-sm" required aria-label="Matrícula">
+                                                    <button id="cadastro_btn"
+                                                        class="btn btn-sm btn-primary"
+                                                        type="button" onclick="searchServidor()" title="Buscar servidor">
+                                                        <i class="ti-search"></i>
+                                                    </button>
                                                 </div>
                                             </div>
-                                            <div class="mt-3 col-md-5">
-                                                <div class="form-group">
-                                                    <label for="servidor" class="">Nome do servidor
-                                                        substituido</label>
-                                                    <input value="{{ old('servidor', $subs_nome ?? '') }}" id="servidor"
-                                                        name="servidor" type="text"
-                                                        class="form-control form-control-sm" readonly>
-                                                    <input value="{{ $subs_id ?? ($subs ?? '') }}"
-                                                        id="servidor_subistituido" name="servidor_subistituido"
-                                                        type="number" class="form-control form-control-sm" hidden>
-                                                    <input value="{{ $subs_id ?? ($subs ?? '') }}"
-                                                        id="substituicao_servidor_id" name="servidor_id" type="number"
-                                                        class="form-control form-control-sm" hidden>
-                                                </div>
+                                            <div class="col-md-4">
+                                                <label for="servidor" class="form-label">Nome do servidor substituído</label>
+                                                <input value="{{ old('servidor', $subs_nome ?? '') }}" id="servidor"
+                                                    name="servidor" type="text"
+                                                    class="form-control form-control-sm" readonly form="substituicaoForm"
+                                                    aria-label="Nome do servidor substituído">
+                                                {{-- hidden ids submitted via external form --}}
+                                                <input value="{{ $subs_id ?? ($subs ?? '') }}" id="servidor_subistituido"
+                                                    name="servidor_subistituido" type="hidden" form="substituicaoForm">
+                                                <input value="{{ $subs_id ?? ($subs ?? '') }}" id="substituicao_servidor_id"
+                                                    name="servidor_id" type="hidden" form="substituicaoForm">
+                                                <input value="{{ $candidate->num_inscricao }}"
+                                                    name="candidato_inscricao" type="hidden" form="substituicaoForm">
                                             </div>
-                                            <div class="mt-3 col-md-3">
-                                                <div class="form-group">
-                                                    <label for="vinculo" class="">Vinculo</label>
-                                                    <div class="d-flex align-items-center">
-                                                        <input value="{{ old('vinculo', $subs_vinculo ?? '') }}"
-                                                            id="vinculo" name="vinculo" type="text"
-                                                            class="form-control form-control-sm me-2" readonly>
-                                                    </div>
-                                                </div>
+
+                                            <div class="col-md-3">
+                                                <label for="vinculo" class="form-label">Vínculo</label>
+                                                <input value="{{ old('vinculo', $subs_vinculo ?? '') }}" id="vinculo"
+                                                    name="vinculo" type="text" class="form-control form-control-sm" readonly
+                                                    form="substituicaoForm" aria-label="Vínculo do servidor">
                                             </div>
-                                            <div class="mt-3 col-md-1 d-flex justify-content-center align-items-center">
-                                                <div class="form-group mb-0">
-                                                    <button type="button" id="btnClearSubstituicao"
-                                                        class="btn btn-danger btn-sm"
-                                                        onclick="clearSubstituicaoFields()">Limpar</button>
-                                                </div>
+
+                                            <div class="mb-2 col-md-2 d-flex align-items-end justify-content-end">
+                                                <button class="btn btn-sm btn-primary" type="submit" form="substituicaoForm">
+                                                    Salvar Servidor
+                                                </button>
                                             </div>
                                         </div>
 
@@ -981,6 +981,10 @@
                                             @endif
                                         </div>
                                     </div>
+                                </form>
+                                <form id="substituicaoForm" action="/save/servidor/encaminhamento" method="POST"
+                                    class="d-none">
+                                    @csrf
                                 </form>
                             </div>
                         </div>

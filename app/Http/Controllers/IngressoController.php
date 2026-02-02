@@ -49,13 +49,13 @@ class IngressoController extends Controller
 
         // Attempt to get columns from the ingresso_candidatos table to build the datatable
         $columns = [];
-            if (Schema::hasTable('ingresso_candidatos') && Schema::hasColumn('ingresso_candidatos', 'assunsao')) {
-                $columns = Schema::getColumnListing('ingresso_candidatos');
-            }
+        if (Schema::hasTable('ingresso_candidatos') && Schema::hasColumn('ingresso_candidatos', 'assunsao')) {
+            $columns = Schema::getColumnListing('ingresso_candidatos');
+        }
 
         // Build list of available NTEs for the filter select
         $ntes = [];
-            try {
+        try {
             if (Schema::hasTable('ingresso_candidatos') && in_array('nte', $columns)) {
                 try {
                     $ntes = DB::table('ingresso_candidatos')
@@ -116,7 +116,7 @@ class IngressoController extends Controller
         }
         // Build real stats from DB, defensively checking available columns
         $table = 'ingresso_candidatos';
-            $available = Schema::hasTable($table) && Schema::hasColumn($table, 'assunsao') ? Schema::getColumnListing($table) : [];
+        $available = Schema::hasTable($table) && Schema::hasColumn($table, 'assunsao') ? Schema::getColumnListing($table) : [];
 
         // Prepare a base query which may be scoped to the authenticated NTE user below
         $total = 0;
@@ -147,12 +147,12 @@ class IngressoController extends Controller
             }
 
             // Restrict dashboard to candidates that have been encaminhados (exist in provimentos_encaminhados)
-                // NOTE: previously results were restricted to candidates that have been
-                // encaminhados (exist in provimentos_encaminhados). That filter was
-                // removed to allow listing all candidates while still scoping results
-                // to the current user's NTE above.
-                // The following code is commented out to remove the restriction.
-                /*
+            // NOTE: previously results were restricted to candidates that have been
+            // encaminhados (exist in provimentos_encaminhados). That filter was
+            // removed to allow listing all candidates while still scoping results
+            // to the current user's NTE above.
+            // The following code is commented out to remove the restriction.
+            /*
                 try {
                     if (Schema::hasTable('provimentos_encaminhados')) {
                         $encQuery = DB::table('provimentos_encaminhados')
@@ -184,7 +184,7 @@ class IngressoController extends Controller
                         ->groupBy('ingresso_candidato_id');
 
                     $qbValid = (clone $baseQuery)
-                        ->joinSub($sub, 'ds', function($join) {
+                        ->joinSub($sub, 'ds', function ($join) {
                             $join->on('ingresso_candidatos.id', '=', 'ds.ingresso_candidato_id');
                         })
                         ->whereRaw('ds.total > 0 AND ds.validated_count = ds.total');
@@ -214,10 +214,10 @@ class IngressoController extends Controller
                 // Count candidates marked as 'Não Assumiu' (robust to accents/variants)
                 try {
                     $naoAssumiu = (clone $baseQuery)
-                        ->where(function($q){
+                        ->where(function ($q) {
                             $q->whereRaw("LOWER(status) LIKE '%nao assumiu%'")
-                              ->orWhereRaw("LOWER(status) LIKE '%não assumiu%'")
-                              ->orWhereRaw("LOWER(status) LIKE '%nao-assumiu%'");
+                                ->orWhereRaw("LOWER(status) LIKE '%não assumiu%'")
+                                ->orWhereRaw("LOWER(status) LIKE '%nao-assumiu%'");
                         })->count();
                 } catch (\Throwable $e) {
                     Log::warning('Failed to compute nao_assumiu count', ['exception' => $e->getMessage()]);
@@ -236,18 +236,18 @@ class IngressoController extends Controller
 
                     // Left join so we include candidates that have no documents recorded (treat as pending)
                     $qbPend = (clone $baseQuery)
-                        ->leftJoinSub($subPending, 'docsum', function($join) {
+                        ->leftJoinSub($subPending, 'docsum', function ($join) {
                             $join->on('ingresso_candidatos.id', '=', 'docsum.ingresso_candidato_id');
                         })
-                        ->where(function($q){
+                        ->where(function ($q) {
                             $q->whereNull('docsum.total')
-                              ->orWhereRaw('docsum.validated_count < docsum.total');
+                                ->orWhereRaw('docsum.validated_count < docsum.total');
                         });
 
                     $pendencia = $qbPend->distinct('ingresso_candidatos.id')->count('ingresso_candidatos.id');
                 } else {
                     if (in_array('documentos_validados', $available)) {
-                        $pendencia = (clone $baseQuery)->where(function($q){
+                        $pendencia = (clone $baseQuery)->where(function ($q) {
                             $q->whereNull('documentos_validados')->orWhere('documentos_validados', '<>', 1);
                         })->count();
                     } else {
@@ -261,7 +261,7 @@ class IngressoController extends Controller
                 Log::warning('Failed to compute pendencia_documentos, falling back', ['exception' => $e->getMessage()]);
                 // fallback to previous logic
                 if (in_array('documentos_validados', $available)) {
-                    $pendencia = (clone $baseQuery)->where(function($q){
+                    $pendencia = (clone $baseQuery)->where(function ($q) {
                         $q->whereNull('documentos_validados')->orWhere('documentos_validados', '<>', 1);
                     })->count();
                 } elseif (in_array('status', $available)) {
@@ -285,13 +285,13 @@ class IngressoController extends Controller
                         ->groupBy('ingresso_candidato_id');
 
                     $qb = (clone $baseQuery)
-                        ->joinSub($sub, 'ds', function($join) {
+                        ->joinSub($sub, 'ds', function ($join) {
                             $join->on('ingresso_candidatos.id', '=', 'ds.ingresso_candidato_id');
                         })
                         ->whereRaw('ds.total > 0 AND ds.validated_count = ds.total');
 
                     if (in_array('documentos_validados', $available)) {
-                        $qb->where(function($q){
+                        $qb->where(function ($q) {
                             $q->whereNull('ingresso_candidatos.documentos_validados')->orWhere('ingresso_candidatos.documentos_validados', '<>', 1);
                         });
                     }
@@ -313,7 +313,7 @@ class IngressoController extends Controller
         ];
 
         // Helper to compute stats for a given status_convocacao value
-        $computeStatsForConv = function($statusConv) use ($table, $available) {
+        $computeStatsForConv = function ($statusConv) use ($table, $available) {
             try {
                 $cols = Schema::hasTable($table) ? Schema::getColumnListing($table) : [];
                 $base = DB::table($table);
@@ -336,18 +336,29 @@ class IngressoController extends Controller
 
                 $total = (clone $base)->count();
 
-                $ingressados = 0; $corrigir = 0; $naoAssumiu = 0; $pendencia = 0; $docsValidated = 0; $pendenteCpm = 0;
+                $ingressados = 0;
+                $corrigir = 0;
+                $naoAssumiu = 0;
+                $pendencia = 0;
+                $docsValidated = 0;
+                $pendenteCpm = 0;
 
                 if (in_array('status', $cols)) {
                     $ingressados = (clone $base)->whereRaw("LOWER(status) = 'apto para encaminhamento'")->count();
-                    try { $corrigir = (clone $base)->whereRaw("LOWER(status) LIKE '%corrig%'")->count(); } catch (\Throwable $e) { $corrigir = 0; }
                     try {
-                        $naoAssumiu = (clone $base)->where(function($q){
+                        $corrigir = (clone $base)->whereRaw("LOWER(status) LIKE '%corrig%'")->count();
+                    } catch (\Throwable $e) {
+                        $corrigir = 0;
+                    }
+                    try {
+                        $naoAssumiu = (clone $base)->where(function ($q) {
                             $q->whereRaw("LOWER(status) LIKE '%nao assumiu%'")
-                              ->orWhereRaw("LOWER(status) LIKE '%não assumiu%'")
-                              ->orWhereRaw("LOWER(status) LIKE '%nao-assumiu%'");
+                                ->orWhereRaw("LOWER(status) LIKE '%não assumiu%'")
+                                ->orWhereRaw("LOWER(status) LIKE '%nao-assumiu%'");
                         })->count();
-                    } catch (\Throwable $e) { $naoAssumiu = 0; }
+                    } catch (\Throwable $e) {
+                        $naoAssumiu = 0;
+                    }
                 }
 
                 // documentos validados preference: exact status, then documentos_validados column, then ingresso_documentos summary
@@ -360,26 +371,38 @@ class IngressoController extends Controller
                         ->select('ingresso_candidato_id', DB::raw('SUM(validated) as validated_count'), DB::raw('COUNT(*) as total'))
                         ->groupBy('ingresso_candidato_id');
                     $qbValid = (clone $base)
-                        ->joinSub($sub, 'ds', function($join){ $join->on('ingresso_candidatos.id', '=', 'ds.ingresso_candidato_id'); })
+                        ->joinSub($sub, 'ds', function ($join) {
+                            $join->on('ingresso_candidatos.id', '=', 'ds.ingresso_candidato_id');
+                        })
                         ->whereRaw('ds.total > 0 AND ds.validated_count = ds.total');
                     $docsValidated = $qbValid->count();
                 }
 
                 // pendencia: status not equal to exact 'Documentos Validados' or documentos_validados != 1
                 if (in_array('documentos_validados', $cols)) {
-                    $pendencia = (clone $base)->where(function($q){ $q->whereNull('documentos_validados')->orWhere('documentos_validados','<>',1); })->count();
+                    $pendencia = (clone $base)->where(function ($q) {
+                        $q->whereNull('documentos_validados')->orWhere('documentos_validados', '<>', 1);
+                    })->count();
                 } elseif (in_array('status', $cols)) {
                     $pendencia = (clone $base)->whereRaw("(status IS NULL OR LOWER(TRIM(status)) != 'documentos validados')")->count();
                 }
 
                 // pendente_confirmacao_cpm: status contains aguard and cpm
                 if (in_array('status', $cols)) {
-                    try { $pendenteCpm = (clone $base)->whereRaw("LOWER(status) LIKE '%aguard%'")->whereRaw("LOWER(status) LIKE '%cpm%'")->count(); } catch (\Throwable $e) { $pendenteCpm = 0; }
+                    try {
+                        $pendenteCpm = (clone $base)->whereRaw("LOWER(status) LIKE '%aguard%'")->whereRaw("LOWER(status) LIKE '%cpm%'")->count();
+                    } catch (\Throwable $e) {
+                        $pendenteCpm = 0;
+                    }
                 } elseif (Schema::hasTable('ingresso_documentos')) {
                     $subPending = DB::table('ingresso_documentos')
                         ->select('ingresso_candidato_id', DB::raw('SUM(validated) as validated_count'), DB::raw('COUNT(*) as total'))
                         ->groupBy('ingresso_candidato_id');
-                    $qbPend = (clone $base)->leftJoinSub($subPending, 'docsum', function($join){ $join->on('ingresso_candidatos.id', '=', 'docsum.ingresso_candidato_id'); })->where(function($q){ $q->whereNull('docsum.total')->orWhereRaw('docsum.validated_count < docsum.total'); });
+                    $qbPend = (clone $base)->leftJoinSub($subPending, 'docsum', function ($join) {
+                        $join->on('ingresso_candidatos.id', '=', 'docsum.ingresso_candidato_id');
+                    })->where(function ($q) {
+                        $q->whereNull('docsum.total')->orWhereRaw('docsum.validated_count < docsum.total');
+                    });
                     $pendenteCpm = $qbPend->distinct('ingresso_candidatos.id')->count('ingresso_candidatos.id');
                 }
 
@@ -408,8 +431,11 @@ class IngressoController extends Controller
 
         // Build NTE breakdown by choosing an available grouping column
         $groupCol = null;
-        foreach (['nte','unidade_organizacional','uee_municipio','uee_code','uee_name'] as $c) {
-            if (in_array($c, $available)) { $groupCol = $c; break; }
+        foreach (['nte', 'unidade_organizacional', 'uee_municipio', 'uee_code', 'uee_name'] as $c) {
+            if (in_array($c, $available)) {
+                $groupCol = $c;
+                break;
+            }
         }
 
         $nte_breakdown = [];
@@ -449,7 +475,9 @@ class IngressoController extends Controller
             } catch (\Throwable $e) {
                 $rows = (clone $qb)->orderBy('nte', 'asc')->get();
             }
-            $nte_breakdown = $rows->map(function($r){ return ['nte' => $r->nte ?? '—', 'count' => intval($r->count)]; })->toArray();
+            $nte_breakdown = $rows->map(function ($r) {
+                return ['nte' => $r->nte ?? '—', 'count' => intval($r->count)];
+            })->toArray();
         }
 
         // Prepare aptos lists split by status_convocacao (1 and 2) for dashboard tabs
@@ -459,7 +487,7 @@ class IngressoController extends Controller
             $table = 'ingresso_candidatos';
             $availableCols = Schema::hasTable($table) ? Schema::getColumnListing($table) : [];
             if (Schema::hasTable($table) && in_array('status_convocacao', $availableCols)) {
-                $baseCols = ['id','name','nome','cpf','nte','matricula','num_inscricao','status'];
+                $baseCols = ['id', 'name', 'nome', 'cpf', 'nte', 'matricula', 'num_inscricao', 'status'];
                 $selectCols = array_values(array_intersect($baseCols, $availableCols));
                 if (empty($selectCols)) $selectCols = ['id'];
 
@@ -482,8 +510,8 @@ class IngressoController extends Controller
                     }
                 }
 
-                $aptos_conv1 = $q1->orderBy('name','asc')->get();
-                $aptos_conv2 = $q2->orderBy('name','asc')->get();
+                $aptos_conv1 = $q1->orderBy('name', 'asc')->get();
+                $aptos_conv2 = $q2->orderBy('name', 'asc')->get();
             }
         } catch (\Throwable $e) {
             Log::warning('Failed to build aptos convocation lists', ['exception' => $e->getMessage()]);
@@ -505,17 +533,37 @@ class IngressoController extends Controller
                     $u = Auth::user();
                     $userNte = $u->nte ?? null;
                     if ($userNte) {
-                        if (in_array('nte', $cols)) { $qb1->where('nte', $userNte); $qb2->where('nte', $userNte); }
-                        elseif (in_array('uee_code', $cols)) { $qb1->where('uee_code', $userNte); $qb2->where('uee_code', $userNte); }
-                        elseif (in_array('uee_name', $cols)) { $qb1->where('uee_name', $userNte); $qb2->where('uee_name', $userNte); }
+                        if (in_array('nte', $cols)) {
+                            $qb1->where('nte', $userNte);
+                            $qb2->where('nte', $userNte);
+                        } elseif (in_array('uee_code', $cols)) {
+                            $qb1->where('uee_code', $userNte);
+                            $qb2->where('uee_code', $userNte);
+                        } elseif (in_array('uee_name', $cols)) {
+                            $qb1->where('uee_name', $userNte);
+                            $qb2->where('uee_name', $userNte);
+                        }
                     }
-                } catch (\Throwable $e) {}
+                } catch (\Throwable $e) {
+                }
 
-                try { $rows1 = (clone $qb1)->orderByRaw("CAST(`$groupCol` AS SIGNED) ASC")->get(); } catch (\Throwable $e) { $rows1 = (clone $qb1)->orderBy($groupCol,'asc')->get(); }
-                try { $rows2 = (clone $qb2)->orderByRaw("CAST(`$groupCol` AS SIGNED) ASC")->get(); } catch (\Throwable $e) { $rows2 = (clone $qb2)->orderBy($groupCol,'asc')->get(); }
+                try {
+                    $rows1 = (clone $qb1)->orderByRaw("CAST(`$groupCol` AS SIGNED) ASC")->get();
+                } catch (\Throwable $e) {
+                    $rows1 = (clone $qb1)->orderBy($groupCol, 'asc')->get();
+                }
+                try {
+                    $rows2 = (clone $qb2)->orderByRaw("CAST(`$groupCol` AS SIGNED) ASC")->get();
+                } catch (\Throwable $e) {
+                    $rows2 = (clone $qb2)->orderBy($groupCol, 'asc')->get();
+                }
 
-                $nte_breakdown_conv1 = $rows1->map(function($r){ return ['nte' => $r->nte ?? '—', 'count' => intval($r->count)]; })->toArray();
-                $nte_breakdown_conv2 = $rows2->map(function($r){ return ['nte' => $r->nte ?? '—', 'count' => intval($r->count)]; })->toArray();
+                $nte_breakdown_conv1 = $rows1->map(function ($r) {
+                    return ['nte' => $r->nte ?? '—', 'count' => intval($r->count)];
+                })->toArray();
+                $nte_breakdown_conv2 = $rows2->map(function ($r) {
+                    return ['nte' => $r->nte ?? '—', 'count' => intval($r->count)];
+                })->toArray();
             } catch (\Throwable $e) {
                 Log::warning('Failed to compute NTE breakdown per convocation', ['exception' => $e->getMessage()]);
             }
@@ -523,7 +571,10 @@ class IngressoController extends Controller
 
         Log::info('ingresso.dashboard stats', $stats);
         // Prepare COP summary for dashboard (moved from view)
-        $copNumber = null; $copQuantity = 0; $candidatesCount = 0; $copFree = 0;
+        $copNumber = null;
+        $copQuantity = 0;
+        $candidatesCount = 0;
+        $copFree = 0;
         try {
             $cols = Schema::hasTable($table) ? Schema::getColumnListing($table) : [];
             // Find most common COP in ingresso_candidatos when column exists
@@ -600,7 +651,7 @@ class IngressoController extends Controller
         }
 
         $table = 'ingresso_candidatos';
-            $available = Schema::hasTable($table) && Schema::hasColumn($table, 'assunsao') ? Schema::getColumnListing($table) : [];
+        $available = Schema::hasTable($table) && Schema::hasColumn($table, 'assunsao') ? Schema::getColumnListing($table) : [];
 
         if (! Schema::hasTable($table)) {
             return redirect()->route('ingresso.dashboard')->with('status', 'Tabela de candidatos indisponível.');
@@ -661,7 +712,7 @@ class IngressoController extends Controller
                     ->select('ingresso_candidato_id', DB::raw('SUM(validated) as validated_count'), DB::raw('COUNT(*) as total'))
                     ->groupBy('ingresso_candidato_id');
 
-                $query->joinSub($sub, 'ds', function($join) {
+                $query->joinSub($sub, 'ds', function ($join) {
                     $join->on('ingresso_candidatos.id', '=', 'ds.ingresso_candidato_id');
                 })->whereRaw('ds.total > 0 AND ds.validated_count = ds.total');
             }
@@ -669,7 +720,7 @@ class IngressoController extends Controller
             Log::warning('Failed to build aptos query', ['exception' => $e->getMessage()]);
         }
 
-        $desired = ['id','num_inscricao','name','nome','cpf','nte','matricula','status','documentos_validados'];
+        $desired = ['id', 'num_inscricao', 'name', 'nome', 'cpf', 'nte', 'matricula', 'status', 'documentos_validados'];
         $select = array_values(array_intersect($desired, $available));
         if (empty($select)) $select = ['*'];
 
@@ -749,19 +800,21 @@ class IngressoController extends Controller
         // fetch available unidades escolares and disciplinas
         $uees = [];
         $disciplinas = [];
-       
-                // include NTE and municipio so the view options have data attributes
-                $uees = Uee::select('id','unidade_escolar','cod_unidade','nte','municipio')
-                    ->orderBy('unidade_escolar')
-                    ->get();
-     
+
+        // include NTE and municipio so the view options have data attributes
+        $uees = Uee::select('id', 'unidade_escolar', 'cod_unidade', 'nte', 'municipio')
+            ->orderBy('unidade_escolar')
+            ->get();
+
 
         try {
             if (class_exists(\App\Models\Disciplina::class)) {
-                $disciplinas = \App\Models\Disciplina::select('id','nome')->orderBy('nome')->get();
+                $disciplinas = \App\Models\Disciplina::select('id', 'nome')->orderBy('nome')->get();
                 Log::info('IngressoController::disciplinas_loaded', ['count' => $disciplinas->count()]);
             }
-        } catch (\Throwable $e) { $disciplinas = collect(); }
+        } catch (\Throwable $e) {
+            $disciplinas = collect();
+        }
 
         // attempt to load encaminhamentos for this candidate (if any) and aggregate when multiple rows are present
         $lastEncaminhamento = null;
@@ -775,7 +828,7 @@ class IngressoController extends Controller
 
                 // If encaminhamentos include a servidor_id, attach the servidor model for use in views
                 if ($allEnc->isNotEmpty()) {
-                    $allEnc = $allEnc->map(function($r){
+                    $allEnc = $allEnc->map(function ($r) {
                         if (isset($r->servidor_id) && $r->servidor_id) {
                             try {
                                 $r->servidor = Servidore::find($r->servidor_id);
@@ -978,7 +1031,7 @@ class IngressoController extends Controller
             // filtered
             // ensure we explicitly select critical columns but only those that exist in the table
             // include both legacy and current column names for racial quota to be safe
-            $desired = ['id','num_inscricao','name','cpf','nte','disciplina','municipio_convocacao','classificacao_ampla','classificacao_quota_pne','classificacao_quota_racial','classificacao_racial','classificacao','nota','sei_number','status','documentos_validados','assunsao'];
+            $desired = ['id', 'num_inscricao', 'name', 'cpf', 'nte', 'disciplina', 'municipio_convocacao', 'classificacao_ampla', 'classificacao_quota_pne', 'classificacao_quota_racial', 'classificacao_racial', 'classificacao', 'nota', 'sei_number', 'status', 'documentos_validados', 'assunsao'];
             $available = Schema::hasTable('ingresso_candidatos') ? Schema::getColumnListing('ingresso_candidatos') : [];
             $selectCols = array_values(array_intersect($desired, $available));
 
@@ -989,10 +1042,14 @@ class IngressoController extends Controller
             }
 
             // Ensure classificacao_quota_racial is present: COALESCE from alternative columns that exist
-            $raceCandidates = array_values(array_filter(['classificacao_quota_racial','classificacao_racial','classificacao'], function($c) use ($available){ return in_array($c, $available); }));
+            $raceCandidates = array_values(array_filter(['classificacao_quota_racial', 'classificacao_racial', 'classificacao'], function ($c) use ($available) {
+                return in_array($c, $available);
+            }));
             if (count($raceCandidates) > 0) {
                 // build safe COALESCE, then alias to classificacao_quota_racial
-                $coalesceExpr = implode(', ', array_map(function($c){ return $c; }, $raceCandidates));
+                $coalesceExpr = implode(', ', array_map(function ($c) {
+                    return $c;
+                }, $raceCandidates));
                 $filteredQuery->addSelect(DB::raw("COALESCE($coalesceExpr, '') as classificacao_quota_racial"));
             } else {
                 // no columns available, still add empty alias so frontend gets the key
@@ -1032,7 +1089,7 @@ class IngressoController extends Controller
                 $requestedCols = array_values(array_intersect($requestedCols, $columns));
 
                 // common textual columns used as a safe fallback
-                $commonTextCols = ['num_inscricao','name','cpf','sei_number','nota','email','telefone','celular','nome_mae','rg'];
+                $commonTextCols = ['num_inscricao', 'name', 'cpf', 'sei_number', 'nota', 'email', 'telefone', 'celular', 'nome_mae', 'rg'];
 
                 // Determine which columns to search: prefer intersection of requested columns and textual columns
                 $colsToSearch = array_values(array_intersect($requestedCols, $commonTextCols));
@@ -1094,16 +1151,16 @@ class IngressoController extends Controller
                                 $sub = DB::table('ingresso_documentos')
                                     ->select('ingresso_candidato_id', DB::raw('SUM(validated) as validated_count'), DB::raw('COUNT(*) as total'))
                                     ->groupBy('ingresso_candidato_id');
-                                $filteredQuery->joinSub($sub, 'ds', function($join) {
+                                $filteredQuery->joinSub($sub, 'ds', function ($join) {
                                     $join->on('ingresso_candidatos.id', '=', 'ds.ingresso_candidato_id');
                                 })->whereRaw('ds.total > 0 AND ds.validated_count = ds.total');
                             } elseif (mb_strpos($low, 'pend') !== false) {
                                 $subPending = DB::table('ingresso_documentos')
                                     ->select('ingresso_candidato_id', DB::raw('SUM(validated) as validated_count'), DB::raw('COUNT(*) as total'))
                                     ->groupBy('ingresso_candidato_id');
-                                $filteredQuery->leftJoinSub($subPending, 'docsum', function($join) {
+                                $filteredQuery->leftJoinSub($subPending, 'docsum', function ($join) {
                                     $join->on('ingresso_candidatos.id', '=', 'docsum.ingresso_candidato_id');
-                                })->where(function($q){
+                                })->where(function ($q) {
                                     $q->whereNull('docsum.total')->orWhereRaw('docsum.validated_count < docsum.total');
                                 });
                             }
@@ -1192,11 +1249,11 @@ class IngressoController extends Controller
                             ->orderBy('created_at', 'desc')
                             ->get()
                             ->groupBy('ingresso_candidato_id')
-                            ->map(function($g){
+                            ->map(function ($g) {
                                 // take the newest by created_at
                                 return $g->sortByDesc('created_at')->first();
                             });
-                        $encMap = $encRows->mapWithKeys(function($v, $k){
+                        $encMap = $encRows->mapWithKeys(function ($v, $k) {
                             return [$k => [
                                 'id' => $v->id ?? null,
                                 'status' => $v->status ?? null,
@@ -1208,7 +1265,7 @@ class IngressoController extends Controller
                     Log::warning('Failed to load ingresso_encaminhamentos in data endpoint', ['exception' => $e->getMessage()]);
                 }
 
-                $data = $rows->map(function($r) use ($docSummary, $encMap) {
+                $data = $rows->map(function ($r) use ($docSummary, $encMap) {
                     $row = (array) $r;
                     $status = null;
 
@@ -1249,7 +1306,8 @@ class IngressoController extends Controller
                             $row['encaminhamento_id'] = $enc['id'] ?? null;
                             $row['devolucao_assunsao'] = $enc['devolucao_assunsao'] ?? 0;
                         }
-                    } catch (\Throwable $e) {}
+                    } catch (\Throwable $e) {
+                    }
                     return (object) $row;
                 })->values();
             } catch (\Throwable $e) {
@@ -1396,7 +1454,7 @@ class IngressoController extends Controller
         if (is_numeric($conv)) $conv = intval($conv);
 
         // basic validation (most sites only have 1 or 2)
-        if (! in_array($conv, [1,2], true)) {
+        if (! in_array($conv, [1, 2], true)) {
             // still allow storing other values but be conservative
             return response()->json(['success' => false, 'message' => 'Invalid convocacao'], 422);
         }
@@ -1488,7 +1546,7 @@ class IngressoController extends Controller
         // apply simple search (DataTables uses 'search' param client-side)
         $search = $request->query('search');
         if ($search && is_string($search)) {
-            $query->where(function($q) use ($available, $search) {
+            $query->where(function ($q) use ($available, $search) {
                 foreach ($available as $col) {
                     $q->orWhere($col, 'like', "%{$search}%");
                 }
@@ -1540,11 +1598,13 @@ class IngressoController extends Controller
             // producing a synthetic empty column.
             if (in_array('nome', $cols) && in_array('name', $available)) {
                 // replace any occurrence of 'nome' in $cols with the real DB column 'name'
-                $cols = array_map(function($c) use ($available) {
+                $cols = array_map(function ($c) use ($available) {
                     return ($c === 'nome' && in_array('name', $available)) ? 'name' : $c;
                 }, $cols);
                 // ensure 'nome' is not treated as synthetic
-                $syntheticCols = array_values(array_filter($syntheticCols, function($c){ return $c !== 'nome'; }));
+                $syntheticCols = array_values(array_filter($syntheticCols, function ($c) {
+                    return $c !== 'nome';
+                }));
             }
         }
 
@@ -1694,7 +1754,7 @@ class IngressoController extends Controller
             // ignore logging failures
         }
 
-        $callback = function() use ($rows, $cols, $syntheticCols) {
+        $callback = function () use ($rows, $cols, $syntheticCols) {
             $out = fopen('php://output', 'w');
             // header (allow custom label for tipos_servidor; default to uppercased column key)
             $labelMap = [
@@ -1755,7 +1815,7 @@ class IngressoController extends Controller
                 'cargo' => 'cargo',
             ];
             // Ensure specific column order when present: num_inscricao, nome, data_nascimento, cpf
-            $desiredOrder = ['num_inscricao','nome','data_nascimento','cpf'];
+            $desiredOrder = ['num_inscricao', 'nome', 'data_nascimento', 'cpf'];
             $front = [];
             foreach ($desiredOrder as $d) {
                 // prefer real DB column `name` when user requested `nome`
@@ -1768,7 +1828,9 @@ class IngressoController extends Controller
                     $front[] = $d;
                 }
                 // ensure we don't treat requested logical names as synthetic
-                $syntheticCols = array_values(array_filter($syntheticCols, function($sc) use ($d) { return $sc !== $d; }));
+                $syntheticCols = array_values(array_filter($syntheticCols, function ($sc) use ($d) {
+                    return $sc !== $d;
+                }));
             }
             if (!empty($front)) {
                 $cols = array_merge($front, $cols);
@@ -1776,19 +1838,21 @@ class IngressoController extends Controller
 
             // Remove internal/auxiliary columns that should not be exported
             // specifically: documentos_validados (internal boolean/flag used by the app)
-            $cols = array_values(array_filter($cols, function($c) {
+            $cols = array_values(array_filter($cols, function ($c) {
                 return $c !== 'documentos_validados' && $c !== 'documentos validados';
             }));
-            $syntheticCols = array_values(array_filter($syntheticCols, function($c) {
+            $syntheticCols = array_values(array_filter($syntheticCols, function ($c) {
                 return $c !== 'documentos_validados' && $c !== 'documentos validados';
             }));
 
-            $header = array_map(function($c) use ($labelMap) {
+            $header = array_map(function ($c) use ($labelMap) {
                 if (isset($labelMap[$c])) return $labelMap[$c];
-                return strtoupper(str_replace('_',' ', $c));
+                return strtoupper(str_replace('_', ' ', $c));
             }, $cols);
             // convert header encoding
-            $header = array_map(function($v){ return mb_convert_encoding((string)$v, 'Windows-1252', 'UTF-8'); }, $header);
+            $header = array_map(function ($v) {
+                return mb_convert_encoding((string)$v, 'Windows-1252', 'UTF-8');
+            }, $header);
             // use semicolon as separator which Excel (pt-BR) recognizes as column separator
             fputcsv($out, $header, ';');
             foreach ($rows as $r) {
@@ -1966,8 +2030,8 @@ class IngressoController extends Controller
             ['key' => 'comprovante_residencia', 'label' => 'Comprovante de Residência'],
             ['key' => 'diploma', 'label' => 'Diploma / Histórico'],
             ['key' => 'dependente_doc', 'label' => 'Certidão de Nascimento ou RG do(s) dependente(s)'],
-            
-            
+
+
             ['key' => 'comprovante_bb', 'label' => 'Comprovante (extrato ou cartão) - Banco do Brasil'],
             ['key' => 'pis_pasep', 'label' => 'Original e cópia do PIS/PASEP (se inscrito)'],
             ['key' => 'carteira_trabalho', 'label' => 'Carteira de Trabalho (original e cópia)'],
@@ -1991,8 +2055,8 @@ class IngressoController extends Controller
             ['key' => 'antecedentes_pe_estados_8_anos', 'label' => 'Antecedentes da Polícia Estadual (Estados onde residiu nos últimos 8 anos)'],
             ['key' => 'declaracao_beneficio_inss', 'label' => 'Declaração de Benefício do INSS'],
             ['key' => 'comprovante_situacao_cadastral_rf', 'label' => 'Comprovante de Situação Cadastral por CPF - RECEITA FEDERAL'],
-            
-            
+
+
         ];
 
         // fetch existing checklist if table exists
@@ -2058,53 +2122,55 @@ class IngressoController extends Controller
             $encaminhamentos = collect();
         }
 
-            // If there are no ingresso_encaminhamentos, try to present provimentos_encaminhados
-            // and map commonly used fields so the view can render school, discipline and day counts.
-            try {
-                if ((is_null($encaminhamentos) || $encaminhamentos->isEmpty()) && Schema::hasTable('provimentos_encaminhados')) {
-                    $candidateId = $candidate['id'] ?? null;
-                    if ($candidateId) {
-                        // Join with `uees` to obtain unidade_escolar, nte and municipio when provimentos
-                        $provRows = DB::table('provimentos_encaminhados')
-                            ->leftJoin('uees', 'provimentos_encaminhados.uee_id', '=', 'uees.id')
-                            ->where('provimentos_encaminhados.ingresso_candidato_id', $candidateId)
-                            ->select('provimentos_encaminhados.*',
-                                'uees.unidade_escolar as uee_name',
-                                'uees.nte as uee_nte',
-                                'uees.municipio as uee_municipio')
-                            ->orderBy('provimentos_encaminhados.created_at', 'desc')
-                            ->get();
+        // If there are no ingresso_encaminhamentos, try to present provimentos_encaminhados
+        // and map commonly used fields so the view can render school, discipline and day counts.
+        try {
+            if ((is_null($encaminhamentos) || $encaminhamentos->isEmpty()) && Schema::hasTable('provimentos_encaminhados')) {
+                $candidateId = $candidate['id'] ?? null;
+                if ($candidateId) {
+                    // Join with `uees` to obtain unidade_escolar, nte and municipio when provimentos
+                    $provRows = DB::table('provimentos_encaminhados')
+                        ->leftJoin('uees', 'provimentos_encaminhados.uee_id', '=', 'uees.id')
+                        ->where('provimentos_encaminhados.ingresso_candidato_id', $candidateId)
+                        ->select(
+                            'provimentos_encaminhados.*',
+                            'uees.unidade_escolar as uee_name',
+                            'uees.nte as uee_nte',
+                            'uees.municipio as uee_municipio'
+                        )
+                        ->orderBy('provimentos_encaminhados.created_at', 'desc')
+                        ->get();
 
-                        if ($provRows && count($provRows)) {
-                            $mapped = collect();
-                            foreach ($provRows as $p) {
-                                $m = (int) ($p->provimento_matutino ?? $p->matutino ?? 0);
-                                $v = (int) ($p->provimento_vespertino ?? $p->vespertino ?? 0);
-                                $n = (int) ($p->provimento_noturno ?? $p->noturno ?? 0);
-                                $row = new \stdClass();
-                                $row->id = $p->id ?? ($p->provimento_id ?? null);
-                                $row->created_at = $p->created_at ?? ($p->data_encaminhamento ?? null);
-                                $row->uee_name = $p->unidade_escolar ?? ($p->uee_name ?? ($p->unidade ?? null));
-                                $row->motivo = $p->motivo ?? ($p->obs ?? null);
-                                $row->disciplina_name = $p->disciplina ?? ($p->disciplina_name ?? ($p->disciplina_code ?? null));
-                                $row->quant_matutino = $m;
-                                $row->quant_vespertino = $v;
-                                $row->quant_noturno = $n;
-                                $row->total = ($p->total ?? ($m + $v + $n));
-                                $row->created_by_name = $p->usuario ?? ($p->created_by ?? null);
-                                // prefer joined uee values when available
-                                $row->uee_name = $p->uee_name ?? $row->uee_name ?? ($p->unidade_escolar ?? null);
-                                $row->nte = $p->uee_nte ?? ($p->nte ?? null);
-                                $row->municipio = $p->uee_municipio ?? ($p->municipio ?? null);
-                                $mapped->push($row);
-                            }
-                            $encaminhamentos = $mapped;
+                    if ($provRows && count($provRows)) {
+                        $mapped = collect();
+                        foreach ($provRows as $p) {
+                            $m = (int) ($p->provimento_matutino ?? $p->matutino ?? 0);
+                            $v = (int) ($p->provimento_vespertino ?? $p->vespertino ?? 0);
+                            $n = (int) ($p->provimento_noturno ?? $p->noturno ?? 0);
+                            $row = new \stdClass();
+                            $row->id = $p->id ?? ($p->provimento_id ?? null);
+                            $row->created_at = $p->created_at ?? ($p->data_encaminhamento ?? null);
+                            $row->uee_name = $p->unidade_escolar ?? ($p->uee_name ?? ($p->unidade ?? null));
+                            $row->motivo = $p->motivo ?? ($p->obs ?? null);
+                            $row->disciplina_name = $p->disciplina ?? ($p->disciplina_name ?? ($p->disciplina_code ?? null));
+                            $row->quant_matutino = $m;
+                            $row->quant_vespertino = $v;
+                            $row->quant_noturno = $n;
+                            $row->total = ($p->total ?? ($m + $v + $n));
+                            $row->created_by_name = $p->usuario ?? ($p->created_by ?? null);
+                            // prefer joined uee values when available
+                            $row->uee_name = $p->uee_name ?? $row->uee_name ?? ($p->unidade_escolar ?? null);
+                            $row->nte = $p->uee_nte ?? ($p->nte ?? null);
+                            $row->municipio = $p->uee_municipio ?? ($p->municipio ?? null);
+                            $mapped->push($row);
                         }
+                        $encaminhamentos = $mapped;
                     }
                 }
-            } catch (\Throwable $e) {
-                Log::warning('provimentos_encaminhados read failed', ['exception' => $e->getMessage()]);
             }
+        } catch (\Throwable $e) {
+            Log::warning('provimentos_encaminhados read failed', ['exception' => $e->getMessage()]);
+        }
 
         // Example: allow the view to receive an explicit ordered list of columns
         // to display and custom column labels. Controllers can customize this
@@ -2214,7 +2280,14 @@ class IngressoController extends Controller
 
         // Primary keys to show in the top section (Dados Principais)
         $primaryKeys = [
-            'num_inscricao', 'name', 'cpf', 'data_nascimento', 'nota', 'classificacao_ampla', 'classificacao_quota_pne', 'classificacao_quota_racial'
+            'num_inscricao',
+            'name',
+            'cpf',
+            'data_nascimento',
+            'nota',
+            'classificacao_ampla',
+            'classificacao_quota_pne',
+            'classificacao_quota_racial'
         ];
 
         return view('ingresso.show', [
@@ -2507,10 +2580,10 @@ class IngressoController extends Controller
 
         $encaminhamentos = DB::table('ingresso_encaminhamentos')
             ->where('ingresso_candidato_id', $candidate['id'] ?? 0)
-            ->orderBy('created_at','desc')
+            ->orderBy('created_at', 'desc')
             ->get();
 
-       
+
 
         $encs = collect();
         try {
@@ -2518,7 +2591,7 @@ class IngressoController extends Controller
             if (Schema::hasTable('ingresso_encaminhamentos') && ($candidate['id'] ?? null)) {
                 $encs = DB::table('ingresso_encaminhamentos')
                     ->where('ingresso_candidato_id', $candidate['id'])
-                    ->orderBy('created_at','desc')
+                    ->orderBy('created_at', 'desc')
                     ->selectRaw('*, COALESCE(disciplina_name, disciplina, disciplina_code) as disciplina_resolved')
                     ->get();
             } else {
@@ -2579,12 +2652,12 @@ class IngressoController extends Controller
             // ignore inference failures
         }
 
-         
+
 
         if ($request->boolean('print')) {
             return response()->view('ingresso.oficio_print', ['candidate' => $candidate, 'encaminhamentos' => $encaminhamentos]);
         }
-        
+
 
         return view('ingresso.oficio', ['candidate' => $candidate, 'encaminhamentos' => $encs]);
     }
@@ -2608,14 +2681,14 @@ class IngressoController extends Controller
             ['key' => 'diploma', 'label' => 'Diploma / Histórico'],
             ['key' => 'dependente_doc', 'label' => 'Certidão de Nascimento ou RG do(s) dependente(s)'],
             // 'titulo_eleitor' removed: not required/validated by default
-            
+
             ['key' => 'comprovante_bb', 'label' => 'Comprovante (extrato ou cartão) - Banco do Brasil'],
             ['key' => 'pis_pasep', 'label' => 'Original e cópia do PIS/PASEP (se inscrito)'],
             ['key' => 'carteira_trabalho', 'label' => 'Carteira de Trabalho (original e cópia)'],
             ['key' => 'certificado_reservista', 'label' => 'Certificado de Reservista (para homens)'],
             ['key' => 'ficha_cadastro', 'label' => 'Ficha de Cadastro (original)'],
             ['key' => 'email_confirmacao', 'label' => 'E-mail (confirmação/comprovante)'],
-            
+
             ['key' => 'declaracao_etnia', 'label' => 'Declaração de Etnia'],
             ['key' => 'quitacao_eleitoral', 'label' => 'Quitação Eleitoral (fornecida pelo cartório eleitoral)'],
             ['key' => 'declaracao_bens', 'label' => 'Declaração de Bens'],
@@ -2640,8 +2713,12 @@ class IngressoController extends Controller
                 if ($candidateId) {
                     $rows = IngressoDocumento::where('ingresso_candidato_id', $candidateId)->get();
                     // Build existing map and also append any custom documents to the returned list
-                    $presentKeys = array_map(function($it){ return (string)($it['key'] ?? $it['label'] ?? ''); }, $list);
-                    $presentNorm = array_map(function($k){ return strtolower(preg_replace('/[^a-z0-9]/','',$k)); }, $presentKeys);
+                    $presentKeys = array_map(function ($it) {
+                        return (string)($it['key'] ?? $it['label'] ?? '');
+                    }, $list);
+                    $presentNorm = array_map(function ($k) {
+                        return strtolower(preg_replace('/[^a-z0-9]/', '', $k));
+                    }, $presentKeys);
                     $reports = [];
                     foreach ($rows as $r) {
                         $k = (string) ($r->documento_key ?? '');
@@ -2653,7 +2730,7 @@ class IngressoController extends Controller
                         ];
                         // if this document key/label isn't already in the static list, add it so the UI can show it
                         $label = (string) ($r->documento_label ?? $k ?: 'Documento não identificado');
-                        $norm = strtolower(preg_replace('/[^a-z0-9]/','',$k ?: $label));
+                        $norm = strtolower(preg_replace('/[^a-z0-9]/', '', $k ?: $label));
                         if ($norm !== '' && !in_array($norm, $presentNorm, true)) {
                             $list[] = ['key' => $k ?: $label, 'label' => $label];
                             $presentNorm[] = $norm;
@@ -2701,7 +2778,7 @@ class IngressoController extends Controller
                         'documento_key' => $key,
                     ]);
                     $rawLabel = $doc->documento_label ?? $request->input('label') ?? $key;
-                    $doc->documento_label = is_string($rawLabel) ? \Illuminate\Support\Str::limit(trim(preg_replace('/\s+\s+/',' ', strip_tags($rawLabel))), 255) : $rawLabel;
+                    $doc->documento_label = is_string($rawLabel) ? \Illuminate\Support\Str::limit(trim(preg_replace('/\s+\s+/', ' ', strip_tags($rawLabel))), 255) : $rawLabel;
                     // mark there is a report and store its description
                     if (Schema::hasColumn('ingresso_documentos', 'report')) {
                         $doc->report = 1;
@@ -2717,7 +2794,10 @@ class IngressoController extends Controller
                         $doc->reported_at = now();
                     }
                     $doc->save();
-                    try { Log::info('ingresso_documentos: issue reported', ['candidate_id' => $candidateId, 'key' => $key, 'user' => optional(Auth::user())->id]); } catch (\Throwable $e) {}
+                    try {
+                        Log::info('ingresso_documentos: issue reported', ['candidate_id' => $candidateId, 'key' => $key, 'user' => optional(Auth::user())->id]);
+                    } catch (\Throwable $e) {
+                    }
                     return response()->json(['success' => true, 'message' => 'Problema reportado com sucesso']);
                 } catch (\Throwable $e) {
                     Log::error('ingresso_documentos: failed to save issue', ['exception' => $e->getMessage(), 'candidate' => $candidateId, 'key' => $key]);
@@ -2769,7 +2849,10 @@ class IngressoController extends Controller
                     } catch (\Throwable $e) {
                         Log::warning('ingresso_documentos: failed to clear validated flags for reported docs', ['exception' => $e->getMessage(), 'candidate' => $candidateId]);
                     }
-                    try { Log::info('ingresso_documentos: returned to NTE', ['candidate_id' => $candidateId, 'user' => optional(Auth::user())->id, 'affected_candidates' => $affected, 'cleared_docs' => $cleared]); } catch (\Throwable $e) {}
+                    try {
+                        Log::info('ingresso_documentos: returned to NTE', ['candidate_id' => $candidateId, 'user' => optional(Auth::user())->id, 'affected_candidates' => $affected, 'cleared_docs' => $cleared]);
+                    } catch (\Throwable $e) {
+                    }
                     return response()->json(['success' => true, 'message' => 'Ingressos retornado para correção pelo NTE.', 'debug' => ['affected_candidates' => $affected, 'cleared_docs' => $cleared]]);
                 } catch (\Throwable $e) {
                     Log::error('ingresso_documentos: failed to return to NTE', ['exception' => $e->getMessage(), 'candidate' => $candidateId]);
@@ -2830,16 +2913,25 @@ class IngressoController extends Controller
                                 if (Schema::hasColumn('ingresso_documentos', 'validated_by')) $existingDoc->validated_by = null;
                                 if (Schema::hasColumn('ingresso_documentos', 'validated_at')) $existingDoc->validated_at = null;
                                 $existingDoc->save();
-                                try { Log::info('ingresso_documentos: doc updated (kept due to report)', ['candidate_id' => $candidateId, 'key' => $key, 'id' => $existingDoc->id]); } catch (\Throwable $e) {}
+                                try {
+                                    Log::info('ingresso_documentos: doc updated (kept due to report)', ['candidate_id' => $candidateId, 'key' => $key, 'id' => $existingDoc->id]);
+                                } catch (\Throwable $e) {
+                                }
                             } else {
                                 $deleted = IngressoDocumento::where('ingresso_candidato_id', $candidateId)
                                     ->where('documento_key', $key)
                                     ->delete();
-                                try { Log::info('ingresso_documentos: doc deleted', ['candidate_id' => $candidateId, 'key' => $key, 'deleted' => $deleted]); } catch (\Throwable $e) {}
+                                try {
+                                    Log::info('ingresso_documentos: doc deleted', ['candidate_id' => $candidateId, 'key' => $key, 'deleted' => $deleted]);
+                                } catch (\Throwable $e) {
+                                }
                             }
                         }
                     } catch (\Throwable $e) {
-                        try { Log::error('ingresso_documentos: failed to delete/update doc', ['candidate_id' => $candidateId, 'key' => $key, 'exception' => $e->getMessage()]); } catch (\Throwable $ee) {}
+                        try {
+                            Log::error('ingresso_documentos: failed to delete/update doc', ['candidate_id' => $candidateId, 'key' => $key, 'exception' => $e->getMessage()]);
+                        } catch (\Throwable $ee) {
+                        }
                     }
                     continue;
                 }
@@ -2850,7 +2942,7 @@ class IngressoController extends Controller
                     'documento_key' => $key,
                 ]);
                 $rawLabel = $item['label'] ?? $doc->documento_label ?? $key;
-                $doc->documento_label = is_string($rawLabel) ? \Illuminate\Support\Str::limit(trim(preg_replace('/\s+\s+/',' ', strip_tags($rawLabel))), 255) : $rawLabel;
+                $doc->documento_label = is_string($rawLabel) ? \Illuminate\Support\Str::limit(trim(preg_replace('/\s+\s+/', ' ', strip_tags($rawLabel))), 255) : $rawLabel;
                 $doc->validated = $validated;
                 if ($validated) {
                     $doc->validated_by = optional(Auth::user())->id;
@@ -2874,7 +2966,10 @@ class IngressoController extends Controller
                     $doc->validated_at = null;
                 }
                 $doc->save();
-                try { Log::info('ingresso_documentos: doc saved', ['candidate_id' => $candidateId, 'key' => $key, 'id' => $doc->id]); } catch (\Throwable $e) {}
+                try {
+                    Log::info('ingresso_documentos: doc saved', ['candidate_id' => $candidateId, 'key' => $key, 'id' => $doc->id]);
+                } catch (\Throwable $e) {
+                }
             }
 
             // Only update the candidate-level status when the request explicitly indicates
@@ -2886,7 +2981,7 @@ class IngressoController extends Controller
                 $debugUpdate = null;
                 $debugAffected = null;
 
-                if (( $isConfirm || $isUnvalidate ) && Schema::hasTable('ingresso_documentos')) {
+                if (($isConfirm || $isUnvalidate) && Schema::hasTable('ingresso_documentos')) {
                     $total = IngressoDocumento::where('ingresso_candidato_id', $candidateId)->count();
                     $notValidated = IngressoDocumento::where('ingresso_candidato_id', $candidateId)->where('validated', 0)->count();
 
@@ -2949,36 +3044,36 @@ class IngressoController extends Controller
                                 }
                             }
                         } else {
-                                // Non-CPM (e.g., NTE) confirms selected documents -> require SEI number before allowing
-                                if (boolval($isConfirm)) {
-                                    try {
-                                        $candidateRec = DB::table('ingresso_candidatos')->where('id', $candidateId)->first();
-                                        $hasSeiColumn = Schema::hasColumn('ingresso_candidatos', 'sei_number');
-                                        $seiVal = $candidateRec && $hasSeiColumn ? trim((string)($candidateRec->sei_number ?? '')) : '';
-                                        // If current user is not CPM (i.e., NTE) and SEI missing, reject
-                                        if (! $isCpmUser && ($hasSeiColumn && $seiVal === '')) {
-                                            return response()->json(['success' => false, 'message' => 'Validação pelo NTE requer número do processo SEI'], 422);
-                                        }
-                                    } catch (\Throwable $e) {
-                                        // ignore and proceed conservatively (do not allow NTE to validate without SEI)
-                                        if (! $isCpmUser) {
-                                            return response()->json(['success' => false, 'message' => 'Validação pelo NTE requer número do processo SEI'], 422);
-                                        }
+                            // Non-CPM (e.g., NTE) confirms selected documents -> require SEI number before allowing
+                            if (boolval($isConfirm)) {
+                                try {
+                                    $candidateRec = DB::table('ingresso_candidatos')->where('id', $candidateId)->first();
+                                    $hasSeiColumn = Schema::hasColumn('ingresso_candidatos', 'sei_number');
+                                    $seiVal = $candidateRec && $hasSeiColumn ? trim((string)($candidateRec->sei_number ?? '')) : '';
+                                    // If current user is not CPM (i.e., NTE) and SEI missing, reject
+                                    if (! $isCpmUser && ($hasSeiColumn && $seiVal === '')) {
+                                        return response()->json(['success' => false, 'message' => 'Validação pelo NTE requer número do processo SEI'], 422);
+                                    }
+                                } catch (\Throwable $e) {
+                                    // ignore and proceed conservatively (do not allow NTE to validate without SEI)
+                                    if (! $isCpmUser) {
+                                        return response()->json(['success' => false, 'message' => 'Validação pelo NTE requer número do processo SEI'], 422);
                                     }
                                 }
-
-                                // mark awaiting CPM confirmation (documents remain unfinalized until CPM)
-                                if (Schema::hasColumn('ingresso_candidatos', 'status')) {
-                                    $update['status'] = 'Aguardando Confirmação pela CPM';
-                                }
-                                // documentos_validados remains unset until CPM confirms
-                                if (Schema::hasColumn('ingresso_candidatos', 'status_validated_by')) {
-                                    $update['status_validated_by'] = optional(Auth::user())->id;
-                                }
-                                if (Schema::hasColumn('ingresso_candidatos', 'status_validated_at')) {
-                                    $update['status_validated_at'] = now();
-                                }
                             }
+
+                            // mark awaiting CPM confirmation (documents remain unfinalized until CPM)
+                            if (Schema::hasColumn('ingresso_candidatos', 'status')) {
+                                $update['status'] = 'Aguardando Confirmação pela CPM';
+                            }
+                            // documentos_validados remains unset until CPM confirms
+                            if (Schema::hasColumn('ingresso_candidatos', 'status_validated_by')) {
+                                $update['status_validated_by'] = optional(Auth::user())->id;
+                            }
+                            if (Schema::hasColumn('ingresso_candidatos', 'status_validated_at')) {
+                                $update['status_validated_at'] = now();
+                            }
+                        }
                     }
 
                     if (!empty($update)) {
@@ -3031,7 +3126,8 @@ class IngressoController extends Controller
                 } catch (\Throwable $e) {
                     // ignore candidate fetch failures
                 }
-            } catch (\Throwable $e) {}
+            } catch (\Throwable $e) {
+            }
 
             return response()->json($responsePayload);
         } catch (\Throwable $e) {
@@ -3088,7 +3184,10 @@ class IngressoController extends Controller
                 }
             }
 
-            try { Log::info('Candidato marcado como NAO ASSUMIU', ['candidate_id' => $candidateId, 'user' => optional(Auth::user())->id]); } catch (\Throwable $e) {}
+            try {
+                Log::info('Candidato marcado como NAO ASSUMIU', ['candidate_id' => $candidateId, 'user' => optional(Auth::user())->id]);
+            } catch (\Throwable $e) {
+            }
 
             return response()->json(['success' => true, 'message' => 'Candidato marcado como NÃO ASSUMIU']);
         } catch (\Throwable $e) {
@@ -3128,7 +3227,10 @@ class IngressoController extends Controller
             }
             DB::table('ingresso_candidatos')->where('id', $candidateId)->update($upd);
 
-            try { Log::info('Retirado NAO ASSUMIU', ['candidate_id' => $candidateId, 'user' => optional(Auth::user())->id]); } catch (\Throwable $e) {}
+            try {
+                Log::info('Retirado NAO ASSUMIU', ['candidate_id' => $candidateId, 'user' => optional(Auth::user())->id]);
+            } catch (\Throwable $e) {
+            }
 
             return response()->json(['success' => true, 'message' => 'Status restaurado com sucesso']);
         } catch (\Throwable $e) {
@@ -3218,7 +3320,7 @@ class IngressoController extends Controller
                 $rowsToInsert = [];
 
                 // helper to assemble a single row respecting existing columns
-                $assembleRow = function($discipline = null) use ($request, $candidateId) {
+                $assembleRow = function ($discipline = null) use ($request, $candidateId) {
                     $row = [
                         'ingresso_candidato_id' => $candidateId,
                         'created_by' => optional(Auth::user())->id,
@@ -3271,36 +3373,36 @@ class IngressoController extends Controller
                         $row['motivo'] = $request->input('motivo') ?? $request->input('tipo_encaminhamento') ?? null;
                     }
 
-                        // tipo de encaminhamento (if table has column)
-                        if (Schema::hasColumn('ingresso_encaminhamentos', 'tipo_encaminhamento')) {
-                            $row['tipo_encaminhamento'] = $request->input('tipo_encaminhamento') ?? null;
-                        } elseif (Schema::hasColumn('ingresso_encaminhamentos', 'tipo')) {
-                            $row['tipo'] = $request->input('tipo_encaminhamento') ?? null;
-                        }
+                    // tipo de encaminhamento (if table has column)
+                    if (Schema::hasColumn('ingresso_encaminhamentos', 'tipo_encaminhamento')) {
+                        $row['tipo_encaminhamento'] = $request->input('tipo_encaminhamento') ?? null;
+                    } elseif (Schema::hasColumn('ingresso_encaminhamentos', 'tipo')) {
+                        $row['tipo'] = $request->input('tipo_encaminhamento') ?? null;
+                    }
 
-                        // persist servidor id on encaminhamentos when table supports it
-                        if (Schema::hasColumn('ingresso_encaminhamentos', 'servidor_id')) {
-                            $servidorVal = null;
-                            // allow per-discipline override when provided
-                            if (is_array($discipline)) {
-                                if (isset($discipline['substituicao_servidor_id'])) {
-                                    $servidorVal = intval($discipline['substituicao_servidor_id']);
-                                } elseif (isset($discipline['servidor_id'])) {
-                                    $servidorVal = intval($discipline['servidor_id']);
-                                }
+                    // persist servidor id on encaminhamentos when table supports it
+                    if (Schema::hasColumn('ingresso_encaminhamentos', 'servidor_id')) {
+                        $servidorVal = null;
+                        // allow per-discipline override when provided
+                        if (is_array($discipline)) {
+                            if (isset($discipline['substituicao_servidor_id'])) {
+                                $servidorVal = intval($discipline['substituicao_servidor_id']);
+                            } elseif (isset($discipline['servidor_id'])) {
+                                $servidorVal = intval($discipline['servidor_id']);
                             }
-                            // if not set per-discipline, prefer substituicao_servidor when tipo is REDA
-                            if ($servidorVal === null) {
-                                $tipo = $request->input('tipo_encaminhamento') ?? $request->input('tipo') ?? null;
-                                $tipoStr = is_null($tipo) ? '' : strtolower((string)$tipo);
-                                if ($tipoStr === 'reda') {
-                                    $servidorVal = $request->input('substituicao_servidor_id') ?? $request->input('substituicao_servidor') ?? null;
-                                } else {
-                                    $servidorVal = $request->input('servidor_id') ?? $request->input('substituicao_servidor_id') ?? $request->input('substituicao_servidor') ?? null;
-                                }
-                            }
-                            $row['servidor_id'] = is_null($servidorVal) ? null : intval($servidorVal);
                         }
+                        // if not set per-discipline, prefer substituicao_servidor when tipo is REDA
+                        if ($servidorVal === null) {
+                            $tipo = $request->input('tipo_encaminhamento') ?? $request->input('tipo') ?? null;
+                            $tipoStr = is_null($tipo) ? '' : strtolower((string)$tipo);
+                            if ($tipoStr === 'reda') {
+                                $servidorVal = $request->input('substituicao_servidor_id') ?? $request->input('substituicao_servidor') ?? null;
+                            } else {
+                                $servidorVal = $request->input('servidor_id') ?? $request->input('substituicao_servidor_id') ?? $request->input('substituicao_servidor') ?? null;
+                            }
+                        }
+                        $row['servidor_id'] = is_null($servidorVal) ? null : intval($servidorVal);
+                    }
 
                     return $row;
                 };
@@ -3331,7 +3433,10 @@ class IngressoController extends Controller
                         Log::info('Ingresso encaminhado (replace all)', ['user' => optional(Auth::user())->id, 'candidate' => $candidateId, 'rows' => count($rowsToInsert)]);
                     } catch (\Throwable $e) {
                         DB::rollBack();
-                        try { Log::error('Failed to sync encaminhamentos', ['exception' => $e->getMessage(), 'trace' => $e->getTraceAsString(), 'candidate' => $candidateId]); } catch (\Throwable $_) {}
+                        try {
+                            Log::error('Failed to sync encaminhamentos', ['exception' => $e->getMessage(), 'trace' => $e->getTraceAsString(), 'candidate' => $candidateId]);
+                        } catch (\Throwable $_) {
+                        }
                         $resp = ['success' => false, 'message' => 'Erro ao registrar encaminhamentos'];
                         // Expose error details only when app debug is enabled or caller requested debug
                         try {
@@ -3339,7 +3444,8 @@ class IngressoController extends Controller
                                 $resp['error'] = $e->getMessage();
                                 $resp['trace'] = $e->getTraceAsString();
                             }
-                        } catch (\Throwable $_) {}
+                        } catch (\Throwable $_) {
+                        }
                         return response()->json($resp, 500);
                     }
 
@@ -3544,5 +3650,43 @@ class IngressoController extends Controller
             Log::error('updateCandidate error', ['exception' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return response()->json(['success' => false, 'message' => 'Erro no servidor'], 500);
         }
+    }
+
+    public function storeServidorSubstituido(Request $request)
+    {
+        // 1. Validação dos dados de entrada
+        // É uma boa prática validar também o servidor_id para garantir que ele existe.
+
+
+        $inscricao  = $request->input('candidato_inscricao');
+        $servidorCadastro = $request->input('cadastro');
+
+        $servidorId = DB::table('servidores')
+            ->where('cadastro', $servidorCadastro)
+            ->value('id');
+
+
+
+        // 2. Recuperação do ID do candidato
+        $candidateId = DB::table('ingresso_candidatos')
+            ->where('num_inscricao', $inscricao)
+            ->value('id');
+
+        // 3. Verificação e Atualização
+        if ($candidateId) {
+            // Realiza o update na tabela ingresso_candidatos
+            // Utilizei a coluna 'id' como filtro, conforme recuperado acima.
+            // Se a sua coluna de filtro for literalmente 'ingresso_candidato_id', basta trocar o nome.
+            DB::table('ingresso_encaminhamentos')
+                ->where('ingresso_candidato_id', $candidateId)
+                ->update([
+                    'servidor_id' => $servidorId,
+                    'updated_at'  => now() // Recomendado se estiver usando timestamps
+                ]);
+
+            return redirect()->back()->with('success', 'Servidor substituído com sucesso!');
+        }
+
+        return redirect()->back()->with('error', 'Candidato não localizado.');
     }
 }

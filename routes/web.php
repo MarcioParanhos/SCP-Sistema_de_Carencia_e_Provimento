@@ -228,6 +228,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/ingresso/{id}/encaminhar/{encaminhamento}', [IngressoController::class, 'destroyEncaminhamento'])->name('ingresso.encaminhar.destroy');
     Route::post('/ingresso/{id}/assign', [IngressoController::class, 'assign'])->name('ingresso.assign');
     Route::delete('/ingresso/{id}', [IngressoController::class, 'destroy'])->name('ingresso.destroy');
+    Route::post('/save/servidor/encaminhamento', [IngressoController::class, 'storeServidorSubstituido'])->name('ingresso.save.servidor.encaminhamento');
     // Persist devolucao_assunsao flag for an encaminhamento (AJAX)
     Route::post('/ingresso/encaminhamento/{encaminhamento}/devolucao_assunsao', [IngressoController::class, 'setEncaminhamentoDevolucaoAssuncao'])->name('ingresso.encaminhar.devolucao_assunsao');
     
