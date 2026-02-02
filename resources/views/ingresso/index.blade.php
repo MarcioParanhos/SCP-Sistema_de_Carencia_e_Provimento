@@ -303,20 +303,30 @@
                             }
                         } catch (e) { formatted = String(date); }
 
+                        // detect explicit 'Apto para ingresso' first
+                        try {
+                            var ingressoText = (row && row.ingresso) ? String(row.ingresso).toLowerCase() : '';
+                            var statusTextLower = (row && row.status) ? String(row.status).toLowerCase() : '';
+                        } catch (e) { var ingressoText = ''; var statusTextLower = ''; }
+
+                        if (ingressoText.indexOf('apto para ingresso') !== -1 || statusTextLower.indexOf('apto para ingresso') !== -1) {
+                            return '<span class="badge bg-success">' + formatted + ' • Apto para Ingresso</span>';
+                        }
+
                         // broaden detection for 'validated' state: check several possible indicators
                         var validated = false;
                         try {
                             if (row && (row.assuncao_validada === 1 || String(row.assuncao_validada) === '1')) validated = true;
                             if (!validated && row && row.assuncao_validada_at) validated = true;
                             if (!validated && row && row.status_validated_at) validated = true;
-                            if (!validated && row && row.ingresso && String(row.ingresso).toLowerCase().indexOf('apto para ingresso') !== -1) validated = true;
-                            if (!validated && row && row.status && String(row.status).toLowerCase().indexOf('apto para ingresso') !== -1) validated = true;
                             // also treat generic 'apto' statuses as validated if ingresso present
-                            if (!validated && row && row.status && String(row.status).toLowerCase().indexOf('apto') !== -1 && row.ingresso) validated = true;
+                            if (!validated && statusTextLower.indexOf('apto') !== -1 && ingressoText) validated = true;
                         } catch (e) { validated = false; }
+
                         if (validated) {
                             return '<span class="badge bg-success">' + formatted + ' • Validado (CPM)</span>';
                         }
+
                         return '<span class="badge bg-warning text-dark">' + formatted + ' • Pendente (CPM)</span>';
                     }
                 }

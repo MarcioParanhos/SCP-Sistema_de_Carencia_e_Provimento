@@ -1031,7 +1031,7 @@ class IngressoController extends Controller
             // filtered
             // ensure we explicitly select critical columns but only those that exist in the table
             // include both legacy and current column names for racial quota to be safe
-            $desired = ['id', 'num_inscricao', 'name', 'cpf', 'nte', 'disciplina', 'municipio_convocacao', 'classificacao_ampla', 'classificacao_quota_pne', 'classificacao_quota_racial', 'classificacao_racial', 'classificacao', 'nota', 'sei_number', 'status', 'documentos_validados', 'assunsao'];
+            $desired = ['id', 'num_inscricao', 'name', 'cpf', 'nte', 'disciplina', 'municipio_convocacao', 'classificacao_ampla', 'classificacao_quota_pne', 'classificacao_quota_racial', 'classificacao_racial', 'classificacao', 'nota', 'sei_number', 'status', 'documentos_validados', 'assunsao', 'ingresso'];
             $available = Schema::hasTable('ingresso_candidatos') ? Schema::getColumnListing('ingresso_candidatos') : [];
             $selectCols = array_values(array_intersect($desired, $available));
 

@@ -1664,6 +1664,12 @@ class ProvimentoController extends Controller
                     try { $ingressoCandidate = \App\Models\IngressoCandidato::find($ing->ingresso_candidato_id); } catch (\Throwable $e) { $ingressoCandidate = null; }
                 }
                 $obj->servidorEncaminhado = $ingressoCandidate;
+                // preserve servidor_id from ingresso_encaminhamentos (used for substituted server)
+                $obj->servidor_id = $ing->servidor_id ?? null;
+                $obj->servidor_substituido_id = $ing->servidor_id ?? null;
+                if (! empty($obj->servidor_id)) {
+                    try { $obj->servidorSubstituido = \App\Models\Servidore::find($obj->servidor_id); } catch (\Throwable $e) { $obj->servidorSubstituido = null; }
+                }
                 $provimentos_encaminhado = $obj;
             }
         }

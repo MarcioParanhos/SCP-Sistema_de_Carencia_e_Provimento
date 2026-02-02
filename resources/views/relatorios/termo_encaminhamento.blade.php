@@ -234,6 +234,17 @@
 </head>
 
 <body>
+    @php
+            // Prefer relation 'servidorSubstituido', but fall back to explicit 'servidor_id' column if present
+            $sSub = $provimentos_encaminhado->servidorSubstituido ?? null;
+            if (empty($sSub) && !empty($provimentos_encaminhado->servidor_id)) {
+                $sSub = \App\Models\Servidore::find($provimentos_encaminhado->servidor_id);
+            }
+            $sSubName = optional($sSub)->nome ?? optional($sSub)->name ?? optional($provimentos_encaminhado)->servidor_substituido ?? '-';
+            $sSubCadastro = optional($sSub)->cadastro ?? optional($provimentos_encaminhado)->servidor_substituido_id ?? ($provimentos_encaminhado->servidor_id ?? '');
+            $sSubCpf = optional($sSub)->cpf ?? '';
+            $sSubVinculo = optional($sSub)->vinculo ?? '';
+        @endphp
     <header>
         <div class="header border mb-2">
             <img src="/images/teste.png" alt="">
@@ -263,7 +274,7 @@
         @php
             $dateToShow = optional($provimentos_encaminhado)->data_encaminhamento ? \Carbon\Carbon::parse($provimentos_encaminhado->data_encaminhamento)->format('d/m/Y') : \Carbon\Carbon::now()->format('d/m/Y');
         @endphp
-        <p>Salvador, <span id="date">{{ $dateToShow }}</span></p>
+        <p><span id="date">{{ $dateToShow }}</span></p>
         </div>
     </section>
     <section class="after_date">
@@ -282,7 +293,9 @@
         @endphp
         <p class="main-content">
             Encaminhamos o(a) Professor(a) {{ $serverName }},
-            CPF {{ $serverCpf }} com carga horária de 20hs, para atuar nos turnos abaixo indicados, na(s) disciplina(s)
+            CPF {{ $serverCpf }} com carga horária de 20hs,@if(!empty($sSubName) && $sSubName !== '-')
+            Subistituindo o(a) servidor(a): {{ $sSubName }}, Matrícula: {{ $sSubCadastro ?: '-' }}, Vínculo: {{ $sSubVinculo ?: '-' }}
+        @endif, para atuar nos turnos abaixo indicados, na(s) disciplina(s)
             @php
                 // prefer explicit $encaminhamentos (rows from ingresso_encaminhamentos) when available
                 $discList = [];
