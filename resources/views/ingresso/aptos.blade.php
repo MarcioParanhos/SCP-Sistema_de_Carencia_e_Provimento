@@ -69,6 +69,30 @@
                             @endif
                         </select>
                     </div>
+                    <div class="col-md-2">
+                        <label for="filter_encaminhamento">Encaminhamento</label>
+                        <select id="filter_encaminhamento" class="form-control form-control-sm">
+                            <option value="">(Todos)</option>
+                            <option value="with">Com encaminhamento</option>
+                            <option value="without">Sem encaminhamento</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="filter_encaminhamento_validated">Encaminhamento validado</label>
+                        <select id="filter_encaminhamento_validated" class="form-control form-control-sm">
+                            <option value="">(Todos)</option>
+                            <option value="yes">Sim</option>
+                            <option value="no">Não</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="filter_assunsao">Data de Assunção</label>
+                        <select id="filter_assunsao" class="form-control form-control-sm">
+                            <option value="">(Todos)</option>
+                            <option value="yes">Com data de assunção</option>
+                            <option value="no">Sem data de assunção</option>
+                        </select>
+                    </div>
                     @endif
                     <div class="col-md-2">
                         <button type="button" id="applyFilters" class="btn btn-primary">Aplicar</button>
@@ -281,6 +305,19 @@ document.addEventListener('DOMContentLoaded', function() {
                             var nteSel = document.getElementById('filter_nte_cpm');
                             if (ntePanel && ntePanel.value) d.filter_nte = ntePanel.value || '';
                             else if (nteSel && nteSel.value) d.filter_nte = nteSel.value || '';
+                            // include encaminhamento presence filter and validated filter
+                            try {
+                                var fEnc = document.getElementById('filter_encaminhamento');
+                                if (fEnc && fEnc.value) d.filter_encaminhamento = fEnc.value;
+                            } catch(e) {}
+                            try {
+                                var fEncVal = document.getElementById('filter_encaminhamento_validated');
+                                if (fEncVal && fEncVal.value) d.filter_encaminhamento_validated = fEncVal.value;
+                            } catch(e) {}
+                            try {
+                                var fAss = document.getElementById('filter_assunsao');
+                                if (fAss && fAss.value) d.filter_assunsao = fAss.value;
+                            } catch(e) {}
                         } catch (e) {}
                     }
         },
@@ -330,6 +367,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (state) {
                     try { if (state.filter_nte) document.getElementById('filter_nte').value = state.filter_nte; } catch(e){}
                     try { if (state.filter_status) document.getElementById('filter_status').value = state.filter_status; } catch(e){}
+                    try { if (state.filter_encaminhamento) document.getElementById('filter_encaminhamento').value = state.filter_encaminhamento; } catch(e){}
+                    try { if (state.filter_encaminhamento_validated) document.getElementById('filter_encaminhamento_validated').value = state.filter_encaminhamento_validated; } catch(e){}
+                    try { if (state.filter_assunsao) document.getElementById('filter_assunsao').value = state.filter_assunsao; } catch(e){}
                     try { if (state.panelOpen) { document.getElementById('filterPanel').style.display = 'block'; setFilterButtonOpen(true); } else { setFilterButtonOpen(false); } } catch(e){ setFilterButtonOpen(false); }
                 }
             } else {
@@ -356,8 +396,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // apply filters
         $(document).on('click', '#applyFilters', function(e){
             e.preventDefault();
-            try {
-                var st = { filter_nte: document.getElementById('filter_nte') ? document.getElementById('filter_nte').value : '', filter_status: document.getElementById('filter_status') ? document.getElementById('filter_status').value : '', panelOpen: ($('#filterPanel').is(':visible')) };
+                try {
+                var st = { filter_nte: document.getElementById('filter_nte') ? document.getElementById('filter_nte').value : '', filter_status: document.getElementById('filter_status') ? document.getElementById('filter_status').value : '', filter_encaminhamento: document.getElementById('filter_encaminhamento') ? document.getElementById('filter_encaminhamento').value : '', filter_encaminhamento_validated: document.getElementById('filter_encaminhamento_validated') ? document.getElementById('filter_encaminhamento_validated').value : '', filter_assunsao: document.getElementById('filter_assunsao') ? document.getElementById('filter_assunsao').value : '', panelOpen: ($('#filterPanel').is(':visible')) };
                 localStorage.setItem('aptos_filters', JSON.stringify(st));
             } catch(err){}
             try { $('#aptosTable').DataTable().ajax.reload(function(){ try{ var s = localStorage.getItem('aptos_filters'); if (s) localStorage.setItem('aptos_filters', s); }catch(e){} }); } catch(e) { console.warn(e); }
@@ -368,7 +408,10 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             try { if (document.getElementById('filter_nte')) document.getElementById('filter_nte').value = ''; } catch(e){}
             try { if (document.getElementById('filter_status')) document.getElementById('filter_status').value = ''; } catch(e){}
-            try { var st = { filter_nte:'', filter_status:'', panelOpen: false }; localStorage.setItem('aptos_filters', JSON.stringify(st)); } catch(err){}
+            try { if (document.getElementById('filter_encaminhamento')) document.getElementById('filter_encaminhamento').value = ''; } catch(e){}
+            try { if (document.getElementById('filter_encaminhamento_validated')) document.getElementById('filter_encaminhamento_validated').value = ''; } catch(e){}
+            try { if (document.getElementById('filter_assunsao')) document.getElementById('filter_assunsao').value = ''; } catch(e){}
+            try { var st = { filter_nte:'', filter_status:'', filter_encaminhamento:'', filter_encaminhamento_validated:'', filter_assunsao:'', panelOpen: false }; localStorage.setItem('aptos_filters', JSON.stringify(st)); } catch(err){}
             try { $('#aptosTable').DataTable().ajax.reload(); } catch(e){}
         });
     })();

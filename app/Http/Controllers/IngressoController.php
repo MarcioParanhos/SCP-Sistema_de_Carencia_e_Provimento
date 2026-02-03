@@ -1180,6 +1180,80 @@ class IngressoController extends Controller
                         }
                     }
                 }
+
+                // Apply encaminhamento presence filter (filter_encaminhamento)
+                $filterEnc = trim((string) ($request->query('filter_encaminhamento') ?? ''));
+                if ($filterEnc !== '') {
+                    try {
+                        if ($filterEnc === 'with') {
+                            $filteredQuery->whereExists(function ($q) {
+                                $q->select(DB::raw(1))
+                                    ->from('ingresso_encaminhamentos')
+                                    ->whereRaw('ingresso_encaminhamentos.ingresso_candidato_id = ingresso_candidatos.id');
+                            });
+                        } elseif ($filterEnc === 'without') {
+                            $filteredQuery->whereNotExists(function ($q) {
+                                $q->select(DB::raw(1))
+                                    ->from('ingresso_encaminhamentos')
+                                    ->whereRaw('ingresso_encaminhamentos.ingresso_candidato_id = ingresso_candidatos.id');
+                            });
+                        }
+                    } catch (\Throwable $e) {
+                        // ignore if table missing or other issues
+                    }
+                }
+
+                // Apply encaminhamento validated filter (filter_encaminhamento_validated)
+                $filterEncVal = trim((string) ($request->query('filter_encaminhamento_validated') ?? ''));
+                if ($filterEncVal !== '') {
+                    try {
+                        if ($filterEncVal === 'yes') {
+                            // candidates with any encaminhamento whose status indicates validation
+                            $filteredQuery->whereExists(function ($q) {
+                                $q->select(DB::raw(1))
+                                    ->from('ingresso_encaminhamentos')
+                                    ->whereRaw('ingresso_encaminhamentos.ingresso_candidato_id = ingresso_candidatos.id')
+                                    ->whereRaw("(LOWER(COALESCE(ingresso_encaminhamentos.status,'')) LIKE '%valida%' OR LOWER(COALESCE(ingresso_encaminhamentos.status,'')) LIKE '%valid%')");
+                            });
+                        } elseif ($filterEncVal === 'no') {
+                            // candidates that have encaminhamentos but none validated
+                            $filteredQuery->whereExists(function ($q) {
+                                $q->select(DB::raw(1))
+                                    ->from('ingresso_encaminhamentos')
+                                    ->whereRaw('ingresso_encaminhamentos.ingresso_candidato_id = ingresso_candidatos.id');
+                            })->whereNotExists(function ($q) {
+                                $q->select(DB::raw(1))
+                                    ->from('ingresso_encaminhamentos')
+                                    ->whereRaw('ingresso_encaminhamentos.ingresso_candidato_id = ingresso_candidatos.id')
+                                    ->whereRaw("(LOWER(COALESCE(ingresso_encaminhamentos.status,'')) LIKE '%valida%' OR LOWER(COALESCE(ingresso_encaminhamentos.status,'')) LIKE '%valid%')");
+                            });
+                        }
+                    } catch (\Throwable $e) {
+                        // ignore if table missing or other issues
+                    }
+                }
+
+                // Apply assunsao presence filter (filter_assunsao)
+                $filterAss = trim((string) ($request->query('filter_assunsao') ?? ''));
+                if ($filterAss !== '') {
+                    // detect which assunção-like column exists in the table (tolerate naming variants)
+                    $possible = ['assunsao', 'assuncao', 'data_assunsao', 'data_assuncao', 'data_assumcao', 'data_assuncao'];
+                    $assCol = null;
+                    foreach ($possible as $p) {
+                        if (in_array($p, $columns)) { $assCol = $p; break; }
+                    }
+                    if ($assCol) {
+                        try {
+                            if ($filterAss === 'yes') {
+                                $filteredQuery->whereNotNull($assCol);
+                            } elseif ($filterAss === 'no') {
+                                $filteredQuery->whereNull($assCol);
+                            }
+                        } catch (\Throwable $e) {
+                            // ignore issues
+                        }
+                    }
+                }
             } catch (\Throwable $e) {
                 Log::warning('Failed to apply client filters in ingresso.data', ['exception' => $e->getMessage()]);
             }
