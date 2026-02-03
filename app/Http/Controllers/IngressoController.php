@@ -662,7 +662,7 @@ class IngressoController extends Controller
         // Se for usuário NTE, faça scope para o NTE dele
         try {
             $u = Auth::user();
-            if ($u && isset($u->profile_id) && $u->profile_id == 1 && isset($u->sector_id) && $u->sector_id == 7) {
+                if ($u && isset($u->profile_id) && $u->profile_id == 1 && isset($u->sector_id) && $u->sector_id == 7) {
                 $userNte = $u->nte ?? null;
                 if ($userNte) {
                     if (in_array('nte', $available)) {
@@ -2064,9 +2064,61 @@ class IngressoController extends Controller
                     }
                     // normalize to string and convert encoding to Windows-1252
                     if (is_null($val)) $val = '';
-                    if (is_array($val) || is_object($val)) {
+                    // If value is a Date/Carbon instance, render as DD/MM/YYYY (strip later)
+                    if ($val instanceof \DateTimeInterface) {
+                        $val = $val->format('d/m/Y');
+                    }
+                    // Convert arrays/objects to JSON
+                    if (is_array($val) || (is_object($val) && !($val instanceof \JsonSerializable))) {
                         $val = json_encode($val, JSON_UNESCAPED_UNICODE);
                     }
+                    // Special cleanup for RG-like and phone columns: remove any non-digit characters
+                    if (is_string($val)) {
+                        if (stripos($c, 'rg') !== false) {
+                            $val = preg_replace('/\D+/', '', $val);
+                            if ($val !== '') {
+                                // Wrap so Excel preserves leading zeros without showing an apostrophe
+                                $val = '="' . $val . '"';
+                            }
+                        }
+                        // phone columns: tel_, telefone, celular
+                        if (stripos($c, 'tel') !== false || stripos($c, 'telefone') !== false || stripos($c, 'celular') !== false) {
+                            $val = preg_replace('/\D+/', '', $val);
+                            if ($val !== '') {
+                                $val = '="' . $val . '"';
+                            }
+                        }
+                        // CEP columns: remove non-digits and wrap to preserve leading zeros
+                        if (stripos($c, 'cep') !== false) {
+                            $val = preg_replace('/\D+/', '', $val);
+                            if ($val !== '') {
+                                $val = '="' . $val . '"';
+                            }
+                        }
+                    }
+
+                    // Apply configured date-column formatting: remove slashes for listed date columns
+                    $dateCols = config('ingresso.csv_date_columns', []);
+                    if (is_string($val)) {
+                        // detect known date column or common date string patterns (dd/mm/yyyy or yyyy-mm-dd)
+                        if (in_array($c, $dateCols, true) || preg_match('/\d{2}\/\d{2}\/\d{4}/', $val) || preg_match('/\d{4}-\d{2}-\d{2}/', $val)) {
+                            // Try to parse into timestamp and format as DDMMYYYY; fallback to stripping separators
+                            $ts = false;
+                            try {
+                                $ts = strtotime($val);
+                            } catch (\Throwable $e) {
+                                $ts = false;
+                            }
+                            if ($ts !== false && $ts !== -1) {
+                                $val = date('dmY', $ts);
+                            } else {
+                                $val = str_replace(['/', '-'], '', $val);
+                            }
+                            // Wrap as an Excel formula string to force text and preserve leading zeros
+                            $val = '="' . $val . '"';
+                        }
+                    }
+
                     $line[] = mb_convert_encoding((string)$val, 'Windows-1252', 'UTF-8');
                 }
                 fputcsv($out, $line, ';');
