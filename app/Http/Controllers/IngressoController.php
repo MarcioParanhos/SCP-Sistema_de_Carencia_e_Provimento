@@ -1233,25 +1233,71 @@ class IngressoController extends Controller
                     }
                 }
 
-                // Apply assunsao presence filter (filter_assunsao)
+                // Apply assunsao filter (filter_assunsao)
+                // Supported values: '' (all), 'no' (no assunção date), 'pending' (has date but not validated), 'validated' (assunção validated)
                 $filterAss = trim((string) ($request->query('filter_assunsao') ?? ''));
                 if ($filterAss !== '') {
                     // detect which assunção-like column exists in the table (tolerate naming variants)
-                    $possible = ['assunsao', 'assuncao', 'data_assunsao', 'data_assuncao', 'data_assumcao', 'data_assuncao'];
+                    $possible = ['assunsao', 'assuncao', 'data_assunsao', 'data_assuncao', 'data_assumcao'];
                     $assCol = null;
-                    foreach ($possible as $p) {
-                        if (in_array($p, $columns)) { $assCol = $p; break; }
+                    foreach ($possible as $p) { if (in_array($p, $columns)) { $assCol = $p; break; } }
+
+                    // detect assunção-validated indicator columns (boolean or timestamp)
+                    $possibleValidated = ['assuncao_validada', 'assuncao_validada_at', 'assunsao_validada', 'assunsao_validada_at'];
+                    $validatedCol = null;
+                    $validatedIsTimestamp = false;
+                    foreach ($possibleValidated as $pv) {
+                        if (in_array($pv, $columns)) { $validatedCol = $pv; $validatedIsTimestamp = (strpos($pv, '_at') !== false); break; }
                     }
-                    if ($assCol) {
-                        try {
-                            if ($filterAss === 'yes') {
-                                $filteredQuery->whereNotNull($assCol);
-                            } elseif ($filterAss === 'no') {
-                                $filteredQuery->whereNull($assCol);
-                            }
-                        } catch (\Throwable $e) {
-                            // ignore issues
+
+                    try {
+                        if ($filterAss === 'no') {
+                            if ($assCol) $filteredQuery->whereNull($assCol);
+                        } elseif ($filterAss === 'validated') {
+                            // require an assunção date AND evidence of validation
+                            if ($assCol) $filteredQuery->whereNotNull($assCol);
+                            $filteredQuery->where(function ($q) use ($validatedCol, $validatedIsTimestamp, $columns) {
+                                if ($validatedCol) {
+                                    if ($validatedIsTimestamp) {
+                                        $q->whereNotNull($validatedCol);
+                                    } else {
+                                        $q->where($validatedCol, 1);
+                                    }
+                                }
+                                // also accept candidates whose `ingresso` or `status` indicate apto for ingresso
+                                if (in_array('ingresso', $columns)) {
+                                    $q->orWhereRaw("LOWER(COALESCE(ingresso,'')) LIKE '%apto%'");
+                                }
+                                if (in_array('status', $columns)) {
+                                    $q->orWhereRaw("LOWER(COALESCE(status,'')) LIKE '%apto para ingresso%'");
+                                }
+                            });
+                        } elseif ($filterAss === 'pending') {
+                            // has assunção date but not validated
+                            if ($assCol) $filteredQuery->whereNotNull($assCol);
+                            $filteredQuery->where(function ($q) use ($validatedCol, $validatedIsTimestamp, $columns) {
+                                if ($validatedCol) {
+                                    if ($validatedIsTimestamp) {
+                                        $q->whereNull($validatedCol);
+                                    } else {
+                                        $q->where(function($q2) use ($validatedCol){ $q2->where($validatedCol, '!=', 1)->orWhereNull($validatedCol); });
+                                    }
+                                } else {
+                                    // no explicit validated column: infer from absence of 'apto' ingresso/status
+                                    if (in_array('ingresso', $columns)) {
+                                        $q->whereRaw("LOWER(COALESCE(ingresso,'')) NOT LIKE '%apto%'");
+                                    }
+                                    if (in_array('status', $columns)) {
+                                        $q->whereRaw("LOWER(COALESCE(status,'')) NOT LIKE '%apto para ingresso%'");
+                                    }
+                                }
+                            });
+                        } elseif ($filterAss === 'yes') {
+                            // legacy: any row with assunção date
+                            if ($assCol) $filteredQuery->whereNotNull($assCol);
                         }
+                    } catch (\Throwable $e) {
+                        // ignore issues applying assunção filters
                     }
                 }
             } catch (\Throwable $e) {

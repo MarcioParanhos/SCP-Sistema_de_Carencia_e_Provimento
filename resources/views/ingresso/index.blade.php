@@ -149,6 +149,15 @@
                         <option value="Nao Assumiu">Não Assumiu</option>
                     </select>
                 </div>
+                <div class="col-md-3">
+                    <label for="filter_assunsao">Assunção</label>
+                    <select id="filter_assunsao" class="form-control form-control-sm">
+                        <option value="">(Todos)</option>
+                        <option value="no">Sem data de assunção</option>
+                        <option value="pending">Com data — Pendente validação</option>
+                        <option value="validated">Com data — Validados</option>
+                    </select>
+                </div>
                 <div class="col-md-2">
                     <button type="button" id="applyFilters" class="btn btn-primary">Aplicar</button>
                     <button type="button" id="clearFilters" class="btn btn-secondary ml-2">Limpar</button>
@@ -424,6 +433,7 @@
                     data.customFilters = {
                         filter_nte: $('#filter_nte').val(),
                         filter_status: $('#filter_status').val(),
+                        filter_assunsao: $('#filter_assunsao').val ? $('#filter_assunsao').val() : '',
                         filter_convocacao: $('#filter_convocacao').val(),
                         panelOpen: ($('#filterPanel').is(':visible'))
                     };
@@ -440,6 +450,7 @@
                             // restore filters UI before DataTables requests data
                             try { $('#filter_nte').val(data.customFilters.filter_nte || ''); } catch(e){}
                             try { $('#filter_status').val(data.customFilters.filter_status || ''); } catch(e){}
+                            try { $('#filter_assunsao').val(data.customFilters.filter_assunsao || ''); } catch(e){}
                             try { $('#filter_convocacao').val(data.customFilters.filter_convocacao || ''); } catch(e){}
                             try {
                                 if (data.customFilters.panelOpen) {
@@ -462,6 +473,7 @@
                     data: function(d) {
                         d.filter_nte = $('#filter_nte').val();
                         d.filter_status = $('#filter_status').val();
+                        try { d.filter_assunsao = $('#filter_assunsao').val(); } catch(e) {}
                         d.filter_convocacao = $('#filter_convocacao').val();
                     }
                 },
@@ -770,6 +782,7 @@
                     e.preventDefault();
                     $('#filter_nte').val('');
                     $('#filter_status').val('');
+                    try { $('#filter_assunsao').val(''); } catch(e){}
                     if (typeof ingressoTable !== 'undefined' && ingressoTable) {
                         ingressoTable.ajax.reload(function(){ try{ if (ingressoTable && ingressoTable.state) ingressoTable.state.save(); }catch(e){} });
                     }
