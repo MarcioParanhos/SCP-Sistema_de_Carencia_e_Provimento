@@ -294,7 +294,7 @@
         <p class="main-content">
             Encaminhamos o(a) Professor(a) {{ $serverName }},
             CPF {{ $serverCpf }} com carga horária de 20hs,@if(!empty($sSubName) && $sSubName !== '-')
-            Subistituindo o(a) servidor(a): {{ $sSubName }}, Matrícula: {{ $sSubCadastro ?: '-' }}, Vínculo: {{ $sSubVinculo ?: '-' }}
+            Substituindo o(a) servidor(a): {{ $sSubName }}, Matrícula: {{ $sSubCadastro ?: '-' }}, Vínculo: {{ $sSubVinculo ?: '-' }}
         @endif, para atuar nos turnos abaixo indicados, na(s) disciplina(s)
             @php
                 // prefer explicit $encaminhamentos (rows from ingresso_encaminhamentos) when available

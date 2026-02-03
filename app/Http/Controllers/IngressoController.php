@@ -1345,7 +1345,10 @@ class IngressoController extends Controller
     public function setEncaminhamentoDevolucaoAssuncao(Request $request, $identifier)
     {
         if (! $this->authorizeUser()) {
-            return response()->json(['success' => false, 'message' => 'Ação não autorizada'], 403);
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Ação não autorizada'], 403);
+            }
+            return redirect()->back()->with('status', 'Ação não autorizada');
         }
 
         if (! $request->has('devolucao')) {
@@ -2317,13 +2320,19 @@ class IngressoController extends Controller
         // only CPM (sector 2 && profile_id 1) may perform final validation
         $user = optional(Auth::user());
         if (!($user && isset($user->sector_id) && isset($user->profile_id) && $user->sector_id == 2 && $user->profile_id == 1)) {
-            return response()->json(['success' => false, 'message' => 'Ação permitida apenas para CPM'], 403);
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Ação permitida apenas para CPM'], 403);
+            }
+            return redirect()->back()->with('status', 'Ação permitida apenas para CPM');
         }
 
         try {
             $candidateId = DB::table('ingresso_candidatos')->where('id', $identifier)->orWhere('num_inscricao', $identifier)->value('id');
             if (! $candidateId) {
-                return response()->json(['success' => false, 'message' => 'Candidato não encontrado'], 404);
+                if ($request->expectsJson()) {
+                    return response()->json(['success' => false, 'message' => 'Candidato não encontrado'], 404);
+                }
+                return redirect()->back()->with('status', 'Candidato não encontrado');
             }
 
             $updates = [];
@@ -2480,6 +2489,64 @@ class IngressoController extends Controller
         } catch (\Throwable $e) {
             Log::error('Failed to validate assuncao', ['exception' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => 'Erro ao validar assunção'], 500);
+        }
+    }
+
+    /**
+     * CPM: remove only assunção validation (clear `ingresso` and assuncao_* flags)
+     * without changing the candidate `status` or `documentos_validados`.
+     */
+    public function retirarValidacaoAssuncao(Request $request, $identifier)
+    {
+        if (! $this->authorizeUser()) {
+            return response()->json(['success' => false, 'message' => 'Ação não autorizada'], 403);
+        }
+
+        // only CPM may perform this action
+        $user = optional(Auth::user());
+        if (!($user && isset($user->sector_id) && isset($user->profile_id) && $user->sector_id == 2 && $user->profile_id == 1)) {
+            return response()->json(['success' => false, 'message' => 'Ação permitida apenas para CPM'], 403);
+        }
+
+        try {
+            $candidateId = DB::table('ingresso_candidatos')->where('id', $identifier)->orWhere('num_inscricao', $identifier)->value('id');
+            if (! $candidateId) {
+                return response()->json(['success' => false, 'message' => 'Candidato não encontrado'], 404);
+            }
+
+            $updates = [];
+            // clear ingresso column but keep documentos_validados and status intact
+            if (Schema::hasColumn('ingresso_candidatos', 'ingresso')) {
+                $updates['ingresso'] = null;
+            }
+            // clear assuncao validation metadata if present
+            if (Schema::hasColumn('ingresso_candidatos', 'assuncao_validada')) {
+                $updates['assuncao_validada'] = 0;
+            }
+            if (Schema::hasColumn('ingresso_candidatos', 'assuncao_validada_by')) {
+                $updates['assuncao_validada_by'] = null;
+            }
+            if (Schema::hasColumn('ingresso_candidatos', 'assuncao_validada_at')) {
+                $updates['assuncao_validada_at'] = null;
+            }
+
+            if (! empty($updates)) {
+                DB::table('ingresso_candidatos')->where('id', $candidateId)->update($updates);
+            }
+
+            Log::info('Retirou validação de assuncao (CPM)', ['user' => optional(Auth::user())->id, 'candidate' => $candidateId, 'updates' => $updates]);
+
+            $updated = DB::table('ingresso_candidatos')->where('id', $candidateId)->first();
+            if ($request->expectsJson()) {
+                return response()->json(['success' => true, 'message' => 'Validação de assunção removida.', 'candidate' => $updated]);
+            }
+            return redirect()->back()->with('status', 'Validação de assunção removida.');
+        } catch (\Throwable $e) {
+            Log::error('Failed to retirarValidacaoAssuncao', ['exception' => $e->getMessage()]);
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Erro ao remover validação de assunção'], 500);
+            }
+            return redirect()->back()->with('status', 'Erro ao remover validação de assunção');
         }
     }
 

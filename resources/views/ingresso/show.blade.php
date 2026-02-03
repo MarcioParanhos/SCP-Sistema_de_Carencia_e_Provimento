@@ -46,15 +46,15 @@
 
     <div class="card">
         @if (session('status'))
-            <div class="col-12">
-                <div class="alert text-center text-white bg-success container alert-success alert-dismissible fade show"
-                    role="alert" style="min-width: 100%">
-                    <strong>{{ session('status') }}</strong>
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-            </div>
+     
+            <script>
+                document.addEventListener('DOMContentLoaded', function(){
+                    var msg = {!! json_encode(session('status')) !!};
+                    if (typeof Swal !== 'undefined' && msg) {
+                        try { Swal.fire({icon:'success', title: msg, timer:1500, showConfirmButton:false}); } catch(e) { console.error(e); }
+                    }
+                });
+            </script>
         @endif
         <style>
             /* Corporate candidate view */
@@ -622,9 +622,12 @@
                         @if ($isAptoIngresso)
                             <button type="button" class="btn btn-outline-danger btn-sm" id="btn-retirar-validacao-assuncao" style="border-radius:6px;padding:6px 10px;">Retirar Validação de Assunção</button>
                         @else
-                            <button type="button" class="btn btn-primary btn-sm" id="btn-validar-assuncao" style="border-radius:6px;padding:6px 10px;">Validar Assunção</button>
+                            <button type="button" class="btn btn-primary btn-sm" id="btn-validar-assuncao" style="border-radius:6px;padding:6px 10px;">Validar Assunsão</button>
                         @endif
                     </div>
+                    <form id="form-retirar-assuncao" action="{{ route('ingresso.assuncao.retirar', ['id' => $candidate['id'] ?? ($candidate['num_inscricao'] ?? '')]) }}" method="POST" style="display:none;">
+                        @csrf
+                    </form>
                     <script>
                         (function(){
                             try {
@@ -669,7 +672,14 @@
                                     if (!btnRet) return;
                                     try {
                                         btnRet.disabled = true;
-                                        const resp = await fetch('/ingresso/' + encodeURIComponent(candidateId) + '/retirar-validacao', {
+                                        const form = document.getElementById('form-retirar-assuncao');
+                                        if (form) {
+                                            // submit a regular POST form to avoid method/headers issues
+                                            form.submit();
+                                            return;
+                                        }
+                                        // fallback to fetch if form is not present
+                                        const resp = await fetch('/ingresso/' + encodeURIComponent(candidateId) + '/assuncao/retirar', {
                                             method: 'POST',
                                             credentials: 'same-origin',
                                             headers: {
