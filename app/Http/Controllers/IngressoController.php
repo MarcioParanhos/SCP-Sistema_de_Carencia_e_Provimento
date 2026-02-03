@@ -1251,7 +1251,25 @@ class IngressoController extends Controller
                     }
 
                     try {
-                        if ($filterAss === 'no') {
+                        if ($filterAss === 'reported') {
+                            // rows where ingresso/status text indicates a reported assunção
+                            $filteredQuery->where(function($q) use ($columns) {
+                                $q->where(function($sub) use ($columns) {
+                                    if (in_array('ingresso', $columns)) {
+                                        $sub->whereRaw("LOWER(COALESCE(ingresso,'')) LIKE '%assun%'")
+                                            ->whereRaw("LOWER(COALESCE(ingresso,'')) LIKE '%report%'");
+                                    }
+                                });
+                                // rows with an observation present are considered reported as well
+                                if (in_array('observacao', $columns)) {
+                                    $q->orWhereRaw("(observacao IS NOT NULL AND TRIM(observacao) <> '')");
+                                }
+                                // status text fallback
+                                if (in_array('status', $columns)) {
+                                    $q->orWhereRaw("LOWER(COALESCE(status,'')) LIKE '%assun%' AND LOWER(COALESCE(status,'')) LIKE '%report%'");
+                                }
+                            });
+                        } elseif ($filterAss === 'no') {
                             if ($assCol) $filteredQuery->whereNull($assCol);
                         } elseif ($filterAss === 'validated') {
                             // require an assunção date AND evidence of validation
@@ -2667,6 +2685,93 @@ class IngressoController extends Controller
                 return response()->json(['success' => false, 'message' => 'Erro ao remover validação de assunção'], 500);
             }
             return redirect()->back()->with('status', 'Erro ao remover validação de assunção');
+        }
+    }
+
+    /**
+     * CPM: report an issue with the candidate's assunção.
+     * Saves an observation into ingresso_candidatos.observacao and sets ingresso='Assunsão reportada'.
+     */
+    public function reportAssuncao(Request $request, $identifier)
+    {
+        if (! $this->authorizeUser()) {
+            return response()->json(['success' => false, 'message' => 'Ação não autorizada'], 403);
+        }
+
+        // only CPM may perform this action
+        $user = optional(Auth::user());
+        if (!($user && isset($user->sector_id) && isset($user->profile_id) && $user->sector_id == 2 && $user->profile_id == 1)) {
+            return response()->json(['success' => false, 'message' => 'Ação permitida apenas para CPM'], 403);
+        }
+
+        $observacao = $request->input('observacao');
+        if (is_null($observacao) || trim((string) $observacao) === '') {
+            return response()->json(['success' => false, 'message' => 'Observação vazia'], 400);
+        }
+
+        try {
+            $candidateId = DB::table('ingresso_candidatos')->where('id', $identifier)->orWhere('num_inscricao', $identifier)->value('id');
+            if (! $candidateId) {
+                return response()->json(['success' => false, 'message' => 'Candidato não encontrado'], 404);
+            }
+
+            $updates = [];
+            if (Schema::hasColumn('ingresso_candidatos', 'observacao')) {
+                $updates['observacao'] = trim((string)$observacao);
+            } else {
+                return response()->json(['success' => false, 'message' => 'Coluna observacao ausente no banco de dados'], 500);
+            }
+
+            if (Schema::hasColumn('ingresso_candidatos', 'ingresso')) {
+                $updates['ingresso'] = 'Assunsão reportada';
+            }
+
+            if (! empty($updates)) {
+                // use DB::table->update to avoid Eloquent timestamp behaviour
+                DB::table('ingresso_candidatos')->where('id', $candidateId)->update($updates);
+            }
+
+            Log::info('CPM reported assuncao issue', ['user' => optional(Auth::user())->id, 'candidate' => $candidateId, 'observacao' => $observacao]);
+
+            $updated = DB::table('ingresso_candidatos')->where('id', $candidateId)->first();
+            return response()->json(['success' => true, 'message' => 'Observação registrada e ingresso marcado como "Assunsão reportada"', 'candidate' => $updated]);
+        } catch (\Throwable $e) {
+            Log::error('reportAssuncao failed', ['exception' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Erro ao registrar observação'], 500);
+        }
+    }
+
+    /**
+     * NTE: clear a reported assunção marker from `ingresso`.
+     * Leaves `observacao` intact.
+     */
+    public function clearReportAssuncao(Request $request, $identifier)
+    {
+        // only NTE users may clear a report
+        $user = Auth::user();
+        if (!($user && isset($user->sector_id) && isset($user->profile_id) && $user->sector_id == 7 && $user->profile_id == 1)) {
+            return response()->json(['success' => false, 'message' => 'Ação permitida apenas para NTE'], 403);
+        }
+
+        try {
+            $candidateId = DB::table('ingresso_candidatos')->where('id', $identifier)->orWhere('num_inscricao', $identifier)->value('id');
+            if (! $candidateId) {
+                return response()->json(['success' => false, 'message' => 'Candidato não encontrado'], 404);
+            }
+
+            if (Schema::hasColumn('ingresso_candidatos', 'ingresso')) {
+                DB::table('ingresso_candidatos')->where('id', $candidateId)->update(['ingresso' => null]);
+            } else {
+                return response()->json(['success' => false, 'message' => 'Coluna ingresso ausente'], 500);
+            }
+
+            Log::info('NTE cleared assuncao report', ['user' => $user->id ?? null, 'candidate' => $candidateId]);
+
+            $updated = DB::table('ingresso_candidatos')->where('id', $candidateId)->first();
+            return response()->json(['success' => true, 'message' => 'Reporte de assunção removido', 'candidate' => $updated]);
+        } catch (\Throwable $e) {
+            Log::error('clearReportAssuncao failed', ['exception' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Erro ao limpar reporte'], 500);
         }
     }
 

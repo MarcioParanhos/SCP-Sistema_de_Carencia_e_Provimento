@@ -156,6 +156,7 @@
                         <option value="no">Sem data de assunção</option>
                         <option value="pending">Com data — Pendente validação</option>
                         <option value="validated">Com data — Validados</option>
+                        <option value="reported">Reportadas</option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -321,6 +322,17 @@
                         if (ingressoText.indexOf('apto para ingresso') !== -1 || statusTextLower.indexOf('apto para ingresso') !== -1) {
                             return '<span class="badge bg-success">' + formatted + ' • Apto para Ingresso</span>';
                         }
+
+                        // If ingresso was marked as reported by CPM, show the reported label
+                        try {
+                            if (ingressoText.indexOf('assuns') !== -1 && ingressoText.indexOf('report') !== -1) {
+                                    return '<span class="badge bg-danger text-white">' + formatted + ' • Assunsão reportada</span>';
+                            }
+                            // also handle alternative spellings like 'assuncao reportada' (no diacritics)
+                            if (ingressoText.indexOf('assuncao') !== -1 && ingressoText.indexOf('report') !== -1) {
+                                    return '<span class="badge bg-danger text-white">' + formatted + ' • Assunsão reportada</span>';
+                            }
+                        } catch (e) {}
 
                         // broaden detection for 'validated' state: check several possible indicators
                         var validated = false;

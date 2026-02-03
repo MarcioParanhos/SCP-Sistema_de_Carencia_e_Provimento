@@ -617,12 +617,51 @@
                     </div>
                     @php
                         $isAptoIngresso = isset($candidate['ingresso']) && mb_strtolower(trim($candidate['ingresso']), 'UTF-8') === 'apto para ingresso';
+                        $isNte = optional(Auth::user())->sector_id == 7 && optional(Auth::user())->profile_id == 1;
+                        $ingressoLower = mb_strtolower(trim($candidate['ingresso'] ?? ''), 'UTF-8');
+                        $observacaoStr = trim((string)($candidate['observacao'] ?? ''));
+                        $hasObservacao = $observacaoStr !== '';
+                        $foundAssun = (mb_strpos($ingressoLower, 'assuns') !== false || mb_strpos($ingressoLower, 'assuncao') !== false || mb_strpos($ingressoLower, 'assun') !== false);
+                        $foundReport = (mb_strpos($ingressoLower, 'report') !== false || mb_strpos($ingressoLower, 'reportada') !== false);
+                        // consider reported when ingresso text indicates report OR when an observation exists
+                        $isReportedAssuncao = ($foundAssun && $foundReport) || ($hasObservacao && ($foundAssun || $foundReport));
+                        $isCpm = optional(Auth::user())->sector_id == 2 && optional(Auth::user())->profile_id == 1;
                     @endphp
+                    @if($isCpm && !empty($isReportedAssuncao) && $isReportedAssuncao)
+                        <div style="flex:0 0 auto;margin-left:8px;">
+                            <span class="badge bg-danger text-white" title="Assunção reportada por CPM">Assunsão reportada</span>
+                        </div>
+                    @endif
                     <div style="flex:0 0 auto;margin-left:8px;display:flex;gap:8px;">
-                        @if ($isAptoIngresso)
-                            <button type="button" class="btn btn-outline-danger btn-sm" id="btn-retirar-validacao-assuncao" style="border-radius:6px;padding:6px 10px;">Retirar Validação de Assunção</button>
+                        @if ($isCpm)
+                            @if ($isAptoIngresso)
+                                <button type="button" class="btn btn-outline-danger btn-sm" id="btn-retirar-validacao-assuncao" style="border-radius:6px;padding:6px 10px;">Retirar Validação de Assunção</button>
+                            @else
+                                <button type="button" class="btn btn-primary btn-sm" id="btn-validar-assuncao" style="border-radius:6px;padding:6px 10px;">Validar Assunsão</button>
+                            @endif
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-report-assuncao" style="border-radius:6px;padding:6px 10px;">Reportar Assunção</button>
                         @else
-                            <button type="button" class="btn btn-primary btn-sm" id="btn-validar-assuncao" style="border-radius:6px;padding:6px 10px;">Validar Assunsão</button>
+                            @if ($isNte && $isReportedAssuncao)
+                                <button type="button" class="btn btn-outline-danger btn-sm" id="btn-view-report" data-observacao="{{ e($candidate['observacao'] ?? '') }}" style="border-radius:6px;padding:6px 10px;display:inline-flex;align-items:center;gap:8px;" title="Ver observação do reporte">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto;">
+                                        <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                    <span style="font-weight:700;">Ver Reporte</span>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-clear-report" style="border-radius:6px;padding:6px 10px;display:inline-flex;align-items:center;gap:8px;" title="Retirar reporte de assunção">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto;">
+                                        <path d="M3 6h18"></path>
+                                        <path d="M8 6v14a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6" ></path>
+                                        <path d="M10 11v6"></path>
+                                        <path d="M14 11v6"></path>
+                                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+                                    </svg>
+                                    <span style="font-weight:700;">Assunsão Ajustada </span>
+                                </button>
+                            @else
+                                {{-- Non-CPM users without a reported assunção see no actions here --}}
+                            @endif
                         @endif
                     </div>
                     <form id="form-retirar-assuncao" action="{{ route('ingresso.assuncao.retirar', ['id' => $candidate['id'] ?? ($candidate['num_inscricao'] ?? '')]) }}" method="POST" style="display:none;">
@@ -756,8 +795,159 @@
                                         });
                                     });
                                 }
+
+                                // Reportar Assunção (CPM only)
+                                try {
+                                    const btnReport = document.getElementById('btn-report-assuncao');
+                                    async function doReportAssuncao() {
+                                        if (!btnReport) return;
+                                        // ask for observation via SweetAlert (textarea)
+                                        const hasSwal = typeof Swal !== 'undefined';
+                                        if (!hasSwal) {
+                                            const text = prompt('Descreva o problema na assunção:');
+                                            if (!text || text.trim() === '') return alert('Observação vazia');
+                                            await sendReport(text);
+                                            return;
+                                        }
+
+                                        const result = await Swal.fire({
+                                            title: 'Reportar problema na assunção',
+                                            input: 'textarea',
+                                            inputPlaceholder: 'Descreva o problema encontrado...',
+                                            inputAttributes: { 'aria-label': 'Observação' },
+                                            showCancelButton: true,
+                                            confirmButtonText: 'Enviar',
+                                            cancelButtonText: 'Cancelar',
+                                            preConfirm: (value) => {
+                                                if (!value || !value.trim()) {
+                                                    Swal.showValidationMessage('Insira uma observação');
+                                                }
+                                                return value;
+                                            }
+                                        });
+
+                                        if (result && result.isConfirmed) {
+                                            const text = (result.value || '').trim();
+                                            if (!text) return;
+                                            await sendReport(text);
+                                        }
+                                    }
+
+                                    async function sendReport(text) {
+                                        try {
+                                            btnReport.disabled = true;
+                                            const resp = await fetch('/ingresso/' + encodeURIComponent(candidateId) + '/assuncao/report', {
+                                                method: 'POST',
+                                                credentials: 'same-origin',
+                                                headers: {
+                                                    'Content-Type': 'application/json',
+                                                    'X-CSRF-TOKEN': csrf,
+                                                    'X-Requested-With': 'XMLHttpRequest',
+                                                    'Accept': 'application/json'
+                                                },
+                                                body: JSON.stringify({ observacao: text })
+                                            });
+                                            let j = null;
+                                            try { j = await resp.json(); } catch (e) { j = null; }
+                                            if (resp.ok && j && j.success) {
+                                                try { await Swal.fire({icon:'success', title: j.message || 'Report enviado', timer:1200, showConfirmButton:false}); } catch (e) {}
+                                                try { location.reload(); } catch (e) {}
+                                            } else {
+                                                const msg = (j && j.message) || 'Erro ao enviar reporte';
+                                                await Swal.fire({icon:'error', title:'Erro', text: msg});
+                                            }
+                                        } catch (e) {
+                                            console.error(e);
+                                            await Swal.fire({icon:'error', title:'Erro', text: 'Erro de comunicação'});
+                                        } finally {
+                                            try { btnReport.disabled = false; } catch (e) {}
+                                        }
+                                    }
+
+                                    if (btnReport) {
+                                        btnReport.addEventListener('click', function(e){
+                                            e.preventDefault();
+                                            try { doReportAssuncao(); } catch (e) { console.error(e); }
+                                        });
+                                    }
+                                } catch (e) { console.error(e); }
                             } catch (e) { console.error(e); }
                         })();
+                    </script>
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function(){
+                            try {
+                                var btnView = document.getElementById('btn-view-report');
+                                if (!btnView) return;
+                                var candidateId = '{{ $candidate['id'] ?? ($candidate['num_inscricao'] ?? '') }}';
+                                var csrf = (document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '{{ csrf_token() }}');
+                                btnView.addEventListener('click', function(e){
+                                    e.preventDefault();
+                                    var obs = btnView.getAttribute('data-observacao') || '';
+                                    if (typeof Swal !== 'undefined') {
+                                        Swal.fire({
+                                            title: 'Observação da Assunção',
+                                            html: obs ? obs.replace(/\n/g,'<br/>') : 'Sem observação registrada',
+                                            icon: obs ? 'info' : 'warning',
+                                            confirmButtonText: 'Fechar'
+                                        });
+                                    } else {
+                                        alert(obs || 'Sem observação registrada');
+                                    }
+                                });
+                                // Clear report button handler
+                                var btnClear = document.getElementById('btn-clear-report');
+                                if (btnClear) {
+                                    btnClear.addEventListener('click', function(e){
+                                        e.preventDefault();
+                                        var hasSwal = typeof Swal !== 'undefined';
+                                        var proceed = function(){
+                                            btnClear.disabled = true;
+                                            fetch('/ingresso/' + encodeURIComponent(candidateId) + '/assuncao/clear-report', {
+                                                method: 'POST',
+                                                credentials: 'same-origin',
+                                                headers: {
+                                                    'Content-Type': 'application/json',
+                                                    'X-CSRF-TOKEN': csrf,
+                                                    'X-Requested-With': 'XMLHttpRequest',
+                                                    'Accept': 'application/json'
+                                                },
+                                                body: JSON.stringify({})
+                                            }).then(function(resp){
+                                                return resp.json().catch(function(){ return null; });
+                                            }).then(function(j){
+                                                if (j && j.success) {
+                                                    try { Swal.fire({icon:'success', title: j.message || 'Reporte removido', timer:1000, showConfirmButton:false}); } catch (e) {}
+                                                    try { location.reload(); } catch (e) {}
+                                                } else {
+                                                    var msg = (j && j.message) || 'Erro ao remover reporte';
+                                                    try { Swal.fire({icon:'error', title:'Erro', text: msg}); } catch (e) { alert(msg); }
+                                                }
+                                            }).catch(function(err){
+                                                console.error(err);
+                                                try { Swal.fire({icon:'error', title:'Erro', text: 'Erro de comunicação'}); } catch (e) { alert('Erro de comunicação'); }
+                                            }).finally(function(){ btnClear.disabled = false; });
+                                        };
+
+                                        if (!hasSwal) {
+                                            if (confirm('Remover reporte de assunção?')) proceed();
+                                            return;
+                                        }
+
+                                        Swal.fire({
+                                            title: 'Revalidar assunsão?',
+                                            text: 'Isto limpará o marcador "Assunsão reportada" e tornará a assunção disponível novamente.',
+                                            icon: 'warning',
+                                            showCancelButton: true,
+                                            confirmButtonText: 'Sim, revalidar',
+                                            cancelButtonText: 'Cancelar'
+                                        }).then(function(res){
+                                            if (res && res.isConfirmed) proceed();
+                                        });
+                                    });
+                                }
+                            } catch (e) { console.error(e); }
+                        });
                     </script>
                 </div>
             </div>

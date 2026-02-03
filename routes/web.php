@@ -206,6 +206,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/ingresso/{id}/validar', [IngressoController::class, 'validateIngresso'])->name('ingresso.validar');
     Route::post('/ingresso/{id}/assuncao/validate', [IngressoController::class, 'validateAssuncao'])->name('ingresso.assuncao.validate');
     Route::post('/ingresso/{id}/assuncao/retirar', [IngressoController::class, 'retirarValidacaoAssuncao'])->name('ingresso.assuncao.retirar');
+    // Clear a reported assunção (NTE) - remove the ingresso marker 'Assunsão reportada'
+    Route::post('/ingresso/{id}/assuncao/clear-report', [IngressoController::class, 'clearReportAssuncao'])->name('ingresso.assuncao.clear_report');
+    // Report an issue with assunção (save observation + mark ingresso as reported)
+    Route::post('/ingresso/{id}/assuncao/report', [IngressoController::class, 'reportAssuncao'])->name('ingresso.assuncao.report');
     Route::post('/ingresso/{id}/retirar-validacao', [IngressoController::class, 'unvalidateIngresso'])->name('ingresso.retirar_validacao');
     Route::get('/ingresso/{id}/oficio', [IngressoController::class, 'oficio'])->name('ingresso.oficio');
     Route::get('/ingresso/export/csv', [IngressoController::class, 'exportCsv'])->name('ingresso.export.csv');
