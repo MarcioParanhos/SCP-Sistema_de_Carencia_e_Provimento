@@ -857,7 +857,7 @@
                                             </div>
 
                                             <div class="mb-2 col-md-2 d-flex align-items-end justify-content-end">
-                                                <button class="btn btn-sm btn-primary" type="submit" form="substituicaoForm">
+                                                <button id="btn-save-substituicao" class="btn btn-sm btn-primary" type="button">
                                                     Salvar Servidor
                                                 </button>
                                             </div>
@@ -1306,6 +1306,100 @@
                         if (ueeSelect) handleUeeChange(ueeSelect);
                     } catch (e) {}
                 }
+
+                    // AJAX save for substituição form to avoid page reload
+                    (function() {
+                        const btn = document.getElementById('btn-save-substituicao');
+                        if (!btn) return;
+                        btn.addEventListener('click', async function() {
+                            const form = document.getElementById('substituicaoForm');
+                            if (!form) return;
+                            btn.disabled = true;
+                            try {
+                                const fd = new FormData(form);
+                                const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+                                const csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : null;
+                                const res = await fetch(form.action, {
+                                    method: (form.method || 'POST').toUpperCase(),
+                                    headers: Object.assign({
+                                        'X-Requested-With': 'XMLHttpRequest',
+                                        'Accept': 'application/json'
+                                    }, csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {}),
+                                    body: fd
+                                });
+                                const contentType = (res.headers && res.headers.get) ? (res.headers.get('content-type') || '') : '';
+                                let j = null;
+                                if (contentType.indexOf('application/json') !== -1) {
+                                    j = await res.json().catch(() => null);
+                                }
+                                if (j && j.success) {
+                                    try {
+                                        // show toast/modal
+                                        if (typeof swalSuccess === 'function') swalSuccess(j.message || 'Servidor salvo');
+                                    } catch (e) {}
+                                    // update onscreen fields if server returned data
+                                    if (j.data) {
+                                        if (j.data.id) {
+                                            const hid1 = document.getElementById('substituicao_servidor_id');
+                                            const hid2 = document.getElementById('servidor_subistituido');
+                                            if (hid1) hid1.value = j.data.id;
+                                            if (hid2) hid2.value = j.data.id;
+                                        }
+                                        if (j.data.nome) {
+                                            const el = document.getElementById('subs_nome');
+                                            if (el) el.textContent = j.data.nome;
+                                        }
+                                        if (j.data.cadastro) {
+                                            const el = document.getElementById('subs_cadcpf');
+                                            if (el) el.textContent = 'Matrícula: ' + j.data.cadastro;
+                                        }
+                                        if (j.data.vinculo) {
+                                            const el = document.getElementById('subs_vinculo');
+                                            if (el) el.textContent = 'Vínculo: ' + j.data.vinculo;
+                                        }
+                                    }
+                                } else if (res.ok) {
+                                    // Non-JSON successful response (redirect/HTML). Treat as success and update UI from form inputs.
+                                    try {
+                                        if (typeof swalSuccess === 'function') swalSuccess('Servidor salvo');
+                                    } catch (e) {}
+                                    // Update display fields from inputs as best-effort
+                                    try {
+                                        const servidorInput = document.getElementById('servidor');
+                                        if (servidorInput) {
+                                            const el = document.getElementById('subs_nome');
+                                            if (el) el.textContent = servidorInput.value;
+                                        }
+                                        const cadastroInput = document.getElementById('cadastro');
+                                        if (cadastroInput) {
+                                            const el = document.getElementById('subs_cadcpf');
+                                            if (el) el.textContent = 'Matrícula: ' + cadastroInput.value;
+                                        }
+                                        const vincInput = document.getElementById('vinculo');
+                                        if (vincInput) {
+                                            const el = document.getElementById('subs_vinculo');
+                                            if (el) el.textContent = 'Vínculo: ' + vincInput.value;
+                                        }
+                                        // copy hidden ids into form fields so subsequent actions use them
+                                        const hid1 = document.getElementById('substituicao_servidor_id');
+                                        const hid2 = document.getElementById('servidor_subistituido');
+                                        if (hid1 && !hid1.value) hid1.value = form.querySelector('[name="servidor_id"]') ? form.querySelector('[name="servidor_id"]').value : '';
+                                        if (hid2 && !hid2.value) hid2.value = form.querySelector('[name="servidor_subistituido"]') ? form.querySelector('[name="servidor_subistituido"]').value : '';
+                                    } catch (e) {}
+                                } else {
+                                    try {
+                                        if (typeof swalError === 'function') swalError((j && j.message) || 'Falha ao salvar');
+                                    } catch (e) {}
+                                }
+                            } catch (e) {
+                                try {
+                                    if (typeof swalError === 'function') swalError('Erro de comunicação ao salvar');
+                                } catch (err) {}
+                            } finally {
+                                btn.disabled = false;
+                            }
+                        });
+                    })();
 
                 document.getElementById('btn-submit-encaminhar').addEventListener('click', async function() {
                     const candidateId = '{{ $candidate->id ?? $candidate->num_inscricao }}';
