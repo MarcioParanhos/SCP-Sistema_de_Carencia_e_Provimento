@@ -293,9 +293,11 @@
         @endphp
         <p class="main-content">
             Encaminhamos o(a) Professor(a) {{ $serverName }},
-            CPF {{ $serverCpf }} com carga horária de 20hs,@if(!empty($sSubName) && $sSubName !== '-')
-            Substituindo o(a) servidor(a): {{ $sSubName }}, Matrícula: {{ $sSubCadastro ?: '-' }}, Vínculo: {{ $sSubVinculo ?: '-' }}
-        @endif, para atuar nos turnos abaixo indicados, na(s) disciplina(s)
+            CPF {{ $serverCpf }} com carga horária de 20h.
+            @if(!empty($sSubName) && $sSubName !== '-')
+                Substituindo o(a) servidor(a): {{ $sSubName }}, Matrícula: {{ $sSubCadastro ?: '-' }}, Vínculo: {{ $sSubVinculo ?: '-' }}.
+            @endif
+            Para atuar nos turnos abaixo indicados, na(s) disciplina(s)
             @php
                 // prefer explicit $encaminhamentos (rows from ingresso_encaminhamentos) when available
                 $discList = [];
@@ -357,15 +359,34 @@
     <section class="yoursSincerely">
         <p>Atenciosamente, </p>
     </section>
-    @if(intval(optional($provimentos_encaminhado->uee)->nte ?? 0) === 26)
-    <section class="responsavel">
-        <p><strong>Manoel Vidal Colaço Neto</strong></p>
-        <p>COORDENADOR TÉCNICO</p>
-    </section>
+    @php
+        // Resolve NTE from several possible sources on the provimento record
+        $uee = optional($provimentos_encaminhado->uee);
+        $nteCandidate = $uee->nte ?? $provimentos_encaminhado->nte ?? $uee->cod_unidade ?? null;
+        $nteVal = is_null($nteCandidate) ? 0 : intval(trim((string) $nteCandidate));
+        $mappedNte = null;
+        // If the candidate looks like a long cod_unidade (not an NTE), try to map it to an NTE via the Uee model
+        if ($nteVal > 99999) {
+            try {
+                $mappedNte = \App\Models\Uee::where('cod_unidade', (string) $nteCandidate)->value('nte');
+                if (!is_null($mappedNte) && $mappedNte !== '') {
+                    $nteVal = intval(trim((string) $mappedNte));
+                }
+            } catch (\Throwable $e) {
+                // ignore lookup errors and keep original value
+            }
+        }
+    @endphp
+    
+    @if($nteVal === 26)
+        <section class="responsavel">
+            <p><strong>Manoel Vidal Colaço Neto</strong></p>
+            <p>COORDENADOR TÉCNICO</p>
+        </section>
     @else
-    <section class="responsavel">
-        <p><strong>NÚCLEO TERRITORIAL DE EDUCAÇÃO</strong></p>
-    </section>
+        <section class="responsavel">
+            <p><strong>NÚCLEO TERRITORIAL DE EDUCAÇÃO</strong></p>
+        </section>
     @endif
 
     <script>
