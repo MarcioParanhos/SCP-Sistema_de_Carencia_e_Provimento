@@ -1252,23 +1252,24 @@ class IngressoController extends Controller
 
                     try {
                         if ($filterAss === 'reported') {
-                            // rows where ingresso/status text indicates a reported assunção
-                            $filteredQuery->where(function($q) use ($columns) {
-                                $q->where(function($sub) use ($columns) {
-                                    if (in_array('ingresso', $columns)) {
-                                        $sub->whereRaw("LOWER(COALESCE(ingresso,'')) LIKE '%assun%'")
-                                            ->whereRaw("LOWER(COALESCE(ingresso,'')) LIKE '%report%'");
+                            // Prefer strict matching on the `ingresso` column when present
+                            // so "reported" returns only rows where the ingress note
+                            // explicitly contains both 'assun' and 'report'. If the
+                            // `ingresso` column does not exist, fall back to legacy
+                            // behavior (observacao/status checks).
+                            if (in_array('ingresso', $columns)) {
+                                $filteredQuery->whereRaw("LOWER(COALESCE(ingresso,'')) LIKE '%assun%' AND LOWER(COALESCE(ingresso,'')) LIKE '%report%'");
+                            } else {
+                                // legacy behavior: include observacao or status indicators
+                                $filteredQuery->where(function($q) use ($columns) {
+                                    if (in_array('observacao', $columns)) {
+                                        $q->whereRaw("(observacao IS NOT NULL AND TRIM(observacao) <> '')");
+                                    }
+                                    if (in_array('status', $columns)) {
+                                        $q->orWhereRaw("LOWER(COALESCE(status,'')) LIKE '%assun%' AND LOWER(COALESCE(status,'')) LIKE '%report%'");
                                     }
                                 });
-                                // rows with an observation present are considered reported as well
-                                if (in_array('observacao', $columns)) {
-                                    $q->orWhereRaw("(observacao IS NOT NULL AND TRIM(observacao) <> '')");
-                                }
-                                // status text fallback
-                                if (in_array('status', $columns)) {
-                                    $q->orWhereRaw("LOWER(COALESCE(status,'')) LIKE '%assun%' AND LOWER(COALESCE(status,'')) LIKE '%report%'");
-                                }
-                            });
+                            }
                         } elseif ($filterAss === 'no') {
                             if ($assCol) $filteredQuery->whereNull($assCol);
                         } elseif ($filterAss === 'validated') {
