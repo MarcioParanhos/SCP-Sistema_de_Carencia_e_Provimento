@@ -629,7 +629,7 @@
                     @endphp
                     @if($isCpm && !empty($isReportedAssuncao) && $isReportedAssuncao)
                         <div style="flex:0 0 auto;margin-left:8px;">
-                            <span class="badge bg-danger text-white" title="Assunção reportada por CPM">Assunsão reportada</span>
+                            <span class="badge bg-danger text-white" title="Assunção reportada por CPM">Assunção reportada</span>
                         </div>
                     @endif
                     <div style="flex:0 0 auto;margin-left:8px;display:flex;gap:8px;">
@@ -637,7 +637,7 @@
                             @if ($isAptoIngresso)
                                 <button type="button" class="btn btn-outline-danger btn-sm" id="btn-retirar-validacao-assuncao" style="border-radius:6px;padding:6px 10px;">Retirar Validação de Assunção</button>
                             @else
-                                <button type="button" class="btn btn-primary btn-sm" id="btn-validar-assuncao" style="border-radius:6px;padding:6px 10px;">Validar Assunsão</button>
+                                <button type="button" class="btn btn-primary btn-sm" id="btn-validar-assuncao" style="border-radius:6px;padding:6px 10px;">Validar Assunção</button>
                             @endif
                             <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-report-assuncao" style="border-radius:6px;padding:6px 10px;">Reportar Assunção</button>
                         @else
@@ -657,7 +657,7 @@
                                         <path d="M14 11v6"></path>
                                         <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
                                     </svg>
-                                    <span style="font-weight:700;">Assunsão Ajustada </span>
+                                    <span style="font-weight:700;">Assunção Ajustada </span>
                                 </button>
                             @else
                                 {{-- Non-CPM users without a reported assunção see no actions here --}}
@@ -935,8 +935,8 @@
                                         }
 
                                         Swal.fire({
-                                            title: 'Revalidar assunsão?',
-                                            text: 'Isto limpará o marcador "Assunsão reportada" e tornará a assunção disponível novamente.',
+                                            title: 'Revalidar Assunção?',
+                                            text: 'Isto limpará o marcador "Assunção reportada" e tornará a assunção disponível novamente.',
                                             icon: 'warning',
                                             showCancelButton: true,
                                             confirmButtonText: 'Sim, revalidar',

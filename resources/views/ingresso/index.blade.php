@@ -326,11 +326,11 @@
                         // If ingresso was marked as reported by CPM, show the reported label
                         try {
                             if (ingressoText.indexOf('assuns') !== -1 && ingressoText.indexOf('report') !== -1) {
-                                    return '<span class="badge bg-danger text-white">' + formatted + ' • Assunsão reportada</span>';
+                                    return '<span class="badge bg-danger text-white">' + formatted + ' • Assunção reportada</span>';
                             }
                             // also handle alternative spellings like 'assuncao reportada' (no diacritics)
                             if (ingressoText.indexOf('assuncao') !== -1 && ingressoText.indexOf('report') !== -1) {
-                                    return '<span class="badge bg-danger text-white">' + formatted + ' • Assunsão reportada</span>';
+                                    return '<span class="badge bg-danger text-white">' + formatted + ' • Assunção reportada</span>';
                             }
                         } catch (e) {}
 
