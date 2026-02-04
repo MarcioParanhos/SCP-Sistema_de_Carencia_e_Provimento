@@ -142,13 +142,20 @@ class CarenciaController extends Controller
                 })
                 ->where('ano_ref', $anoRef);
 
-            // Apply NTE restriction for users that have an NTE and are not administrator
+            // Determine user NTE/admin state. If user is logged in, not admin and has no NTE,
+            // show NTE 28 by default. If user has an NTE, filter by it. Admins see full result.
             $user = auth()->user();
+            $userNte = 0;
+            $isAdmin = false;
             if ($user) {
                 $userNte = intval($user->nte ?? 0);
-                if ($userNte > 0 && intval($user->profile_id ?? 0) !== 4) {
-                    $query->where('nte', $userNte);
-                }
+                $isAdmin = intval($user->profile_id ?? 0) === 4;
+            }
+
+            if ($user && !$isAdmin && $userNte === 0) {
+                $query->where('nte', 28);
+            } elseif ($user && !$isAdmin && $userNte > 0) {
+                $query->where('nte', $userNte);
             }
 
             $filteredCarencias = $query->orderBy('nte', 'asc')
@@ -215,12 +222,19 @@ class CarenciaController extends Controller
             if ($user) {
                 $skipProfiles = ['administrador', 'cpm_tecnico', 'cpm_coordenador', 'cpg_tecnico'];
                 $userNte = intval($user->nte ?? 0);
-                if (!in_array($user->profile, $skipProfiles) && $userNte > 0) {
-                    $filteredCarencias = $filteredCarencias->filter(function ($c) use ($userNte) {
-                        // Carencia may include direct 'nte' field or related 'uee'->nte
-                        $carNte = intval($c->nte ?? ($c->uee->nte ?? 0));
-                        return $carNte === $userNte;
-                    })->values();
+                if (!in_array($user->profile, $skipProfiles)) {
+                    if ($userNte > 0) {
+                        $filteredCarencias = $filteredCarencias->filter(function ($c) use ($userNte) {
+                            $carNte = intval($c->nte ?? ($c->uee->nte ?? 0));
+                            return $carNte === $userNte;
+                        })->values();
+                    } else {
+                        // Usuário sem NTE: mostrar apenas NTE 28
+                        $filteredCarencias = $filteredCarencias->filter(function ($c) {
+                            $carNte = intval($c->nte ?? ($c->uee->nte ?? 0));
+                            return $carNte === 28;
+                        })->values();
+                    }
                 }
             }
 
@@ -396,19 +410,35 @@ class CarenciaController extends Controller
                 ->get();
         }
 
-        // Enforce NTE restriction server-side for users with assigned NTE (and non-admin)
+        // Determine if the request included any user-applied filters.
+        $hasAnyFilter = collect($request->except(['_token', 'page']))->filter(function ($v) {
+            return !is_null($v) && $v !== '';
+        })->isNotEmpty();
+
+        // Enforce NTE restriction server-side for users with assigned NTE (and non-admin).
+        // If user is not admin and has no NTE, show NTE 28 by default — but only when
+        // the user did NOT submit any filters. If the user applied filters, honor them.
         $user = auth()->user();
         if ($user) {
             $userNte = intval($user->nte ?? 0);
-            if ($userNte > 0 && intval($user->profile_id ?? 0) !== 4) {
-                // If $carencias is a query builder, apply where; otherwise it'll have been applied above
-                if ($carencias instanceof \Illuminate\Database\Eloquent\Builder) {
-                    $carencias = $carencias->where('nte', $userNte);
+            $isAdmin = intval($user->profile_id ?? 0) === 4;
+            if (!$isAdmin) {
+                if ($userNte > 0) {
+                    if ($carencias instanceof \Illuminate\Database\Eloquent\Builder) {
+                        $carencias = $carencias->where('nte', $userNte);
+                    }
+                    $filteredCarencias = collect($filteredCarencias)->filter(function ($c) use ($userNte) {
+                        return intval($c->nte ?? ($c->uee->nte ?? 0)) === $userNte;
+                    })->values();
+                } elseif (!$hasAnyFilter) {
+                    // Usuário sem NTE e não admin, sem filtros aplicados: limitar ao NTE 28
+                    if ($carencias instanceof \Illuminate\Database\Eloquent\Builder) {
+                        $carencias = $carencias->where('nte', 28);
+                    }
+                    $filteredCarencias = collect($filteredCarencias)->filter(function ($c) {
+                        return intval($c->nte ?? ($c->uee->nte ?? 0)) === 28;
+                    })->values();
                 }
-                // Also filter the resulting collection that we just retrieved
-                $filteredCarencias = collect($filteredCarencias)->filter(function($c) use ($userNte) {
-                    return intval($c->nte ?? ($c->uee->nte ?? 0)) === $userNte;
-                })->values();
             }
         }
 
