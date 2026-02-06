@@ -1031,7 +1031,7 @@ class IngressoController extends Controller
             // filtered
             // ensure we explicitly select critical columns but only those that exist in the table
             // include both legacy and current column names for racial quota to be safe
-            $desired = ['id', 'num_inscricao', 'name', 'cpf', 'nte', 'disciplina', 'municipio_convocacao', 'classificacao_ampla', 'classificacao_quota_pne', 'classificacao_quota_racial', 'classificacao_racial', 'classificacao', 'nota', 'sei_number', 'status', 'documentos_validados', 'assunsao', 'ingresso'];
+                $desired = ['id', 'num_inscricao', 'name', 'cpf', 'nte', 'matricula', 'disciplina', 'municipio_convocacao', 'classificacao_ampla', 'classificacao_quota_pne', 'classificacao_quota_racial', 'classificacao_racial', 'classificacao', 'nota', 'sei_number', 'status', 'documentos_validados', 'assunsao', 'ingresso', 'tempo_trabalho_teorico'];
             $available = Schema::hasTable('ingresso_candidatos') ? Schema::getColumnListing('ingresso_candidatos') : [];
             $selectCols = array_values(array_intersect($desired, $available));
 
@@ -1114,7 +1114,7 @@ class IngressoController extends Controller
                 });
             }
 
-            // Apply client-side filters (if provided): filter_nte, filter_status
+                // Apply client-side filters (if provided): filter_nte, filter_status, filter_ingresso
             try {
                 $filterNte = trim((string) ($request->query('filter_nte') ?? ''));
                 if ($filterNte !== '') {
@@ -1135,8 +1135,19 @@ class IngressoController extends Controller
                     if (in_array('status', $columns)) {
                         if (mb_strpos($low, 'corrig') !== false) {
                             $filteredQuery->whereRaw("LOWER(status) LIKE '%corrig%'");
-                        } elseif (mb_strpos($low, 'apto') !== false || mb_strpos($low, 'ingress') !== false || mb_strpos($low, 'ingresso') !== false) {
+                        } elseif (mb_strpos($low, 'apto') !== false || mb_strpos($low, 'ingresso') !== false) {
+                            // treat 'apto' or explicit 'ingresso' text as apto para encaminhamento
                             $filteredQuery->whereRaw("LOWER(status) = 'apto para encaminhamento'");
+                        } elseif (mb_strpos($low, 'ingress') !== false) {
+                            // 'ingress' substring (Ingressado) -> filter candidates that already have a matricula
+                            if (in_array('matricula', $columns)) {
+                                $filteredQuery->whereNotNull('matricula')->whereRaw("TRIM(matricula) != ''");
+                            } else {
+                                // fallback: try join with servidores table if exists
+                                if (Schema::hasTable('servidores')) {
+                                    $filteredQuery->whereIn('id', function($q){ $q->select('id')->from('ingresso_candidatos')->whereRaw('1=0'); });
+                                }
+                            }
                         } elseif (mb_strpos($low, 'valid') !== false) {
                             $filteredQuery->whereRaw("LOWER(status) LIKE '%valid%'");
                         } elseif (mb_strpos($low, 'pend') !== false) {
@@ -1165,6 +1176,23 @@ class IngressoController extends Controller
                                 });
                             }
                         }
+                    }
+                }
+
+                // Apply ingresso filter explicitly when provided (prefer ingresso column)
+                $filterIngresso = trim((string) ($request->query('filter_ingresso') ?? ''));
+                if ($filterIngresso !== '') {
+                    try {
+                        if (in_array('ingresso', $columns)) {
+                            $low = mb_strtolower($filterIngresso, 'UTF-8');
+                            if ($low === 'apto' || mb_strpos($low, 'apto') !== false) {
+                                $filteredQuery->whereRaw("LOWER(TRIM(ingresso)) = 'apto para ingresso'");
+                            } else {
+                                $filteredQuery->whereRaw('LOWER(TRIM(ingresso)) LIKE ?', ["%{$low}%"]);
+                            }
+                        }
+                    } catch (\Throwable $e) {
+                        // ignore if column missing or other issues
                     }
                 }
                 // Apply convocacao filter (status_convocacao) when provided
@@ -1393,10 +1421,15 @@ class IngressoController extends Controller
                                 return $g->sortByDesc('created_at')->first();
                             });
                         $encMap = $encRows->mapWithKeys(function ($v, $k) {
+                            // normalize unit name/code using common aliases across installations
+                            $ueeName = $v->uee_name ?? $v->uee_nome ?? $v->unidade_escolar ?? null;
+                            $ueeCode = $v->uee_code ?? $v->uee_codigo ?? $v->cod_unidade ?? null;
                             return [$k => [
                                 'id' => $v->id ?? null,
                                 'status' => $v->status ?? null,
                                 'devolucao_assunsao' => isset($v->devolucao_assunsao) ? intval($v->devolucao_assunsao) : 0,
+                                'uee_name' => $ueeName,
+                                'uee_code' => $ueeCode,
                             ]];
                         });
                     }
@@ -1444,8 +1477,16 @@ class IngressoController extends Controller
                             $row['encaminhamento_status'] = $enc['status'] ?? null;
                             $row['encaminhamento_id'] = $enc['id'] ?? null;
                             $row['devolucao_assunsao'] = $enc['devolucao_assunsao'] ?? 0;
+                            // attach unidade escolar fields (may be null)
+                            $row['uee_name'] = $enc['uee_name'] ?? null;
+                            $row['uee_code'] = $enc['uee_code'] ?? null;
+                        } else {
+                            $row['uee_name'] = null;
+                            $row['uee_code'] = null;
                         }
                     } catch (\Throwable $e) {
+                        $row['uee_name'] = null;
+                        $row['uee_code'] = null;
                     }
                     return (object) $row;
                 })->values();
@@ -1664,6 +1705,132 @@ class IngressoController extends Controller
             'nte' => $candidate->nte ?? ($candidate->uee_code ?? $candidate->uee_name ?? null),
             'cpf' => $candidate->cpf ?? null,
         ]]);
+    }
+
+    /**
+     * Update matricula for a candidate (AJAX)
+     */
+    public function updateMatricula(Request $request, $id)
+    {
+        if (! $this->authorizeUser()) {
+            return response()->json(['success' => false, 'message' => 'Ação não autorizada'], 403);
+        }
+
+        $matricula = trim((string) $request->input('matricula', ''));
+
+        try {
+            if (! Schema::hasTable('ingresso_candidatos')) {
+                return response()->json(['success' => false, 'message' => 'Tabela de candidatos indisponível'], 500);
+            }
+
+            if (! Schema::hasColumn('ingresso_candidatos', 'matricula')) {
+                return response()->json(['success' => false, 'message' => 'Coluna matricula inexistente no banco de dados'], 400);
+            }
+
+            // Resolve candidate id: accept either primary key id OR num_inscricao (user may click a row that only has num_inscricao)
+            $candidateId = DB::table('ingresso_candidatos')
+                ->where('id', $id)
+                ->orWhere('num_inscricao', $id)
+                ->value('id');
+
+            if (! $candidateId) {
+                return response()->json(['success' => false, 'message' => 'Candidato não encontrado'], 404);
+            }
+
+            // fetch current matricula to detect no-op updates
+            $current = DB::table('ingresso_candidatos')->where('id', $candidateId)->value('matricula');
+
+            if ((string) $current === (string) $matricula) {
+                return response()->json(['success' => true, 'message' => 'Nenhuma alteração necessária', 'matricula' => $matricula]);
+            }
+
+            $upd = ['matricula' => $matricula];
+            if (Schema::hasColumn('ingresso_candidatos', 'updated_at')) $upd['updated_at'] = now();
+
+            $affected = DB::table('ingresso_candidatos')->where('id', $candidateId)->update($upd);
+
+            $didUpdate = false;
+            if ($affected > 0) {
+                $didUpdate = true;
+            } else {
+                // If DB reports 0 affected rows despite different value (edge cases with some drivers),
+                // try forcing an update of updated_at to ensure change is recorded when possible.
+                try {
+                    if (Schema::hasColumn('ingresso_candidatos', 'updated_at')) {
+                        $forced = DB::table('ingresso_candidatos')->where('id', $candidateId)->update(['updated_at' => now()]);
+                        if ($forced) {
+                            Log::warning('updateMatricula: forced updated_at after no rows affected', ['candidate' => $candidateId, 'user' => optional(Auth::user())->id]);
+                            $didUpdate = true;
+                        }
+                    }
+                } catch (\Throwable $__e) {
+                    Log::error('updateMatricula: forced update failed', ['exception' => $__e->getMessage(), 'candidate' => $candidateId]);
+                }
+
+                if (! $didUpdate) {
+                    Log::warning('updateMatricula: no rows affected', ['candidate' => $candidateId, 'current' => $current, 'new' => $matricula]);
+                }
+            }
+
+            // Attempt to create a Servidor record from this candidate (if table exists).
+            $servidorSaved = false;
+            $servidorMessage = '';
+            try {
+                if (Schema::hasTable('servidores')) {
+                    $candidate = DB::table('ingresso_candidatos')->where('id', $candidateId)->first();
+                    if ($candidate) {
+                        $cpf = $candidate->cpf ?? null;
+                        $existsQuery = DB::table('servidores');
+                        if ($cpf) {
+                            $existsQuery->where('cpf', $cpf);
+                        }
+                        $exists = $existsQuery->orWhere('cadastro', $matricula)->exists();
+
+                        if (! $exists) {
+                            $serverData = [
+                                'nome' => $candidate->name ?? $candidate->nome ?? '',
+                                'regime' => '20',
+                                'vinculo' => 'REDA',
+                                'cpf' => $cpf,
+                                'cadastro' => $matricula,
+                                'cadastro_sap' => $matricula,
+                                'tipo' => 'Ingresso',
+                            ];
+                            if (Schema::hasColumn('servidores', 'created_at')) $serverData['created_at'] = now();
+                            if (Schema::hasColumn('servidores', 'updated_at')) $serverData['updated_at'] = now();
+
+                            try {
+                                Servidore::create($serverData);
+                                $servidorSaved = true;
+                                $servidorMessage = 'Servidor criado com sucesso';
+                            } catch (\Throwable $ex) {
+                                Log::error('updateMatricula: failed to create servidor', ['exception' => $ex->getMessage(), 'candidate' => $candidateId]);
+                                $servidorMessage = 'Erro ao criar servidor';
+                            }
+                        } else {
+                            $servidorMessage = 'Servidor já existente';
+                        }
+                    } else {
+                        $servidorMessage = 'Candidato não encontrado para criação de servidor';
+                    }
+                } else {
+                    $servidorMessage = 'Tabela servidores indisponível';
+                }
+            } catch (\Throwable $e) {
+                Log::error('updateMatricula: servidor creation failed', ['exception' => $e->getMessage(), 'candidate' => $candidateId]);
+                $servidorMessage = 'Erro ao processar servidor';
+            }
+
+            return response()->json([
+                'success' => true,
+                'matricula' => $matricula,
+                'servidor_saved' => $servidorSaved,
+                'servidor_message' => $servidorMessage,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('updateMatricula failed', ['exception' => $e->getMessage(), 'id' => $id]);
+            return response()->json(['success' => false, 'message' => 'Erro ao salvar matrícula'], 500);
+        }
     }
 
     /**
@@ -2127,7 +2294,330 @@ class IngressoController extends Controller
             fclose($out);
         };
 
+        // finish exportCsv by streaming the generated CSV
         return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Export PA CSV with the exact required columns and order.
+     */
+    public function exportPa(Request $request)
+    {
+        if (! $this->authorizeUser()) {
+            abort(403);
+        }
+
+        $table = 'ingresso_candidatos';
+
+        // Determine which column holds the candidate's 'assunsao' date in ingresso_candidatos
+        $assCols = ['assunsao','assuncao','data_assuncao','data_assunsao','data_assumcao'];
+        $foundAss = null;
+        foreach ($assCols as $c) {
+            if (Schema::hasColumn($table, $c)) { $foundAss = $c; break; }
+        }
+
+        // Build a simple query selecting only candidate number and the assunsao date (Data inicio)
+        if ($foundAss) {
+            // Build safe expressions for optional columns to avoid referencing non-existent columns
+            $orgaoParts = [];
+            if (Schema::hasColumn($table, 'orgao_emissor')) $orgaoParts[] = 'ingresso_candidatos.orgao_emissor';
+            if (Schema::hasColumn($table, 'orgao_emissor_rg')) $orgaoParts[] = 'ingresso_candidatos.orgao_emissor_rg';
+            if (count($orgaoParts) > 0) {
+                $orgaoExpr = "COALESCE(" . implode(', ', $orgaoParts) . ", '') AS orgao_emissor_rg";
+            } else {
+                $orgaoExpr = "'' AS orgao_emissor_rg";
+            }
+
+            if (Schema::hasColumn($table, 'uf_rg')) {
+                $ufExpr = "COALESCE(ingresso_candidatos.uf_rg, '') AS uf_de_expedicao";
+            } elseif (Schema::hasColumn($table, 'uf_expedicao')) {
+                $ufExpr = "COALESCE(ingresso_candidatos.uf_expedicao, '') AS uf_de_expedicao";
+            } else {
+                $ufExpr = "'' AS uf_de_expedicao";
+            }
+            if (Schema::hasColumn($table, 'num_titulo')) {
+                $tituloExpr = "COALESCE(ingresso_candidatos.num_titulo, '') AS nr_titulo_eleitor";
+            } elseif (Schema::hasColumn($table, 'num_titulo_eleitor')) {
+                $tituloExpr = "COALESCE(ingresso_candidatos.num_titulo_eleitor, '') AS nr_titulo_eleitor";
+            } else {
+                $tituloExpr = "'' AS nr_titulo_eleitor";
+            }
+            if (Schema::hasColumn($table, 'zona')) {
+                $zonaExpr = "COALESCE(ingresso_candidatos.zona, '') AS zona_tit_eleitor";
+            } elseif (Schema::hasColumn($table, 'zona_titulo') || Schema::hasColumn($table, 'zona_titulo_eleitor')) {
+                $col = Schema::hasColumn($table, 'zona_titulo') ? 'zona_titulo' : 'zona_titulo_eleitor';
+                $zonaExpr = "COALESCE(ingresso_candidatos.".$col.", '') AS zona_tit_eleitor";
+            } else {
+                $zonaExpr = "'' AS zona_tit_eleitor";
+            }
+            if (Schema::hasColumn($table, 'secao')) {
+                $secaoExpr = "COALESCE(ingresso_candidatos.secao, '') AS secao_eleitoral";
+            } elseif (Schema::hasColumn($table, 'secao_eleitoral') || Schema::hasColumn($table, 'secao_eleitor')) {
+                $colSec = Schema::hasColumn($table, 'secao_eleitoral') ? 'secao_eleitoral' : 'secao_eleitor';
+                $secaoExpr = "COALESCE(ingresso_candidatos.".$colSec.", '') AS secao_eleitoral";
+            } else {
+                $secaoExpr = "'' AS secao_eleitoral";
+            }
+            if (Schema::hasColumn($table, 'data_emissao_titulo')) {
+                $dataEmissaoTituloExpr = "COALESCE(ingresso_candidatos.data_emissao_titulo, '') AS data_emissao_2";
+            } elseif (Schema::hasColumn($table, 'data_emissao_2')) {
+                $dataEmissaoTituloExpr = "COALESCE(ingresso_candidatos.data_emissao_2, '') AS data_emissao_2";
+            } else {
+                $dataEmissaoTituloExpr = "'' AS data_emissao_2";
+            }
+            if (Schema::hasColumn($table, 'uf_titulo')) {
+                $ufTituloExpr = "COALESCE(ingresso_candidatos.uf_titulo, '') AS uf";
+            } elseif (Schema::hasColumn($table, 'uf_2')) {
+                $ufTituloExpr = "COALESCE(ingresso_candidatos.uf_2, '') AS uf";
+            } elseif (Schema::hasColumn($table, 'uf')) {
+                $ufTituloExpr = "COALESCE(ingresso_candidatos.uf, '') AS uf";
+            } else {
+                $ufTituloExpr = "'' AS uf";
+            }
+            if (Schema::hasColumn($table, 'pis_pasep')) {
+                $pisExpr = "COALESCE(ingresso_candidatos.pis_pasep, '') AS numero_do_pis_pasep";
+            } elseif (Schema::hasColumn($table, 'numero_pis')) {
+                $pisExpr = "COALESCE(ingresso_candidatos.numero_pis, '') AS numero_do_pis_pasep";
+            } else {
+                $pisExpr = "'' AS numero_do_pis_pasep";
+            }
+            if (Schema::hasColumn($table, 'num_certificado_militar')) {
+                $certMilExpr = "COALESCE(ingresso_candidatos.num_certificado_militar, '') AS nr_cert_militar";
+            } elseif (Schema::hasColumn($table, 'numero_certificado_militar') || Schema::hasColumn($table, 'nr_cert_militar')) {
+                $colCert = Schema::hasColumn($table, 'numero_certificado_militar') ? 'numero_certificado_militar' : 'nr_cert_militar';
+                $certMilExpr = "COALESCE(ingresso_candidatos.".$colCert.", '') AS nr_cert_militar";
+            } else {
+                $certMilExpr = "'' AS nr_cert_militar";
+            }
+            if (Schema::hasColumn($table, 'especie_certificado_militar')) {
+                $especieExpr = "COALESCE(ingresso_candidatos.especie_certificado_militar, '') AS especie_cert_mil";
+            } elseif (Schema::hasColumn($table, 'especie_cert_mil') || Schema::hasColumn($table, 'especie_cert_militar')) {
+                $colEsp = Schema::hasColumn($table, 'especie_cert_mil') ? 'especie_cert_mil' : 'especie_cert_militar';
+                $especieExpr = "COALESCE(ingresso_candidatos.".$colEsp.", '') AS especie_cert_mil";
+            } else {
+                $especieExpr = "'' AS especie_cert_mil";
+            }
+            if (Schema::hasColumn($table, 'categoria_certificado_militar')) {
+                $categoriaExpr = "COALESCE(ingresso_candidatos.categoria_certificado_militar, '') AS categoria_cert_mil";
+            } elseif (Schema::hasColumn($table, 'categoria_cert_mil') || Schema::hasColumn($table, 'categoria_certificado_mil')) {
+                $colCat = Schema::hasColumn($table, 'categoria_cert_mil') ? 'categoria_cert_mil' : 'categoria_certificado_mil';
+                $categoriaExpr = "COALESCE(ingresso_candidatos.".$colCat.", '') AS categoria_cert_mil";
+            } else {
+                $categoriaExpr = "'' AS categoria_cert_mil";
+            }
+            $query = DB::table($table)->select(
+                DB::raw("COALESCE(ingresso_candidatos.num_inscricao, ingresso_candidatos.id, '') AS numero_do_candidato"),
+                DB::raw("{$foundAss} AS data_inicio"),
+                DB::raw("COALESCE(ingresso_candidatos.agencia, '') AS chave_do_banco"),
+                DB::raw("COALESCE(ingresso_candidatos.conta, '') AS conta_bancaria"),
+                DB::raw("COALESCE(ingresso_candidatos.data_emissao, '') AS data_emissao"),
+                DB::raw("COALESCE(ingresso_candidatos.nome_pai, '') AS nome_pai"),
+                DB::raw("COALESCE(ingresso_candidatos.nome_mae, '') AS nome_mae"),
+                DB::raw("COALESCE(ingresso_candidatos.email, '') AS email"),
+                DB::raw($orgaoExpr),
+                DB::raw($ufExpr),
+                DB::raw($tituloExpr),
+                DB::raw($zonaExpr),
+                DB::raw($secaoExpr),
+                DB::raw($dataEmissaoTituloExpr),
+                DB::raw($ufTituloExpr),
+                DB::raw($pisExpr),
+                DB::raw($certMilExpr),
+                DB::raw($especieExpr),
+                DB::raw($categoriaExpr),
+                DB::raw("COALESCE(ingresso_candidatos.rg, '') AS documento_identidade")
+            );
+        } else {
+            // if no assunsao column found, still select candidate number and empty data_inicio
+            // ensure especie expression available even when no assunsao column was found
+            if (Schema::hasColumn($table, 'especie_certificado_militar')) {
+                $especieExpr = "COALESCE(ingresso_candidatos.especie_certificado_militar, '') AS especie_cert_mil";
+            } elseif (Schema::hasColumn($table, 'especie_cert_mil') || Schema::hasColumn($table, 'especie_cert_militar')) {
+                $colEsp = Schema::hasColumn($table, 'especie_cert_mil') ? 'especie_cert_mil' : 'especie_cert_militar';
+                $especieExpr = "COALESCE(ingresso_candidatos.".$colEsp.", '') AS especie_cert_mil";
+            } else {
+                $especieExpr = "'' AS especie_cert_mil";
+            }
+            if (Schema::hasColumn($table, 'categoria_certificado_militar')) {
+                $categoriaExpr = "COALESCE(ingresso_candidatos.categoria_certificado_militar, '') AS categoria_cert_mil";
+            } elseif (Schema::hasColumn($table, 'categoria_cert_mil') || Schema::hasColumn($table, 'categoria_certificado_mil')) {
+                $colCat = Schema::hasColumn($table, 'categoria_cert_mil') ? 'categoria_cert_mil' : 'categoria_certificado_mil';
+                $categoriaExpr = "COALESCE(ingresso_candidatos.".$colCat.", '') AS categoria_cert_mil";
+            } else {
+                $categoriaExpr = "'' AS categoria_cert_mil";
+            }
+
+            $query = DB::table($table)->select(
+                DB::raw("COALESCE(ingresso_candidatos.num_inscricao, ingresso_candidatos.id, '') AS numero_do_candidato"),
+                DB::raw("'' AS data_inicio"),
+                DB::raw("COALESCE(ingresso_candidatos.agencia, '') AS chave_do_banco"),
+                DB::raw("COALESCE(ingresso_candidatos.conta, '') AS conta_bancaria"),
+                DB::raw("COALESCE(ingresso_candidatos.data_emissao, '') AS data_emissao"),
+                DB::raw("COALESCE(ingresso_candidatos.nome_pai, '') AS nome_pai"),
+                DB::raw("COALESCE(ingresso_candidatos.nome_mae, '') AS nome_mae"),
+                DB::raw("COALESCE(ingresso_candidatos.email, '') AS email"),
+                DB::raw($orgaoExpr),
+                DB::raw($ufExpr),
+                DB::raw($tituloExpr),
+                DB::raw($zonaExpr),
+                DB::raw($secaoExpr),
+                DB::raw($dataEmissaoTituloExpr),
+                DB::raw($ufTituloExpr),
+                DB::raw($pisExpr),
+                DB::raw($certMilExpr),
+                DB::raw($especieExpr),
+                DB::raw($categoriaExpr),
+                DB::raw("COALESCE(ingresso_candidatos.rg, '') AS documento_identidade")
+            );
+        }
+
+        // Restrict to candidates with ingresso = 'Apto para ingresso'
+        if (Schema::hasColumn($table, 'ingresso')) {
+            $query->whereRaw("LOWER(TRIM(ingresso)) = 'apto para ingresso'");
+        } elseif (Schema::hasColumn($table, 'status')) {
+            // fallback to status if ingresso column missing
+            $query->whereRaw("LOWER(TRIM(status)) = 'apto para ingresso'");
+        }
+
+        // scope to NTE user if applicable
+        try {
+            $u = Auth::user();
+            if ($u && isset($u->profile_id) && $u->profile_id == 1 && isset($u->sector_id) && $u->sector_id == 7) {
+                $userNte = $u->nte ?? null;
+                if ($userNte) {
+                    if (Schema::hasColumn($table, 'nte')) {
+                        $query->where('nte', $userNte);
+                    } elseif (Schema::hasColumn($table, 'uee_code')) {
+                        $query->where('uee_code', $userNte);
+                    }
+                }
+            }
+        } catch (
+            \Throwable $e
+        ) {
+            // ignore
+        }
+
+        $rows = $query->orderBy('num_inscricao')->get();
+
+        $headers = [
+            'Número do candidato',
+            'Data inicio',
+            'Motivo da medida',
+            'Tipo de deficiência',
+            'Tempo de trabalho teorico',
+            'Chave do banco',
+            'Conta bancária',
+            'Chave de controle de bancos',
+            'Tipo de contrato',
+            'Tempo de contrato',
+            'Grau de instrução',
+            'Nome Pai',
+            'Nome Mãe',
+            'E-mail',
+            'Documento Identidade',
+            'Órgão emissor RG',
+            'Data Emissão',
+            'UF de EXpedição',
+            'Número da CTPS',
+            'Série da CTPS',
+            'Data Emissão CTPS',
+            'UF de EXpedição CTPS',
+            'Nr. Título Eleitor',
+            'Zona Tít. Eleitor',
+            'Seção Eleitoral',
+            'Data Emissão Tít. Eleitor',
+            'UF',
+            'Número do PIS/PASEP',
+            'Nr. Cert. Militar',
+            'Espécie Cert. Mil.',
+            'Categoria Cert. Mil',
+            'UF de EXpedição Cert. Mil',
+            'Código tipo de bem',
+            'Descrição do bem',
+            'Data de aquisição',
+            'Valor Aquisição',
+            'Valor atual',
+            'Tipo de estabelecimento de ensino',
+            'Status do Curso',
+            'Formação',
+        ];
+
+        $filename = 'PA_NOVO_APTOS_INGRESSO_' . date('Y_m_d') . '.csv';
+
+        $callback = function () use ($rows, $headers) {
+            $out = fopen('php://output', 'w');
+            // UTF-8 BOM
+            fwrite($out, "\xEF\xBB\xBF");
+            // helper to format dates as ddmmaaaa (no separators)
+            $fmtDate = function ($d) {
+                if (empty($d)) return '';
+                $ts = strtotime($d);
+                if ($ts === false) return '';
+                return '="' . date('dmY', $ts) . '"';
+            };
+            // write header
+            fputcsv($out, $headers, ';');
+            foreach ($rows as $r) {
+                // compute Tempo de contrato: data_inicio + 3 years (if data_inicio present), formatted ddmmaaaa
+                $computed_tempo_de_contrato = '';
+                if (!empty($r->data_inicio)) {
+                    $ts = strtotime($r->data_inicio);
+                    if ($ts !== false) {
+                        $computed_tempo_de_contrato = '="' . date('dmY', strtotime('+3 years', $ts)) . '"';
+                    }
+                }
+
+                $line = [
+                    '',
+                    $fmtDate($r->data_inicio ?? ''),
+                    ($r->motivo_da_medida ?? '') !== '' ? $r->motivo_da_medida : '3',
+                    ($r->tipo_deficiencia ?? '') !== '' ? $r->tipo_deficiencia : '7',
+                    ($r->tempo_trabalho_teorico ?? '') !== '' ? $r->tempo_trabalho_teorico : 'NO27',
+                    $r->chave_do_banco ?? '',
+                    $r->conta_bancaria ?? '',
+                    $r->chave_de_controle_de_bancos ?? '',
+                    $r->tipo_de_contrato ?? '',
+                    $computed_tempo_de_contrato,
+                    '8',
+                    $r->nome_pai ?? '',
+                    $r->nome_mae ?? '',
+                    $r->email ?? '',
+                    (!empty($r->documento_identidade) ? str_replace(['.', '-'], '', trim($r->documento_identidade)) : ''),
+                    $r->orgao_emissor_rg ?? '',
+                    $fmtDate($r->data_emissao ?? ''),
+                    $r->uf_de_expedicao ?? '',
+                    $r->numero_da_ctps ?? '',
+                    $r->serie_da_ctps ?? '',
+                    $fmtDate($r->data_emissao_1 ?? ''),
+                    $r->uf_de_expedicao_1 ?? '',
+                    (!empty($r->nr_titulo_eleitor) ? str_replace('.', '', trim($r->nr_titulo_eleitor)) : ''),
+                    $r->zona_tit_eleitor ?? '',
+                    $r->secao_eleitoral ?? '',
+                    $fmtDate($r->data_emissao_2 ?? ''),
+                    $r->uf ?? '',
+                    $r->numero_do_pis_pasep ?? '',
+                    (!empty($r->nr_cert_militar) ? str_replace('.', '', trim($r->nr_cert_militar)) : ''),
+                    $r->especie_cert_mil ?? '',
+                    $r->categoria_cert_mil ?? '',
+                    ($r->uf_de_expedicao_2 ?? 'BA'),
+                    '0',
+                    $r->descricao_do_bem ?? '',
+                    $fmtDate($r->data_de_aquisicao ?? ''),
+                    $r->valor_aquisicao ?? '',
+                    $r->valor_atual ?? '',
+                    '4',
+                    '10',
+                    $r->formacao ?? '',
+                ];
+                fputcsv($out, $line, ';');
+            }
+            fclose($out);
+        };
+
+        return response()->streamDownload($callback, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
     }
 
     /**

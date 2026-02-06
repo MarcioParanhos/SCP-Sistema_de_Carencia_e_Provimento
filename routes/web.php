@@ -213,10 +213,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/ingresso/{id}/retirar-validacao', [IngressoController::class, 'unvalidateIngresso'])->name('ingresso.retirar_validacao');
     Route::get('/ingresso/{id}/oficio', [IngressoController::class, 'oficio'])->name('ingresso.oficio');
     Route::get('/ingresso/export/csv', [IngressoController::class, 'exportCsv'])->name('ingresso.export.csv');
+    Route::get('/ingresso/export/pa', [IngressoController::class, 'exportPa'])->name('ingresso.export.pa');
     // Debug route (authorized users only) to inspect candidate DB row and recent encaminhamentos
     Route::get('/ingresso/debug-status/{id}', [IngressoController::class, 'debugStatus'])->name('ingresso.debug');
     Route::get('/ingresso/data', [IngressoController::class, 'data'])->name('ingresso.data');
     Route::get('/ingresso/{identifier}', [IngressoController::class, 'show'])->name('ingresso.show');
+    Route::post('/ingresso/{id}/matricula', [IngressoController::class, 'updateMatricula'])->name('ingresso.update.matricula');
     Route::get('/ingresso/{id}/documentos', [IngressoController::class, 'getDocumentChecklist'])->name('ingresso.documentos.get');
     Route::post('/ingresso/{id}/documentos', [IngressoController::class, 'storeDocumentChecklist'])->name('ingresso.documentos.store');
     Route::post('/ingresso/{id}/documentos/confirmar_cpm', [IngressoController::class, 'confirmDocumentosCpm'])->name('ingresso.documentos.confirmar_cpm');

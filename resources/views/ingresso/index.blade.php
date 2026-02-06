@@ -65,6 +65,13 @@
             border-radius: 8px;
             box-shadow: 0 8px 20px rgba(0,0,0,0.12);
         }
+        .dt-btn-excel {
+            border-radius: 5px !important;
+            padding: 5px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
         .dt-overlay-spinner {
             width: 28px;
             height: 28px;
@@ -99,6 +106,7 @@
                 @php
                     $user = Auth::user();
                     $isNte = ($user && isset($user->profile_id) && isset($user->sector_id) && $user->profile_id == 1 && $user->sector_id == 7);
+                    $isCpm = ($user && isset($user->profile_id) && isset($user->sector_id) && $user->profile_id == 1 && $user->sector_id == 2);
                 @endphp
                 @unless($isNte)
                     <button id="btn-export-csv" class="btn btn-primary btn-sm" title="Exportar CSV" style="border-radius:5px;padding:5px !important;display:inline-flex;align-items:center;justify-content:center;">
@@ -111,6 +119,11 @@
                             <path d="M16 15l2 6l2 -6" />
                         </svg>
                     </button>
+                    @if($isCpm)
+                    <a href="{{ route('ingresso.export.pa') }}" class="btn btn-primary btn-sm ml-1" title="Exportar PA" style="border-radius:5px;padding:5px !important;display:inline-flex;align-items:center;justify-content:center;">
+                        Exportar PA
+                    </a>
+                    @endif
                 @endunless
             </div>
         </div>
@@ -145,6 +158,7 @@
                         <option>Aguardando Confirmação pela CPM</option>
                         <option>Documentos Pendentes</option>
                         <option>Apto para encaminhamento</option>
+                        <option>Ingressado</option>
                         <option>Corrigir documentação</option>
                         <option value="Nao Assumiu">Não Assumiu</option>
                     </select>
@@ -184,6 +198,7 @@
                         <th scope="col">Nº DA INSCRIÇÃO</th>
                         <th scope="col">NOME</th>
                         <th scope="col">CPF</th>
+                        <th scope="col">MATRÍCULA</th>
                         <th scope="col">NTE</th>
                         <th scope="col">DISCIPLINA</th>
                         <th scope="col">MUNICÍPIO CONVOCAÇÃO</th>
@@ -226,6 +241,12 @@
                 },
                 {
                     data: 'cpf', name: 'cpf',
+                    render: function(data, type, row) {
+                        return (data === null || data === undefined || data === '') ? '-' : data;
+                    }
+                },
+                {
+                    data: 'matricula', name: 'matricula',
                     render: function(data, type, row) {
                         return (data === null || data === undefined || data === '') ? '-' : data;
                     }
@@ -312,6 +333,13 @@
                                 formatted = String(date);
                             }
                         } catch (e) { formatted = String(date); }
+
+                        // If candidate already has matrícula, mark as Ingressado
+                        try {
+                            if (row && row.matricula) {
+                                return '<span class="badge bg-success">' + formatted + ' • Ingressado</span>';
+                            }
+                        } catch (e) {}
 
                         // detect explicit 'Apto para ingresso' first
                         try {
@@ -465,20 +493,28 @@
                             try { $('#filter_assunsao').val(data.customFilters.filter_assunsao || ''); } catch(e){}
                             try { $('#filter_convocacao').val(data.customFilters.filter_convocacao || ''); } catch(e){}
                             try {
-                                if (data.customFilters.panelOpen) {
-                                    $('#filterPanel').show();
-                                    var btn = document.getElementById('btn-toggle-filters');
-                                    if (btn) { btn.className = 'btn btn-danger btn-sm'; }
-                                } else {
-                                    $('#filterPanel').hide();
-                                    var btn = document.getElementById('btn-toggle-filters');
-                                    if (btn) { btn.className = 'btn btn-primary btn-sm'; }
-                                }
+                                // Always keep the filter panel closed on page load (do not restore panelOpen state)
+                                $('#filterPanel').hide();
+                                var btn = document.getElementById('btn-toggle-filters');
+                                if (btn) { btn.className = 'btn btn-primary btn-sm'; }
                             } catch(e){}
                         }
                         return data;
                     } catch (e) { return null; }
                 },
+                // Buttons + layout: show length selector and buttons/search on same row
+                dom:
+            '<"d-flex flex-column"<"buttons-container text-start mb-2"B><"d-flex justify-content-between align-items-center"<"length-container"l><"search-container"f>>>' +
+            "rt" +
+            '<"d-flex justify-content-between align-items-center mt-2"<"info-container"i><"pagination-container"p>>',
+                buttons: [
+                    {
+                        extend: 'excelHtml5',
+                        text: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-file-type-xls"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M5 12v-7a2 2 0 0 1 2 -2h7l5 5v4" /><path d="M4 15l4 6" /><path d="M4 21l4 -6" /><path d="M17 20.25c0 .414 .336 .75 .75 .75h1.25a1 1 0 0 0 1 -1v-1a1 1 0 0 0 -1 -1h-1a1 1 0 0 1 -1 -1v-1a1 1 0 0 1 1 -1h1.25a.75 .75 0 0 1 .75 .75" /><path d="M11 15v6h3" /></svg>',
+                        className: 'btn btn-sm btn-primary dt-btn-excel',
+                        exportOptions: { columns: ':visible', modifier: { search: 'applied', order: 'applied' } }
+                    }
+                ],
                 ajax: {
                     url: '{{ route('ingresso.data') }}',
                     type: 'GET',
@@ -496,6 +532,7 @@
                     if (window.jQuery && $.fn.tooltip) {
                         $('[data-toggle="tooltip"]').tooltip({container: 'body'});
                     }
+                    try { $('.dt-buttons').appendTo('.buttons-container').addClass('ml-2'); } catch(e) {}
                 },
                 language: {
                     decimal: ',',
@@ -522,6 +559,13 @@
                     }
                 }
             });
+
+            // Ensure DataTables buttons are placed in the action bar above the table
+            try {
+                if (typeof ingressoTable !== 'undefined' && ingressoTable && ingressoTable.buttons) {
+                    ingressoTable.buttons().container().appendTo('.buttons-container').addClass('ml-2');
+                }
+            } catch (e) { console.warn('Failed to move DataTables buttons to top bar', e); }
 
             // Show/hide custom processing overlay (nicer than default text)
             (function(){
