@@ -123,8 +123,8 @@
                     <a href="{{ route('ingresso.export.pa') }}" class="btn btn-primary btn-sm ml-1" title="Exportar PA" style="border-radius:5px;padding:5px !important;display:inline-flex;align-items:center;justify-content:center;">
                         Exportar PA
                     </a>
-                    <a href="{{ route('ingresso.export.substituidos') }}" class="btn btn-primary btn-sm ml-1" title="Exportar Substituídos" style="border-radius:5px;padding:5px !important;display:inline-flex;align-items:center;justify-content:center;">
-                        Exportar Substituídos
+                    <a href="{{ route('ingresso.export.substituidos') }}" class="btn btn-primary btn-sm ml-1" title="Exportar encaminhamento geral" aria-label="Exportar encaminhamento geral" style="border-radius:5px;padding:5px !important;display:inline-flex;align-items:center;justify-content:center;">
+                        Exportar encaminhamento geral
                     </a>
                     @endif
                 @endunless

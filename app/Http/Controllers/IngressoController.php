@@ -2728,9 +2728,15 @@ class IngressoController extends Controller
             'ie.created_at as data_encaminhamento',
             'ie.uee_name as uee_name',
             'ie.disciplina_name as disciplina_name',
-            'ie.motivo as motivo',
             'ie.observacao as observacao',
         ]);
+
+        // Ensure motivo defaults to 'vaga_real' when empty or missing in the DB
+        if (in_array('motivo', $colsIe)) {
+            $select[] = DB::raw("COALESCE(NULLIF(ie.motivo, ''), 'vaga_real') as motivo");
+        } else {
+            $select[] = DB::raw("'vaga_real' as motivo");
+        }
 
         if ($joinPe) {
             $select[] = DB::raw('pe.servidor_substituido_id as pe_servidor_substituido_id');
@@ -2740,13 +2746,44 @@ class IngressoController extends Controller
 
         $qb->select($select);
 
-        // Only rows where a substitution occurred (either on encaminhamento or provimento)
-        $qb->where(function ($q) use ($ie_sub_col, $pe_sub_col, $joinPe) {
-            $added = false;
-            if ($ie_sub_col) { $q->whereNotNull($ie_sub_col); $added = true; }
-            if ($joinPe && $pe_sub_col) { $q->orWhereNotNull($pe_sub_col); $added = true; }
-            // if none detected, don't restrict (will return empty server columns)
-        });
+        // Determine export mode: default = only substitutions; support ?all=1 or ?types=csv
+        $includeAll = $request->query('all') == '1';
+        $typesParam = trim((string) $request->query('types', ''));
+        $types = [];
+        if ($typesParam !== '') {
+            $types = array_map('trim', explode(',', $typesParam));
+        }
+
+        // include tipo_encaminhamento in select (prefer ie.tipo_encaminhamento -> ie.tipo -> ie.motivo)
+        $qbTipoExpr = null;
+        $colsIe = Schema::hasTable('ingresso_encaminhamentos') ? Schema::getColumnListing('ingresso_encaminhamentos') : [];
+        if (in_array('tipo_encaminhamento', $colsIe)) {
+            $qbTipoExpr = 'ie.tipo_encaminhamento';
+        } elseif (in_array('tipo', $colsIe)) {
+            $qbTipoExpr = 'ie.tipo';
+        } elseif (in_array('motivo', $colsIe)) {
+            $qbTipoExpr = 'ie.motivo';
+        }
+        if ($qbTipoExpr) {
+            $select[] = DB::raw($qbTipoExpr . ' as tipo_encaminhamento');
+        } else {
+            $select[] = DB::raw('NULL as tipo_encaminhamento');
+        }
+
+        // Only rows where a substitution occurred (default) or match requested types/all
+        if ($includeAll || count($types) > 0) {
+            if (count($types) > 0 && $qbTipoExpr) {
+                $qb->whereIn(DB::raw($qbTipoExpr), $types);
+            }
+            // when includeAll and no types, do not restrict
+        } else {
+            $qb->where(function ($q) use ($ie_sub_col, $pe_sub_col, $joinPe) {
+                $added = false;
+                if ($ie_sub_col) { $q->whereNotNull($ie_sub_col); $added = true; }
+                if ($joinPe && $pe_sub_col) { $q->orWhereNotNull($pe_sub_col); $added = true; }
+                // if none detected, don't restrict (will return empty server columns)
+            });
+        }
 
         // Scope to user's NTE if present
         try {
@@ -2769,26 +2806,50 @@ class IngressoController extends Controller
 
         $rows = $qb->orderBy('ie.created_at', 'desc')->get();
 
-        $filename = 'substituidos_' . date('Ymd_His') . '.csv';
+        $filename = 'encaminhamento_geral_' . date('Ymd_His') . '.csv';
         $headers = ['Content-Type' => 'text/csv; charset=UTF-8'];
 
         $callback = function () use ($rows) {
             $out = fopen('php://output', 'w');
             // UTF-8 BOM
             fwrite($out, "\xEF\xBB\xBF");
-            $header = ['Encaminhamento ID','Nº Inscrição','Candidato','CPF','Servidor Substituído Cadastro','Servidor Substituído Nome','Servidor Substituído CPF','NTE Substituição','Município Substituição','Data encaminhamento','UEE','Disciplina','Motivo','Observação'];
+            $header = ['Encaminhamento ID','Nº Inscrição','Candidato','CPF','Servidor Substituído Cadastro','Servidor Substituído Nome','Servidor Substituído CPF','NTE Substituição','Município Substituição','Tipo Encaminhamento','Data encaminhamento','UEE','Disciplina','Motivo','Observação'];
             fputcsv($out, $header, ';');
             foreach ($rows as $r) {
+                // determine whether this encaminhamento represents a substitution
+                // prefer explicit substituted-server IDs that we selected (s_sub.id or pe_servidor_substituido_id)
+                $hasSub = false;
+                try {
+                    if (!empty($r->servidor_substituido_id)) {
+                        $hasSub = true;
+                    } elseif (!empty($r->pe_servidor_substituido_id)) {
+                        $hasSub = true;
+                    } else {
+                        // fallback: treat as substitution only when tipo_encaminhamento explicitly says so
+                        $tipo = strtolower(trim((string)($r->tipo_encaminhamento ?? '')));
+                        if ($tipo === 'substituicao_reda' || $tipo === 'substituicao' || strpos($tipo, 'substitu') !== false) {
+                            $hasSub = true;
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    $hasSub = false;
+                }
+
+                $sub_cadastro = $hasSub ? ($r->servidor_substituido_cadastro ?? '') : '';
+                $sub_nome = $hasSub ? ($r->servidor_substituido_nome ?? '') : '';
+                $sub_cpf = ($hasSub && !empty($r->servidor_substituido_cpf)) ? preg_replace('/\D+/', '', $r->servidor_substituido_cpf) : '';
+
                 $line = [
                     $r->encaminhamento_id ?? '',
                     $r->num_inscricao ?? '',
                     $r->candidato_nome ?? '',
                     !empty($r->candidato_cpf) ? preg_replace('/\D+/', '', $r->candidato_cpf) : '',
-                    $r->servidor_substituido_cadastro ?? '',
-                    $r->servidor_substituido_nome ?? '',
-                    !empty($r->servidor_substituido_cpf) ? preg_replace('/\D+/', '', $r->servidor_substituido_cpf) : '',
+                    $sub_cadastro,
+                    $sub_nome,
+                    $sub_cpf,
                     $r->substituido_nte ?? '',
                     $r->substituido_municipio ?? '',
+                    $r->tipo_encaminhamento ?? '',
                     isset($r->data_encaminhamento) ? date('d/m/Y', strtotime($r->data_encaminhamento)) : '',
                     $r->uee_name ?? '',
                     $r->disciplina_name ?? '',
