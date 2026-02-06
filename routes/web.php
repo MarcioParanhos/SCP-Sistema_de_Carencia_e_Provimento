@@ -214,6 +214,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/ingresso/{id}/oficio', [IngressoController::class, 'oficio'])->name('ingresso.oficio');
     Route::get('/ingresso/export/csv', [IngressoController::class, 'exportCsv'])->name('ingresso.export.csv');
     Route::get('/ingresso/export/pa', [IngressoController::class, 'exportPa'])->name('ingresso.export.pa');
+    // Export report of substituted servers in encaminhamentos
+    Route::get('/ingresso/export/substituidos', [IngressoController::class, 'exportSubstituidos'])->name('ingresso.export.substituidos');
     // Debug route (authorized users only) to inspect candidate DB row and recent encaminhamentos
     Route::get('/ingresso/debug-status/{id}', [IngressoController::class, 'debugStatus'])->name('ingresso.debug');
     Route::get('/ingresso/data', [IngressoController::class, 'data'])->name('ingresso.data');

@@ -2634,6 +2634,154 @@ class IngressoController extends Controller
     }
 
     /**
+     * Export CSV report of substituted servers in encaminhamentos
+     */
+    public function exportSubstituidos(Request $request)
+    {
+        if (! $this->authorizeUser()) {
+            abort(403);
+        }
+
+        // Only CPM users (profile_id == 1 and sector_id == 2) may export substituted servers
+        $u = Auth::user();
+        if (! ($u && isset($u->profile_id) && isset($u->sector_id) && $u->profile_id == 1 && $u->sector_id == 2)) {
+            abort(403);
+        }
+
+        $userNte = null;
+        try { $u = Auth::user(); $userNte = $u->nte ?? null; } catch (\Throwable $e) { $userNte = null; }
+
+        // Detect which columns exist for substituted servers and build joins accordingly
+        $colsIe = Schema::hasTable('ingresso_encaminhamentos') ? Schema::getColumnListing('ingresso_encaminhamentos') : [];
+        $colsPe = Schema::hasTable('provimentos_encaminhados') ? Schema::getColumnListing('provimentos_encaminhados') : [];
+
+        // Only join provimentos_encaminhados if ingresso_encaminhamentos has provimento_id
+        $joinPe = in_array('provimento_id', $colsIe) && Schema::hasTable('provimentos_encaminhados');
+
+        // determine candidate/encaminhamento server columns (DBs vary)
+        $ie_sub_col = in_array('servidor_substituido_id', $colsIe) ? 'ie.servidor_substituido_id' : (in_array('servidor_id', $colsIe) ? 'ie.servidor_id' : null);
+        $ie_orig_col = in_array('servidor_original_id', $colsIe) ? 'ie.servidor_original_id' : (in_array('servidor_id', $colsIe) ? 'ie.servidor_id' : null);
+
+        $pe_sub_col = null;
+        $pe_orig_col = null;
+        if ($joinPe) {
+            $pe_cols = $colsPe;
+            $pe_sub_col = in_array('servidor_substituido_id', $pe_cols) ? 'pe.servidor_substituido_id' : (in_array('servidor_encaminhado_id', $pe_cols) ? 'pe.servidor_encaminhado_id' : (in_array('servidor_id', $pe_cols) ? 'pe.servidor_id' : null));
+            $pe_orig_col = in_array('servidor_id', $pe_cols) ? 'pe.servidor_id' : null;
+        }
+
+        $qb = DB::table('ingresso_encaminhamentos as ie')
+            ->leftJoin('ingresso_candidatos as ic', 'ie.ingresso_candidato_id', '=', 'ic.id');
+
+        if ($joinPe) {
+            $qb->leftJoin('provimentos_encaminhados as pe', 'ie.provimento_id', '=', 'pe.id');
+        }
+
+        // join substituted server when column exists on encaminhamentos or provimentos
+        if ($ie_sub_col) {
+            $qb->leftJoin('servidores as s_sub', DB::raw($ie_sub_col), '=', 's_sub.id');
+        } elseif (!empty($pe_sub_col) && $joinPe) {
+            $qb->leftJoin('servidores as s_sub', DB::raw($pe_sub_col), '=', 's_sub.id');
+        } else {
+            $qb->leftJoin('servidores as s_sub', 's_sub.id', '=', DB::raw('NULL'));
+        }
+
+        // join original server when available (prefer pe then ie)
+        if (!empty($pe_orig_col) && $joinPe) {
+            $qb->leftJoin('servidores as s_orig', DB::raw($pe_orig_col), '=', 's_orig.id');
+        } elseif ($ie_orig_col) {
+            $qb->leftJoin('servidores as s_orig', DB::raw($ie_orig_col), '=', 's_orig.id');
+        } else {
+            $qb->leftJoin('servidores as s_orig', 's_orig.id', '=', DB::raw('NULL'));
+        }
+
+        // Build select list, selecting server fields if joined
+        $select = [
+            'ie.id as encaminhamento_id',
+            'ic.num_inscricao',
+            'ic.name as candidato_nome',
+            'ic.cpf as candidato_cpf',
+            's_sub.id as servidor_substituido_id',
+            's_sub.nome as servidor_substituido_nome',
+            's_sub.cadastro as servidor_substituido_cadastro',
+            's_sub.cpf as servidor_substituido_cpf',
+            'ie.created_at as data_encaminhamento',
+            'ie.uee_name as uee_name',
+            'ie.disciplina_name as disciplina_name',
+            'ie.motivo as motivo',
+            'ie.observacao as observacao',
+        ];
+
+        if ($joinPe) {
+            $select[] = DB::raw('pe.servidor_substituido_id as pe_servidor_substituido_id');
+        } else {
+            $select[] = DB::raw('NULL as pe_servidor_substituido_id');
+        }
+
+        $qb->select($select);
+
+        // Only rows where a substitution occurred (either on encaminhamento or provimento)
+        $qb->where(function ($q) use ($ie_sub_col, $pe_sub_col, $joinPe) {
+            $added = false;
+            if ($ie_sub_col) { $q->whereNotNull($ie_sub_col); $added = true; }
+            if ($joinPe && $pe_sub_col) { $q->orWhereNotNull($pe_sub_col); $added = true; }
+            // if none detected, don't restrict (will return empty server columns)
+        });
+
+        // Scope to user's NTE if present
+        try {
+            if ($userNte) {
+                $colsIe = Schema::hasTable('ingresso_encaminhamentos') ? Schema::getColumnListing('ingresso_encaminhamentos') : [];
+                $colsIc = Schema::hasTable('ingresso_candidatos') ? Schema::getColumnListing('ingresso_candidatos') : [];
+                if (in_array('nte', $colsIe)) {
+                    $qb->where('ie.nte', $userNte);
+                } elseif (in_array('uee_code', $colsIe)) {
+                    $qb->where('ie.uee_code', $userNte);
+                } elseif (in_array('nte', $colsIc)) {
+                    $qb->where('ic.nte', $userNte);
+                } elseif (in_array('uee_code', $colsIc)) {
+                    $qb->where('ic.uee_code', $userNte);
+                }
+            }
+        } catch (\Throwable $e) {
+            // ignore scoping failures
+        }
+
+        $rows = $qb->orderBy('ie.created_at', 'desc')->get();
+
+        $filename = 'substituidos_' . date('Ymd_His') . '.csv';
+        $headers = ['Content-Type' => 'text/csv; charset=UTF-8'];
+
+        $callback = function () use ($rows) {
+            $out = fopen('php://output', 'w');
+            // UTF-8 BOM
+            fwrite($out, "\xEF\xBB\xBF");
+            $header = ['Encaminhamento ID','Nº Inscrição','Candidato','CPF','Servidor Substituído Cadastro','Servidor Substituído Nome','Servidor Substituído CPF','Data encaminhamento','UEE','Disciplina','Motivo','Observação'];
+            fputcsv($out, $header, ';');
+            foreach ($rows as $r) {
+                $line = [
+                    $r->encaminhamento_id ?? '',
+                    $r->num_inscricao ?? '',
+                    $r->candidato_nome ?? '',
+                    !empty($r->candidato_cpf) ? preg_replace('/\D+/', '', $r->candidato_cpf) : '',
+                    $r->servidor_substituido_cadastro ?? '',
+                    $r->servidor_substituido_nome ?? '',
+                    !empty($r->servidor_substituido_cpf) ? preg_replace('/\D+/', '', $r->servidor_substituido_cpf) : '',
+                    isset($r->data_encaminhamento) ? date('d/m/Y', strtotime($r->data_encaminhamento)) : '',
+                    $r->uee_name ?? '',
+                    $r->disciplina_name ?? '',
+                    $r->motivo ?? '',
+                    $r->observacao ?? '',
+                ];
+                fputcsv($out, $line, ';');
+            }
+            fclose($out);
+        };
+
+        return response()->streamDownload($callback, $filename, $headers);
+    }
+
+    /**
      * Destroy a candidate (AJAX)
      */
     public function destroy($id)
