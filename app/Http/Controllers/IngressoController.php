@@ -2406,7 +2406,7 @@ class IngressoController extends Controller
                 $categoriaExpr = "'' AS categoria_cert_mil";
             }
             $query = DB::table($table)->select(
-                DB::raw("COALESCE(ingresso_candidatos.num_inscricao, ingresso_candidatos.id, '') AS numero_do_candidato"),
+                DB::raw("COALESCE(NULLIF(REPLACE(REPLACE(REPLACE(ingresso_candidatos.cpf, '.', ''), '-', ''), ' ', ''), ''), COALESCE(ingresso_candidatos.num_inscricao, ingresso_candidatos.id, '')) AS numero_do_candidato"),
                 DB::raw("{$foundAss} AS data_inicio"),
                 DB::raw("COALESCE(ingresso_candidatos.agencia, '') AS chave_do_banco"),
                 DB::raw("COALESCE(ingresso_candidatos.conta, '') AS conta_bancaria"),
@@ -2448,7 +2448,7 @@ class IngressoController extends Controller
             }
 
             $query = DB::table($table)->select(
-                DB::raw("COALESCE(ingresso_candidatos.num_inscricao, ingresso_candidatos.id, '') AS numero_do_candidato"),
+                DB::raw("COALESCE(NULLIF(REPLACE(REPLACE(REPLACE(ingresso_candidatos.cpf, '.', ''), '-', ''), ' ', ''), ''), COALESCE(ingresso_candidatos.num_inscricao, ingresso_candidatos.id, '')) AS numero_do_candidato"),
                 DB::raw("'' AS data_inicio"),
                 DB::raw("COALESCE(ingresso_candidatos.agencia, '') AS chave_do_banco"),
                 DB::raw("COALESCE(ingresso_candidatos.conta, '') AS conta_bancaria"),
@@ -2569,7 +2569,9 @@ class IngressoController extends Controller
                 }
 
                 $line = [
-                    '',
+                    // Use numero_do_candidato (alias from query) when present, otherwise fallback to cpf;
+                    // strip any non-digit characters so CPF is returned without dots or hyphens.
+                    (!empty($r->numero_do_candidato) ? preg_replace('/\D+/', '', trim($r->numero_do_candidato)) : (!empty($r->cpf) ? preg_replace('/\D+/', '', trim($r->cpf)) : '')),
                     $fmtDate($r->data_inicio ?? ''),
                     ($r->motivo_da_medida ?? '') !== '' ? $r->motivo_da_medida : '3',
                     ($r->tipo_deficiencia ?? '') !== '' ? $r->tipo_deficiencia : '7',
