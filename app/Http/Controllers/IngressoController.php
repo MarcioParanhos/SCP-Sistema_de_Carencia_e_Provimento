@@ -2654,6 +2654,7 @@ class IngressoController extends Controller
         // Detect which columns exist for substituted servers and build joins accordingly
         $colsIe = Schema::hasTable('ingresso_encaminhamentos') ? Schema::getColumnListing('ingresso_encaminhamentos') : [];
         $colsPe = Schema::hasTable('provimentos_encaminhados') ? Schema::getColumnListing('provimentos_encaminhados') : [];
+        $colsIc = Schema::hasTable('ingresso_candidatos') ? Schema::getColumnListing('ingresso_candidatos') : [];
 
         // Only join provimentos_encaminhados if ingresso_encaminhamentos has provimento_id
         $joinPe = in_array('provimento_id', $colsIe) && Schema::hasTable('provimentos_encaminhados');
@@ -2696,6 +2697,10 @@ class IngressoController extends Controller
         }
 
         // Build select list, selecting server fields if joined
+        // prefer NTE/municipio from encaminhamentos (ie) when available, else fall back to candidate (ic)
+        $sub_nte_expr = in_array('nte', $colsIe) ? 'ie.nte' : (in_array('nte', $colsIc) ? 'ic.nte' : null);
+        $sub_mun_expr = in_array('municipio_convocacao', $colsIe) ? 'ie.municipio_convocacao' : (in_array('municipio_convocacao', $colsIc) ? 'ic.municipio_convocacao' : null);
+
         $select = [
             'ie.id as encaminhamento_id',
             'ic.num_inscricao',
@@ -2705,12 +2710,27 @@ class IngressoController extends Controller
             's_sub.nome as servidor_substituido_nome',
             's_sub.cadastro as servidor_substituido_cadastro',
             's_sub.cpf as servidor_substituido_cpf',
+        ];
+
+        if ($sub_nte_expr) {
+            $select[] = DB::raw($sub_nte_expr . ' as substituido_nte');
+        } else {
+            $select[] = DB::raw('NULL as substituido_nte');
+        }
+
+        if ($sub_mun_expr) {
+            $select[] = DB::raw($sub_mun_expr . ' as substituido_municipio');
+        } else {
+            $select[] = DB::raw('NULL as substituido_municipio');
+        }
+
+        $select = array_merge($select, [
             'ie.created_at as data_encaminhamento',
             'ie.uee_name as uee_name',
             'ie.disciplina_name as disciplina_name',
             'ie.motivo as motivo',
             'ie.observacao as observacao',
-        ];
+        ]);
 
         if ($joinPe) {
             $select[] = DB::raw('pe.servidor_substituido_id as pe_servidor_substituido_id');
@@ -2756,7 +2776,7 @@ class IngressoController extends Controller
             $out = fopen('php://output', 'w');
             // UTF-8 BOM
             fwrite($out, "\xEF\xBB\xBF");
-            $header = ['Encaminhamento ID','Nº Inscrição','Candidato','CPF','Servidor Substituído Cadastro','Servidor Substituído Nome','Servidor Substituído CPF','Data encaminhamento','UEE','Disciplina','Motivo','Observação'];
+            $header = ['Encaminhamento ID','Nº Inscrição','Candidato','CPF','Servidor Substituído Cadastro','Servidor Substituído Nome','Servidor Substituído CPF','NTE Substituição','Município Substituição','Data encaminhamento','UEE','Disciplina','Motivo','Observação'];
             fputcsv($out, $header, ';');
             foreach ($rows as $r) {
                 $line = [
@@ -2767,6 +2787,8 @@ class IngressoController extends Controller
                     $r->servidor_substituido_cadastro ?? '',
                     $r->servidor_substituido_nome ?? '',
                     !empty($r->servidor_substituido_cpf) ? preg_replace('/\D+/', '', $r->servidor_substituido_cpf) : '',
+                    $r->substituido_nte ?? '',
+                    $r->substituido_municipio ?? '',
                     isset($r->data_encaminhamento) ? date('d/m/Y', strtotime($r->data_encaminhamento)) : '',
                     $r->uee_name ?? '',
                     $r->disciplina_name ?? '',
