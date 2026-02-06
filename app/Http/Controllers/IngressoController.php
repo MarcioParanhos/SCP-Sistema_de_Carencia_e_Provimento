@@ -244,6 +244,11 @@ class IngressoController extends Controller
                                 ->orWhereRaw('docsum.validated_count < docsum.total');
                         });
 
+                    // Exclude candidates explicitly marked as 'Não Assumiu' from the pending count
+                    if (in_array('status', $available)) {
+                        $qbPend->whereRaw("COALESCE(LOWER(status), '') NOT LIKE '%nao assumiu%' AND COALESCE(LOWER(status), '') NOT LIKE '%não assumiu%' AND COALESCE(LOWER(status), '') NOT LIKE '%nao-assumiu%'");
+                    }
+
                     $pendencia = $qbPend->distinct('ingresso_candidatos.id')->count('ingresso_candidatos.id');
                 } else {
                     if (in_array('documentos_validados', $available)) {
@@ -380,11 +385,17 @@ class IngressoController extends Controller
 
                 // pendencia: status not equal to exact 'Documentos Validados' or documentos_validados != 1
                 if (in_array('documentos_validados', $cols)) {
-                    $pendencia = (clone $base)->where(function ($q) {
+                    $qbPend = (clone $base)->where(function ($q) {
                         $q->whereNull('documentos_validados')->orWhere('documentos_validados', '<>', 1);
-                    })->count();
+                    });
+                    if (in_array('status', $cols)) {
+                        $qbPend->whereRaw("COALESCE(LOWER(status), '') NOT LIKE '%nao assumiu%' AND COALESCE(LOWER(status), '') NOT LIKE '%não assumiu%' AND COALESCE(LOWER(status), '') NOT LIKE '%nao-assumiu%'");
+                    }
+                    $pendencia = $qbPend->count();
                 } elseif (in_array('status', $cols)) {
-                    $pendencia = (clone $base)->whereRaw("(status IS NULL OR LOWER(TRIM(status)) != 'documentos validados')")->count();
+                    $qb = (clone $base)->whereRaw("(status IS NULL OR LOWER(TRIM(status)) != 'documentos validados')");
+                    $qb->whereRaw("COALESCE(LOWER(status), '') NOT LIKE '%nao assumiu%' AND COALESCE(LOWER(status), '') NOT LIKE '%não assumiu%' AND COALESCE(LOWER(status), '') NOT LIKE '%nao-assumiu%'");
+                    $pendencia = $qb->count();
                 }
 
                 // pendente_confirmacao_cpm: status contains aguard and cpm
